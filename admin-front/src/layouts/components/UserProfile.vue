@@ -52,7 +52,8 @@ const logout = async () => {
   localStorage.removeItem('user')
   localStorage.removeItem('token')
 
-  await router.push("/login")
+  // await router.push("/login")
+  window.location.reload()
 }
 </script>
 

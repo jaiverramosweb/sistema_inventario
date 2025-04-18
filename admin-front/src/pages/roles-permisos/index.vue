@@ -3,6 +3,8 @@ onMounted(() => {
   list()
 })
 
+definePage({ meta: { permission: 'list_role' } })
+
 const data = ref([])
 const rolSearch = ref('')
 

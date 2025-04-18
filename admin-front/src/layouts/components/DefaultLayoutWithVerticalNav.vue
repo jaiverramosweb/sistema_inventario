@@ -41,18 +41,70 @@ watch([
   else
     verticalNavHeaderActionAnimationName.value = val[0] ? 'rotate-180' : 'rotate-back-180'
 }, { immediate: true })
+
+const navItemsV = ref([])
+
+onMounted(() => {
+  let USER = localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')) : null
+  if (USER) {
+    // Lista de permisos del usuario autenticado
+    let permissions = USER.permissions
+    navItems.forEach(nav => {
+      // Si el usuario es super admin, tendra acceso a todo
+      if (USER.role.name == 'Super-Admin') {
+        navItemsV.value.push(nav)
+      } else {
+        // Los nav que tengan el permiso all puede ser visto por cualquier usuario
+        if (nav.permission == 'all') {
+          navItemsV.value.push(nav)
+        }
+
+        if (nav.heading) {
+          let headingF = nav.permissions.filter(permission => {
+            if (permissions.includes(permission)) {
+              return true
+            }
+            return false
+          })
+
+          if (headingF.length > 0) {
+            navItemsV.value.push(nav)
+          }
+        }
+
+        if (nav.children) {
+          let navT = nav
+          // Filtrar los children para ver si pueden ser visto por el usuario autenticado
+          let newChildren = nav.children.filter(chil => {
+            if (permissions.includes(chil.permission)) {
+              return true
+            }
+            return false
+          })
+
+          if (newChildren.length > 0) {
+            navT.children = newChildren
+            navItemsV.value.push(navT)
+          }
+        } else {
+          // verificar si los permisos de usuario pueden ver el nav individual
+          if (permissions.includes(nav.permission)) {
+            navItemsV.value.push(nav)
+          }
+        }
+      }
+    })
+  }
+
+})
 </script>
 
 <template>
-  <VerticalNavLayout :nav-items="navItems">
+  <VerticalNavLayout :nav-items="navItemsV">
     <!-- 👉 navbar -->
     <template #navbar="{ toggleVerticalOverlayNavActive }">
       <div class="d-flex h-100 align-center">
-        <IconBtn
-          id="vertical-nav-toggle-btn"
-          class="ms-n2 d-lg-none"
-          @click="toggleVerticalOverlayNavActive(true)"
-        >
+        <IconBtn id="vertical-nav-toggle-btn" class="ms-n2 d-lg-none" @click="toggleVerticalOverlayNavActive(true)">
           <VIcon icon="ri-menu-line" />
         </IconBtn>
 
@@ -60,10 +112,8 @@ watch([
 
         <VSpacer />
 
-        <NavBarI18n
-          v-if="themeConfig.app.i18n.enable && themeConfig.app.i18n.langConfig?.length"
-          :languages="themeConfig.app.i18n.langConfig"
-        />
+        <NavBarI18n v-if="themeConfig.app.i18n.enable && themeConfig.app.i18n.langConfig?.length"
+          :languages="themeConfig.app.i18n.langConfig" />
         <UserProfile />
       </div>
     </template>
@@ -72,11 +122,7 @@ watch([
 
     <!-- 👉 Pages -->
     <RouterView v-slot="{ Component }">
-      <Suspense
-        :timeout="0"
-        @fallback="isFallbackStateActive = true"
-        @resolve="isFallbackStateActive = false"
-      >
+      <Suspense :timeout="0" @fallback="isFallbackStateActive = true" @resolve="isFallbackStateActive = false">
         <Component :is="Component" />
       </Suspense>
     </RouterView>
@@ -93,13 +139,23 @@ watch([
 
 <style lang="scss">
 @keyframes rotate-180 {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(180deg); }
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(180deg);
+  }
 }
 
 @keyframes rotate-back-180 {
-  from { transform: rotate(180deg); }
-  to { transform: rotate(0deg); }
+  from {
+    transform: rotate(180deg);
+  }
+
+  to {
+    transform: rotate(0deg);
+  }
 }
 
 .layout-vertical-nav {
