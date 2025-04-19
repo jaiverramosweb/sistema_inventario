@@ -3,6 +3,7 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\Config\SucursalController;
 use App\Http\Controllers\Roles\RoleController;
 use App\Http\Controllers\User\UserController;
 
@@ -31,4 +32,6 @@ Route::group([
     Route::get('users/config', [UserController::class, 'config']);
     Route::post('users/{id}', [UserController::class, 'update']);
     Route::resource('users', UserController::class);
+
+    Route::resource('sucursales', SucursalController::class);
 });

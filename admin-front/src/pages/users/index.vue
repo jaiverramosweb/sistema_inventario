@@ -1,8 +1,4 @@
 <script setup>
-import AddUserDialog from '@/components/inventory/users/AddUserDialog.vue'
-import DeleteUserDialog from '@/components/inventory/users/DeleteUserDialog.vue'
-import EditUserDialog from '@/components/inventory/users/EditUserDialog.vue'
-
 onMounted(() => {
   list()
   config()
