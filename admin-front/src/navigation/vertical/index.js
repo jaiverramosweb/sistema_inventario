@@ -30,13 +30,13 @@ export default [
       },
       {
         title: 'Almacenes',
-        to: 'second-page',
+        to: 'configuration-warehouses',
         permission: 'settings',
         icon: { icon: 'ri-radio-button-line' },
       },
       {
         title: 'Categorias',
-        to: 'second-page',
+        to: 'configuration-categories',
         permission: 'settings',
         icon: { icon: 'ri-radio-button-line' },
       },
