@@ -5,7 +5,6 @@ onMounted(() => {
 
 definePage({ meta: { permission: 'settings' } })
 
-const data = ref([])
 const search = ref('')
 
 const isShowDialog = ref(false)
@@ -15,33 +14,39 @@ const isShowDialogDelete = ref(false)
 const selectedEdit = ref(null)
 const selectedDelete = ref(null)
 
+const data = ref([])
+
 const headers = [
   { title: 'ID', key: 'id' },
-  { title: 'Catgoria', key: 'title' },
-  { title: 'Estado', key: 'status' },
+  { title: 'Nombre', key: 'name' },
+  { title: 'RUC', key: 'ruc' },
+  { title: 'Correo electronico', key: 'email' },
+  { title: 'Telefono', key: 'phone' },
   { title: 'Fecha de registro', key: 'created_at' },
   { title: 'Acciones', key: 'actions' },
 ]
 
 const list = async () => {
   try {
-    const resp = await $api(`categories?search=${search.value ? search.value : ''}`, {
+    const resp = await $api(`providers?search=${search.value ? search.value : ''}`, {
       method: 'GET',
       onResponseError({ response }) {
         console.log(response)
       },
     })
 
-    data.value = resp.categories
+    data.value = resp.providers
+
   } catch (error) {
     console.log(error)
   }
 }
 
-const addNew = (newItem) => {
+
+const addNew = (New) => {
   let backup = data.value
   data.value = []
-  backup.unshift(newItem)
+  backup.unshift(New)
   setTimeout(() => {
     data.value = backup
   }, 50)
@@ -52,12 +57,12 @@ const editItem = (item) => {
   isShowDialogEdit.value = true
 }
 
-const editNew = (editItem) => {
+const editNew = (editId) => {
   let backup = data.value
   data.value = []
-  let INDEX = backup.findIndex(rol => rol.id == editItem.id)
+  let INDEX = backup.findIndex(item => item.id == editId.id)
   if (INDEX != -1) {
-    backup[INDEX] = editItem
+    backup[INDEX] = editId
   }
 
   setTimeout(() => {
@@ -95,18 +100,17 @@ const avatarText = value => {
 
 <template>
   <div>
-    <VCard title="🎫 Categorias">
+    <VCard title="🏤 Proveedores">
 
       <VCardText>
         <VRow class="justify-space-between">
           <VCol cols="4">
-            <VTextField label="Busqueda" placeholder="Sucursal" v-model="search" density="compact"
-              @keyup.enter="list" />
+            <VTextField label="Busqueda" v-model="search" density="compact" @keyup.enter="list" />
           </VCol>
 
           <VCol cols="2" class="text-end">
             <VBtn @click="isShowDialog = !isShowDialog">
-              Agregar categoria
+              Agregar proveedor
               <VIcon end icon="ri-add-line" />
             </VBtn>
           </VCol>
@@ -126,10 +130,11 @@ const avatarText = value => {
               :class="item.imagen ? '' : 'v-avatar-light-bg primary--text'"
               :variant="!item.imagen ? 'tonal' : undefined"
             >
-              <VImg :src="item.imagen" />
+              <VImg v-if="item.imagen" :src="item.imagen" />
+              <span v-else class="text-sm">{{ avatarText(item.name) }}</span>
             </VAvatar>
             <div class="d-flex flex-column ms-3">
-              <span class="d-block font-weight-medium text-high-emphasis text-truncate">{{ item.title }}</span>
+              <span class="d-block font-weight-medium text-high-emphasis text-truncate">{{ item.name }}</span>
             </div>
           </div>
         </template>
@@ -142,6 +147,7 @@ const avatarText = value => {
             {{ item.status }}
           </VChip>
         </template>
+
 
         <template #item.actions="{ item }">
           <div class="d-flex gap-1">
@@ -156,10 +162,9 @@ const avatarText = value => {
       </VDataTable>
     </VCard>
 
-    <AddCategoryDialog v-model:isDialogVisible="isShowDialog" @addCategory="addNew" />
-    <EditCategoryDialog v-if="selectedEdit && isShowDialogEdit" v-model:isDialogVisible="isShowDialogEdit"
-      :caregorySelected="selectedEdit" @editCatgory="editNew" />
-    <DeleteCategoryDialog v-if="selectedDelete && isShowDialogDelete" v-model:isDialogVisible="isShowDialogDelete"
-      :caregorySelected="selectedDelete" @deleteCategory="deleteNew" />
+    <AddProviderDialog v-model:isDialogVisible="isShowDialog" @addProvider="addNew" />
+    <EditProviderDialog v-if="selectedEdit && isShowDialogEdit" v-model:isDialogVisible="isShowDialogEdit":providerSelected="selectedEdit" @editProvider="editNew" />
+    <DeleteProviderDialog v-if="selectedDelete && isShowDialogDelete"
+      v-model:isDialogVisible="isShowDialogDelete" :providerSelected="selectedDelete" @deleteProvider="deleteNew" />
   </div>
 </template>

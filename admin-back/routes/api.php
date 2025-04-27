@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Config\CategoryController;
+use App\Http\Controllers\Config\ProviderController;
 use App\Http\Controllers\Config\SucursalController;
 use App\Http\Controllers\Config\WarehouseController;
 use App\Http\Controllers\Roles\RoleController;
@@ -41,5 +42,8 @@ Route::group([
 
     Route::post('categories/{id}', [CategoryController::class, 'update']);
     Route::resource('categories', CategoryController::class);
+
+    Route::post('providers/{id}', [ProviderController::class, 'update']);
+    Route::resource('providers', ProviderController::class);
 });
 

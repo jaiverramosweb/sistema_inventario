@@ -3,12 +3,13 @@
 namespace App\Http\Controllers\Config;
 
 use App\Http\Controllers\Controller;
-use App\Http\Resources\CategoryResource;
-use App\Models\Category;
+use App\Http\Resources\ProviderResource;
+use App\Models\Provider;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
-class CategoryController extends Controller
+class ProviderController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -16,15 +17,13 @@ class CategoryController extends Controller
     public function index(Request $request)
     {
         $search = $request->get('search');
-        $categories = Category::where('title', 'ilike', '%' . $search . '%')
-            ->orderBy('id', 'desc')
-            ->get();
+        $providers = Provider::where(DB::raw("providers.name || ' ' || providers.ruc || ' ' || providers.phone || ' ' || COALESCE(providers.email,'')"), 'ilike', '%' . $search . '%')->orderBy('id', 'desc')->get();
 
-        $categories_resource = CategoryResource::collection($categories);
+        $providers_resource = ProviderResource::collection($providers);
 
         return response()->json([
             'status' => 200,
-            'categories' => $categories_resource,
+            'providers' => $providers_resource,
         ]);
     }
 
@@ -33,27 +32,27 @@ class CategoryController extends Controller
      */
     public function store(Request $request)
     {
-        $exists = Category::where('title', $request->title)->first();
+        $exists = Provider::where('ruc', $request->ruc)->first();
 
         if ($exists) {
             return response()->json([
                 'status' => 403,
-                'message' => 'category exists',
+                'message' => 'Provider exists',
             ]);
         }
 
         if ($request->hasFile('image')) {
-            $path = Storage::putFile('categores', $request->file('image'));
+            $path = Storage::putFile('providers', $request->file('image'));
             $request->request->add(['imagen' => $path]);
         }
 
-        $category = Category::create($request->all());
+        $provider = Provider::create($request->all());
 
-        $category_resource = new CategoryResource($category);
+        $providers_resource = new ProviderResource($provider);
 
         return response()->json([
             'status' => 201,
-            'category' => $category_resource
+            'provider' => $providers_resource
         ]);
     }
 
@@ -70,32 +69,32 @@ class CategoryController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        $exists = Category::where('title', $request->title)->where('id', '<>', $id)->first();
+        $exists = Provider::where('ruc', $request->ruc)->where('id', '<>', $id)->first();
 
         if ($exists) {
             return response()->json([
                 'status' => 403,
-                'message' => 'category exists',
+                'message' => 'Provider exists',
             ]);
         }
 
-        $category = Category::findOrFail($id);
+        $provider = Provider::findOrFail($id);
 
         if ($request->hasFile('image')) {
-            if ($category->imagen) {
-                Storage::delete($category->imagen);
+            if ($provider->imagen) {
+                Storage::delete($provider->imagen);
             }
-            $path = Storage::putFile('categores', $request->file('image'));
+            $path = Storage::putFile('providers', $request->file('image'));
             $request->request->add(['imagen' => $path]);
         }
 
-        $category->update($request->all());
+        $provider->update($request->all());
 
-        $category_resource = new CategoryResource($category);
+        $providers_resource = new ProviderResource($provider);
 
         return response()->json([
             'status' => 200,
-            'category' => $category_resource
+            'provider' => $providers_resource
         ]);
     }
 
@@ -104,10 +103,10 @@ class CategoryController extends Controller
      */
     public function destroy(string $id)
     {
-        $category = Category::findOrFail($id);
-        $category->delete();
+        $provider = Provider::findOrFail($id);
+        $provider->delete();
         return response()->json([
-            'message' => 'deleted category'
+            'message' => 'deleted provider'
         ]);
     }
 }

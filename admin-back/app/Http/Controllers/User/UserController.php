@@ -131,7 +131,7 @@ class UserController extends Controller
         $user_json = new UserResource($user);
 
         return response()->json([
-            'status' => 201,
+            'status' => 200,
             'data' => $user_json
         ]);
     }

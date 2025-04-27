@@ -42,7 +42,7 @@ export default [
       },
       {
         title: 'Proveedores',
-        to: 'second-page',
+        to: 'configuration-providers',
         permission: 'settings',
         icon: { icon: 'ri-radio-button-line' },
       },

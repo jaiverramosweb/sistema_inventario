@@ -131,7 +131,7 @@ const avatarText = value => {
 
           <VCol cols="2" class="text-end">
             <VBtn @click="isShowDialogUser = !isShowDialogUser">
-              Agregar User
+              Agregar usuario
               <VIcon end icon="ri-add-line" />
             </VBtn>
           </VCol>
