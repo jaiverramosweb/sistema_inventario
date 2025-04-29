@@ -106,7 +106,7 @@ const avatarText = value => {
 
           <VCol cols="2" class="text-end">
             <VBtn @click="isShowDialog = !isShowDialog">
-              Agregar categoria
+              Agregar
               <VIcon end icon="ri-add-line" />
             </VBtn>
           </VCol>

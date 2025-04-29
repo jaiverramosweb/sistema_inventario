@@ -35,8 +35,6 @@ const list = async () => {
       },
     })
 
-    console.log(resp)
-
     data.value = resp.warehouses
     sucursales.value = resp.sucursales
   } catch (error) {
@@ -102,7 +100,7 @@ const deleteNew = (item) => {
 
           <VCol cols="2" class="text-end">
             <VBtn @click="isShowDialog = !isShowDialog">
-              Agregar almacén
+              Agregar
               <VIcon end icon="ri-add-line" />
             </VBtn>
           </VCol>

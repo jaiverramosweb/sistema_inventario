@@ -9,30 +9,33 @@ const data = ref([])
 const search = ref('')
 
 const isShowDialog = ref(false)
+const isShowDialogAdd = ref(false)
 const isShowDialogEdit = ref(false)
 const isShowDialogDelete = ref(false)
 
+const selectedAdd = ref(null)
 const selectedEdit = ref(null)
 const selectedDelete = ref(null)
 
 const headers = [
   { title: 'ID', key: 'id' },
-  { title: 'Sucursal', key: 'name' },
-  { title: 'Dirección', key: 'address' },
+  { title: 'Unidades', key: 'name' },
+  { title: 'Descripción', key: 'description' },
+  { title: 'Estado', key: 'status' },
   { title: 'Fecha de registro', key: 'created_at' },
   { title: 'Acciones', key: 'actions' },
 ]
 
 const list = async () => {
   try {
-    const resp = await $api(`sucursales?search=${search.value ? search.value : ''}`, {
+    const resp = await $api(`units?search=${search.value ? search.value : ''}`, {
       method: 'GET',
       onResponseError({ response }) {
         console.log(response)
       },
     })
 
-    data.value = resp.sucursales
+    data.value = resp.units
   } catch (error) {
     console.log(error)
   }
@@ -77,21 +80,25 @@ const deleteNew = (item) => {
   if (INDEX != -1) {
     backup.splice(INDEX, 1)
   }
-
   setTimeout(() => {
     data.value = backup
   }, 50)
+}
+
+const addConversion = (item) => {
+  selectedAdd.value = item
+  isShowDialogAdd.value = true
 }
 </script>
 
 <template>
   <div>
-    <VCard title="🏪 Sucursales">
+    <VCard title="📦 Unidades">
 
       <VCardText>
         <VRow class="justify-space-between">
           <VCol cols="4">
-            <VTextField label="Busqueda" placeholder="Sucursal" v-model="search" density="compact"
+            <VTextField label="Busqueda" placeholder="unidad" v-model="search" density="compact"
               @keyup.enter="list" />
           </VCol>
 
@@ -109,8 +116,20 @@ const deleteNew = (item) => {
           <span class="text-h6">{{ item.id }}</span>
         </template>
 
+        <template #item.status="{ item }">
+          <VChip color="success" v-if="item.status === 'Activo'">
+            {{ item.status }}
+          </VChip>
+          <VChip color="error" v-else>
+            {{ item.status }}
+          </VChip>
+        </template>
+
         <template #item.actions="{ item }">
           <div class="d-flex gap-1">
+            <IconBtn size="small" @click="addConversion(item)">
+              <VIcon icon="ri-git-repository-commits-line" />
+            </IconBtn>
             <IconBtn size="small" @click="editItem(item)">
               <VIcon icon="ri-pencil-line" />
             </IconBtn>
@@ -122,10 +141,13 @@ const deleteNew = (item) => {
       </VDataTable>
     </VCard>
 
-    <AddSucursalDialog v-model:isDialogVisible="isShowDialog" @addSucursal="addNew" />
-    <EditSucursalDialog v-if="selectedEdit && isShowDialogEdit" v-model:isDialogVisible="isShowDialogEdit"
-      :sucursalSelected="selectedEdit" @editSucursal="editNew" />
-    <DeleteSucursalDialog v-if="selectedDelete && isShowDialogDelete" v-model:isDialogVisible="isShowDialogDelete"
-      :sucursalSelected="selectedDelete" @deleteSucursal="deleteNew" />
+
+    <AddUnitDialog v-model:isDialogVisible="isShowDialog" @addUnit="addNew" />
+    <EditUnitDialog v-if="selectedEdit && isShowDialogEdit" v-model:isDialogVisible="isShowDialogEdit"
+      :unitSelected="selectedEdit" @editUnit="editNew" />
+    <DeleteUnitDialog v-if="selectedDelete && isShowDialogDelete" v-model:isDialogVisible="isShowDialogDelete"
+      :unitSelected="selectedDelete" @deleteUnit="deleteNew" />
+
+    <AddUnitComversionDialog v-if="selectedAdd && isShowDialogAdd" v-model:isDialogVisible="isShowDialogAdd" :unitSelected="selectedAdd" :units="data" />
   </div>
 </template>

@@ -48,7 +48,7 @@ export default [
       },
       {
         title: 'Unidades',
-        to: 'second-page',
+        to: 'configuration-units',
         permission: 'settings',
         icon: { icon: 'ri-radio-button-line' },
       },
