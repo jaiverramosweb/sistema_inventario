@@ -61,13 +61,13 @@ export default [
     children: [
       {
         title: 'Registrar',
-        to: 'second-page',
+        to: 'product-add',
         permission: 'register_product',
         icon: { icon: 'ri-radio-button-line' },
       },
       {
         title: 'Listado',
-        to: 'second-page',
+        to: 'product-list',
         permission: 'list_product',
         icon: { icon: 'ri-radio-button-line' },
       },

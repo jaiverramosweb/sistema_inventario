@@ -9,6 +9,7 @@ use App\Http\Controllers\Config\SucursalController;
 use App\Http\Controllers\Config\UnitController;
 use App\Http\Controllers\Config\UnitConversionController;
 use App\Http\Controllers\Config\WarehouseController;
+use App\Http\Controllers\Product\ProductController;
 use App\Http\Controllers\Roles\RoleController;
 use App\Http\Controllers\User\UserController;
 
@@ -51,5 +52,12 @@ Route::group([
     Route::resource('units', UnitController::class);
 
     Route::resource('unit-conversions', UnitConversionController::class);
+
+    Route::get('products/config', [ProductController::class, 'config']);
+    Route::post('products/index', [ProductController::class, 'index']);
+    Route::post('products/s3_images', [ProductController::class, 's3_images']);
+    Route::post('products/{id}', [ProductController::class, 'update']);
+    Route::resource('products', ProductController::class);
 });
 
+Route::get("products-excel", [ProductController::class, 'download_excel']);
