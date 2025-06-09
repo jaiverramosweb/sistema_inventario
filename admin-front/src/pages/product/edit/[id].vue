@@ -8,7 +8,10 @@ import { onMounted, ref } from 'vue'
 
 onMounted(() => {
   config()
+  show()
 })
+
+const route = useRoute('product-edit-id')
 
 const dropZoneRef = ref()
 const fileData = ref([])
@@ -54,6 +57,16 @@ const success = ref(null)
 const product_warehouse = ref([])
 const product_price = ref([])
 
+const isEditWarehouseDialog = ref(false)
+const isDeleteWarehouseDialog = ref(false)
+const warehouse_selected = ref(null)
+
+const isEditWalletDialog = ref(false)
+const isDeletewalletDialog = ref(false)
+const wallet_selected = ref(null)
+
+const product_selected = ref(null)
+
 function onDrop(DroppedFiles) {
   DroppedFiles?.forEach(file => {
     if (file.type.slice(0, 6) !== 'image/') {
@@ -86,10 +99,52 @@ onChange(selectedFiles => {
 
 useDropZone(dropZoneRef, onDrop)
 
+const show = async () => {
+  try{
+    const resp = await $api(`products/${route.params.id}`, { 
+      method: 'GET',
+      onResponseError({ response }) {
+        console.log(response)
+      },
+    })
+
+    // console.log('resp',  resp)
+    product_selected.value = resp.product
+
+    product.value = {
+      title: resp.product.title,
+      sku: resp.product.sku,
+      price_general: resp.product.price_general,
+      price_company: resp.product.price_company,
+      description: resp.product.description,
+      category: resp.product.category_id,
+      is_gift: resp.product.is_gift.toString(),
+      is_discount: resp.product.is_discount.toString(),
+      max_descount: resp.product.max_descount,
+      tax_selected: resp.product.tax_selected,
+      importe_iva: resp.product.importe_iva,
+      available: resp.product.available,
+      warranty_day: resp.product.warranty_day,
+      status: resp.product.status,
+    }
+
+    fileData.value.push({
+      file: null,
+      url: resp.product.imagen,
+    })
+
+    product_warehouse.value = resp.product.warehouses
+    product_price.value = resp.product.wallets
+
+  }catch (error) {
+    console.error(error)
+  }
+}
+
 const config = async () => {
   try{
     const resp = await $api('products/config', { 
-      method: 'get',
+      method: 'GET',
       onResponseError({ response }) {
         console.log(response)
       },
@@ -104,7 +159,7 @@ const config = async () => {
   }
 }
 
-const addStock = () => {
+const addStock = async () => {
 
   if (!warehouse_stock_id.value || !unit_stock_id.value) {
     warning.value = 'Por favor complete todos los campos'
@@ -126,34 +181,66 @@ const addStock = () => {
     return
   }
 
-  let WAREHOUSE_SELECTED = warehouses.value.find(warehouse => warehouse.id == warehouse_stock_id.value)
-  let UNIT_SELECTED = units.value.find(unit => unit.id == unit_stock_id.value)
-
-  product_warehouse.value.unshift({
+  let data = {
+    product_id: route.params.id,
     warehouse_id: warehouse_stock_id.value,
-    warehouse: WAREHOUSE_SELECTED.name,
     unit_id: unit_stock_id.value,
-    unit: UNIT_SELECTED.name,
     stock: stock.value,
     umbral: umbral.value,
-  })
+  }
 
-  setTimeout(() => {
-    warehouse_stock_id.value = null
-    unit_stock_id.value = null
-    stock.value = 0
-    umbral.value = 0
-  }, 50)
+  try {
+
+    const resp = await $api("product-warehouse", {
+      method: 'POST',
+      body: data,
+      onResponseError({ response }) {
+        console.log(response)
+      },
+    })
+
+    // console.log(resp)
+
+    product_warehouse.value.unshift(resp.product_warehouse)
+
+    setTimeout(() => {
+      warehouse_stock_id.value = null
+      unit_stock_id.value = null
+      stock.value = 0
+      umbral.value = 0
+    }, 50)
+
+  } catch (error){
+    console.log(error)
+  }
+
+}
+
+const editItem = (item) => {
+  warehouse_selected.value = item
+  isEditWarehouseDialog.value = true
+}
+
+const warehouseProductEdit = (warehouseProductUpdate) => {
+  let INDEX = product_warehouse.value.findIndex(item => item.id == warehouseProductUpdate.id)
+  if(INDEX != -1){
+    product_warehouse.value[INDEX] = warehouseProductUpdate
+  }
 }
 
 const deleteItem = (item) => {
-  let INDEX = product_warehouse.value.findIndex(warehouse => warehouse.warehouse_id == item.warehouse_id && warehouse.unit_id == item.unit_id)
-  if (INDEX != -1) {
+  warehouse_selected.value = item
+  isDeleteWarehouseDialog.value = true
+}
+
+const warehouseProductDelete = (warehouseProduct) => {
+  let INDEX = product_warehouse.value.findIndex(item => item.id == warehouseProduct.id)
+  if(INDEX != -1){
     product_warehouse.value.splice(INDEX, 1)
   }
 }
 
-const addPrice = () => {
+const addPrice = async () => {
 
   if (!unit_price_id.value || !type_client_price.value || !price.value) {
     warning_price.value = 'Por favor complete todos los campos'
@@ -167,36 +254,65 @@ const addPrice = () => {
 
     return
   }
-  let SUCURSALE_SELECTED = sucursales.value.find(sucursal => sucursal.id == sucursale_price_id.value)
-  let UNIT_SELECTED = units.value.find(unit => unit.id == unit_price_id.value)
-  let TYPE_CLIENT_SELECTED = [{ id: 1, name: 'Cliente final' }, { id: 2, name: 'Cliente empresa' }].find(type => type.id == type_client_price.value)
 
-  product_price.value.unshift({
+  const data = {
+    product_id: route.params.id,
     sucursal_id: sucursale_price_id.value,
-    sucursale: SUCURSALE_SELECTED,
     unit_id: unit_price_id.value,
-    unit: UNIT_SELECTED.name,
     type_client: type_client_price.value,
-    type_client_name: TYPE_CLIENT_SELECTED.name,
     price: price.value,
-  })
+  }
 
-  setTimeout(() => {
-    sucursale_price_id.value = null
-    unit_price_id.value = null
-    type_client_price.value = null
-    price.value = 0
-  }, 50)
+  try {
+    const resp = await $api("product-wallet", {
+      method: 'POST',
+      body: data,
+      onResponseError({ response }) {
+        console.log(response)
+      },
+    })
+
+    product_price.value.unshift(resp.product_price)
+
+    setTimeout(() => {
+      sucursale_price_id.value = null
+      unit_price_id.value = null
+      type_client_price.value = null
+      price.value = 0
+    }, 50)
+
+  } catch (error) {
+    console.log(error)
+  }
+
+  
 }
 
-const deleteItemPrice = (item) => {
-  let INDEX = product_price.value.findIndex(price => price.sucursale_price_id == item.sucursale_price_id && price.unit_price_id == item.unit_price_id && price.type_client_price == item.type_client_price)
+const editItemPrice = (editPrice) => {
+  wallet_selected.value = editPrice
+  isEditWalletDialog.value = true
+}
+
+const walletProductEdit = (walletUpdate) => {
+  let INDEX = product_price.value.findIndex(item => item.id == walletUpdate.id)
+  if(INDEX != -1){
+    product_price.value[INDEX] = walletUpdate
+  }
+}
+
+const deleteItemPrice = (itemDelete) => {
+  wallet_selected.value = itemDelete
+  isDeletewalletDialog.value = true
+}
+
+const walletDelete = (item) => {
+  let INDEX = product_price.value.findIndex(item => item.id == item.id)
   if (INDEX != -1) {
     product_price.value.splice(INDEX, 1)
   }
 }
 
-const store = async () => {
+const update = async () => {
   try{
     if( !product.value.title){
       warning_form.value = 'El nombre es requerido'
@@ -227,17 +343,17 @@ const store = async () => {
       return
     }
 
-    if(product_warehouse.value.length == 0){
-      warning_form.value = 'Es requerido agregar al menos un almacen y unidad'
+    // if(product_warehouse.value.length == 0){
+    //   warning_form.value = 'Es requerido agregar al menos un almacen y unidad'
 
-      return
-    }
+    //   return
+    // }
 
-    if(product_price.value.length == 0){
-      warning_form.value = 'Es requerido agregar al menos un precio'
+    // if(product_price.value.length == 0){
+    //   warning_form.value = 'Es requerido agregar al menos un precio'
 
-      return
-    }
+    //   return
+    // }
 
     if(product.value.importe_iva < 0){
       warning_form.value = 'Es requerido agregar el importe IVA igual o mayor a 0'
@@ -253,7 +369,7 @@ const store = async () => {
 
     warning_form.value = null
 
-    console.log('productos', product.value)
+    // console.log('productos', product.value)
 
     let formData = new FormData()
     formData.append('title', product.value.title)
@@ -280,12 +396,14 @@ const store = async () => {
     formData.append('warranty_day', product.value.warranty_day)
     formData.append('available', product.value.available)
     formData.append('status', product.value.status)
-    formData.append('product_warehouse', JSON.stringify(product_warehouse.value))
-    formData.append('product_price', JSON.stringify(product_price.value))
-    if (fileData.value.length > 0)
+
+    // formData.append('product_warehouse', JSON.stringify(product_warehouse.value))
+    // formData.append('product_price', JSON.stringify(product_price.value))
+
+    if (fileData.value.length > 0 && fileData.value[0].file)
       formData.append('image', fileData.value[0].file)
 
-    const resp = await $api('products', {
+    const resp = await $api(`products/${route.params.id}`, {
       method: 'POST',
       body: formData,
       onResponseError({ response }) {
@@ -293,10 +411,8 @@ const store = async () => {
       },
     })
 
-    if (resp.status == 201) {
-      success.value = 'Guardado con exito'
-
-      resertForm()
+    if (resp.status == 200) {
+      success.value = 'Editado con exito'
 
       warning_form.value = null
       error_exists.value = null
@@ -311,40 +427,7 @@ const store = async () => {
   }
 }
 
-const resertForm = () => {
-  product.value = {
-    title: '',
-    sku: '',
-    price_general: 0,
-    price_company: 0,
-    description: '',
-    category: '',
-    is_gift: 1,
-    is_discount: 1,
-    max_descount: 0,
-    tax_selected: 1,
-    importe_iva: 18,
-    available: 1,
-    warranty_day: 30,
-    status: 'Activo',
-  }
-
-  warehouse_stock_id.value = null
-  unit_stock_id.value = null
-  stock.value = 0
-  umbral.value = 0
-
-  sucursale_price_id.value = null
-  unit_price_id.value = null
-  type_client_price.value = null
-  price.value = 0
-
-  product_warehouse.value = []
-  product_price.value = []
-  fileData.value = []
-}
-
-definePage({ meta: { permission: 'register_product' } })
+definePage({ meta: { permission: 'edit_product' } })
 </script>
 
 <template>
@@ -352,7 +435,7 @@ definePage({ meta: { permission: 'register_product' } })
     <div class="d-flex flex-wrap justify-space-between gap-4 mb-6">
       <div class="d-flex flex-column justify-center">
         <h4 class="text-h4 mb-1">
-          🖥️ Agregar un nuevo producto
+          🖥️ Editar el producto: {{ route.params.id }}
         </h4>
         <p class="text-body-1 mb-0">
           Pedidos realizados en su tienda
@@ -432,7 +515,6 @@ definePage({ meta: { permission: 'register_product' } })
           </VAlert>
         </VRow>
 
-
         <!-- Imagen del producto -->
 
         <VCard class="mb-6">
@@ -498,7 +580,7 @@ definePage({ meta: { permission: 'register_product' } })
                                 height="150px"
                                 class="w-100 mx-auto"
                               />
-                              <div class="mt-2">
+                              <div class="mt-2" v-if="item.file">
                                 <span class="clamp-text text-wrap">
                                   {{ item.file.name }}
                                 </span>
@@ -547,6 +629,7 @@ definePage({ meta: { permission: 'register_product' } })
                   v-model="warehouse_stock_id"
                 />
               </VCol>
+
               <VCol
                 cols="12"
                 md="3"
@@ -560,6 +643,7 @@ definePage({ meta: { permission: 'register_product' } })
                   v-model="unit_stock_id"
                 />
               </VCol>
+
               <VCol
                 cols="12"
                 md="3"
@@ -635,9 +719,9 @@ definePage({ meta: { permission: 'register_product' } })
                   <td>{{ item.umbral }}</td>
                   <td>
                     <div class="d-flex gap-1">
-                      <!-- <IconBtn size="small" @click="editItem(item)">
+                      <IconBtn size="small" @click="editItem(item)">
                         <VIcon icon="ri-pencil-line" />
-                      </IconBtn> -->
+                      </IconBtn>
                       <IconBtn size="small" @click="deleteItem(item)">
                         <VIcon icon="ri-delete-bin-line" />
                       </IconBtn>
@@ -669,6 +753,7 @@ definePage({ meta: { permission: 'register_product' } })
                   v-model="sucursale_price_id"
                 />
               </VCol>
+
               <VCol
                 cols="12"
                 md="3"
@@ -682,6 +767,7 @@ definePage({ meta: { permission: 'register_product' } })
                   v-model="unit_price_id"
                 />
               </VCol>
+
               <VCol
                 cols="12"
                 md="3"
@@ -695,6 +781,7 @@ definePage({ meta: { permission: 'register_product' } })
                   v-model="type_client_price"
                 />
               </VCol>
+
               <VCol
                 cols="12"
                 md="2"
@@ -754,15 +841,15 @@ definePage({ meta: { permission: 'register_product' } })
 
               <tbody>
                 <tr v-for="(item, index) in product_price" :key="index">
-                  <td>{{ item.sucursale ? item.sucursale.name : '---' }}</td>
+                  <td>{{ item.sucursal ? item.sucursal : '---' }}</td>
                   <td>{{ item.unit }}</td>
                   <td>{{ item.type_client_name }}</td>
                   <td>{{ item.price }}</td>
                   <td>
                     <div class="d-flex gap-1">
-                      <!-- <IconBtn size="small" @click="editItem(item)">
+                      <IconBtn size="small" @click="editItemPrice(item)">
                         <VIcon icon="ri-pencil-line" />
-                      </IconBtn> -->
+                      </IconBtn>
                       <IconBtn size="small" @click="deleteItemPrice(item)">
                         <VIcon icon="ri-delete-bin-line" />
                       </IconBtn>
@@ -868,11 +955,46 @@ definePage({ meta: { permission: 'register_product' } })
           </VCardText>
         </VCard>
 
-        <VBtn block @click="store" class="mt-3">
-          Crear
+        <VBtn block @click="update" class="mt-3">
+          Editar
         </VBtn>
       </VCol>
     </VRow>
+
+    <EditWareHouseProductDialog 
+      v-if="warehouse_selected && isEditWarehouseDialog" 
+      v-model:isDialogVisible="isEditWarehouseDialog" 
+      :wareHouseSelected="warehouse_selected" 
+      :warehouses="warehouses" 
+      :units="units" 
+      :product_id="route.params.id"
+      @editWareHouse="warehouseProductEdit"
+    />
+
+    <DeleteWareHouseProductDialog 
+      v-if="warehouse_selected && isDeleteWarehouseDialog" 
+      v-model:isDialogVisible="isDeleteWarehouseDialog" 
+      :warehouseSelectedProduct="warehouse_selected" 
+      @deleteWarehouseProduct="warehouseProductDelete"
+    />
+
+    <EditPriceProductDialog 
+      v-if="wallet_selected && isEditWalletDialog" 
+      v-model:isDialogVisible="isEditWalletDialog" 
+      :walletSelected="wallet_selected" 
+      :sucursales="sucursales" 
+      :units="units" 
+      :product_id="route.params.id"
+      @editWallet="walletProductEdit"
+      
+    />
+
+    <DeletePriceProductDialog 
+      v-if="wallet_selected && isDeletewalletDialog" 
+      v-model:isDialogVisible="isDeletewalletDialog" 
+      :walletSelected="wallet_selected" 
+      @deleteWallet="walletDelete"
+    />
   </div>
 </template>
 

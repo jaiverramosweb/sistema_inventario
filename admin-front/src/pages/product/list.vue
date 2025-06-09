@@ -8,8 +8,10 @@ definePage({ meta: { permission: 'list_product' } })
 
 const search = ref('')
 
+const router = useRouter()
+
 const isShowDialogDelete = ref(false)
-const userSelectedDelete = ref(null)
+const productSelectedDelete = ref(null)
 
 const data = ref([])
 const sucursales = ref([])
@@ -24,6 +26,11 @@ const sucursale_id = ref(null)
 const available = ref(null)
 const is_gift = ref(null)
 
+const isImportExcelDialog = ref(false)
+
+const currentPage = ref(1)
+const totalPage = ref(0)
+
 const list = async () => {
   try {
     let dataSearch = {
@@ -36,7 +43,7 @@ const list = async () => {
       is_gift: is_gift.value,
     }
 
-    const resp = await $api("products/index", {
+    const resp = await $api(`products/index?page=${currentPage.value}`, {
       method: 'POST',
       body: dataSearch,
       onResponseError({ response }) {
@@ -45,6 +52,7 @@ const list = async () => {
     })
 
     data.value = resp.data
+    totalPage.value = resp.last_page
 
   } catch (error) {
     console.log(error)
@@ -59,6 +67,7 @@ const reset = () => {
   sucursale_id.value = null
   available.value = null
   is_gift.value = null
+  currentPage.value = 1
 
   list()
 }
@@ -85,17 +94,21 @@ const config = async () => {
 
 const editItem = (item) => {
   console.log(item)
+  router.push({
+    name: 'product-edit-id',
+    params: { id: item.id },
+  })
 }
 
 const deleteItem = (item) => {
-  userSelectedDelete.value = item
+  productSelectedDelete.value = item
   isShowDialogDelete.value = true
 }
 
 const deleteNew = (item) => {
   let backup = data.value
   data.value = []
-  let INDEX = backup.findIndex(rol => rol.id == item.id)
+  let INDEX = backup.findIndex(pro => pro.id == item.id)
   if (INDEX != -1) {
     backup.splice(INDEX, 1)
   }
@@ -142,7 +155,13 @@ const downloadExcel = () => {
   window.open(import.meta.env.VITE_API_BASE_URL + 'products-excel?z=1' + QUERY_PARAMS, '_blank')
 }
 
-const ImportExcel = () => {}
+const ImmportProducts = () => {
+  list()
+}
+
+watch(currentPage, (page) => {
+  list()
+})
 </script>
 
 <template>
@@ -212,7 +231,7 @@ const ImportExcel = () => {}
                   v-model="available"
                 />
               </VCol>
-              <VCol cols="3">
+              <VCol cols="2">
                 <VSelect
                   placeholder="-- Seleccione --"
                   label="¿Regalo?"
@@ -222,38 +241,67 @@ const ImportExcel = () => {}
                   v-model="is_gift"
                 />
               </VCol>
-              <VCol cols="3">
+              <VCol cols="4">
                 <VBtn
                   color="info"
                   class="mx-1"
                   prepend-icon="ri-search-2-line"
                   @click="list"
-                />
+                >
+                  <VTooltip
+                    activator="parent"
+                    location="top"
+                  >
+                    Buscar
+                  </VTooltip>
+                </VBtn>
 
                 <VBtn
                   color="secondary"
                   class="mx-1"
                   prepend-icon="ri-restart-line"
                   @click="reset"
-                />
+                >
+                  <VTooltip
+                    activator="parent"
+                    location="top"
+                  >
+                    Limpiar
+                  </VTooltip>
+                </VBtn>
+
                 <VBtn
                   color="error"
                   class="mx-1"
                   prepend-icon="ri-file-excel-2-line"
                   @click="downloadExcel"
-                />
+                >
+                  <VTooltip
+                    activator="parent"
+                    location="top"
+                  >
+                    Exportar
+                  </VTooltip>
+                </VBtn>
                 <VBtn
                   color="success"
                   class="mx-1"
                   prepend-icon="ri-file-excel-line"
-                  @click="ImportExcel"
-                />
+                  @click="isImportExcelDialog = !isImportExcelDialog"
+                >
+                  <VTooltip
+                    activator="parent"
+                    location="top"
+                  >
+                    Importar
+                  </VTooltip>
+                </VBtn>
               </VCol>
             </VRow>
           </VCol>
 
           <VCol cols="2" class="text-end">
-            <VBtn>
+            <VBtn @click="router.push({ name: 'product-add' })">
               Agregar
               <VIcon end icon="ri-add-line" />
             </VBtn>
@@ -287,6 +335,9 @@ const ImportExcel = () => {}
             </th>
             <th class="text-uppercase">
               Estado
+            </th>
+            <th class="text-uppercase">
+              Estado Stock
             </th>
             <th class="text-uppercase">
               Fecha de registro
@@ -326,7 +377,7 @@ const ImportExcel = () => {}
             </td>
             <td>
               {{ item.is_discount == 1 ? 'No' : 'Si' }} <br>
-              <span v-if="item.is_discount != 1">Descunto: {{ item.max_descount }} %</span>
+              <span v-if="item.is_discount != 1" style="text-wrap-mode: nowrap;">Descunto: {{ item.max_descount }} %</span>
             </td>
             <td>
               {{ item.importe_iva }}
@@ -336,6 +387,17 @@ const ImportExcel = () => {}
             </td>
             <td>
               {{ item.status }}
+            </td>
+            <td>
+              <VChip color="primary" v-if="item.status_stok == 1">
+                Disponible
+              </VChip>
+              <VChip color="warning" v-if="item.status_stok == 2">
+                Por agotar
+              </VChip>
+              <VChip color="error" v-if="item.status_stok == 3">
+                Agotado
+              </VChip>
             </td>
             <td>
               {{ item.created_at }}
@@ -353,9 +415,17 @@ const ImportExcel = () => {}
           </tr>
         </tbody>
       </VTable>
+
+      <VPagination
+        v-model="currentPage"
+        :length="totalPage"
+      />
+
     </VCard>
 
-    <!-- <DeleteUserDialog v-if="userSelectedDelete && isShowDialogDelete"
-      v-model:isDialogVisible="isShowDialogDelete" :userSelected="userSelectedDelete" @deleteUser="deleteNew" /> -->
+
+    <ImportExcelProduct v-model:isDialogVisible="isImportExcelDialog" @importExcel="ImmportProducts"/>
+    <DeleteUserDialog v-if="productSelectedDelete && isShowDialogDelete"
+      v-model:isDialogVisible="isShowDialogDelete" :productSelected="productSelectedDelete" @deleteProduct="deleteNew" />
   </div>
 </template>

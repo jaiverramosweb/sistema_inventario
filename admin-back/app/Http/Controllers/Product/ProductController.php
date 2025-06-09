@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Product;
 use App\Exports\Product\ProductDownloadExcel;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\ProductResource;
+use App\Imports\Product\ImportExcelProducts;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\ProductWallet;
@@ -33,7 +34,7 @@ class ProductController extends Controller
 
         $products = Product::filterAdvance($search, $category_id, $warehouse_id, $unit_id, $sucursale_id, $available, $is_gift)
                             ->orderBy('id', 'desc')
-                            ->paginate(25);
+                            ->paginate(15);
 
         $products_collection = ProductResource::collection($products);
 
@@ -260,5 +261,19 @@ class ProductController extends Controller
                             ->get();
 
         return Excel::download(new ProductDownloadExcel($products), "lista_productos.xlsx");
+    }
+
+    public function import_excel(Request $request)
+    {
+        $request->validate([
+            "excel" => 'required|file|mimes:xls,xlsx,csv'
+        ]);
+
+        $data = Excel::import(new ImportExcelProducts, $request->file('excel'));
+
+        return response()->json([
+            'status' => 200,
+            'message' => 'Excel imported successfully',
+        ]);
     }
 }
