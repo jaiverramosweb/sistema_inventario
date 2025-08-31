@@ -17,13 +17,13 @@ return new class extends Migration
             $table->string('surname',250)->nullable();
             $table->string('email',250)->nullable();
             $table->string('phone',50)->nullable();
-            $table->smallInteger('type_client',50)->default(1)->comment('1=Cliente final, 2=Cliente empresa');
-            $table->string('type_document',20);
+            $table->smallInteger('type_client')->default(1)->comment('1=Cliente final, 2=Cliente empresa');
+            $table->string('type_document',30);
             $table->string('n_document',100);
             $table->timestamp('date_birthday')->nullable();
             $table->bigInteger('user_id')->comment('ID del usuario que creó el cliente');
-            $table->bigInteger('sucursal_id')->nullable()->comment('ID de la sucursal');
-            $table->smallinteger('gender')->nullable()->comment('1=Masculino, 2=Femenino');
+            $table->bigInteger('sucursal_id')->comment('ID de la sucursal');
+            $table->string('gender')->nullable();
             $table->smallInteger('status')->default(1)->comment('1=Activo, 2=Inactivo');
             $table->string('id_department',25)->nullable();
             $table->string('id_municipality',25)->nullable();

@@ -9,6 +9,7 @@ declare module 'vue' {
   export interface GlobalComponents {
     AddAuthenticatorAppDialog: typeof import('./src/components/dialogs/AddAuthenticatorAppDialog.vue')['default']
     AddCategoryDialog: typeof import('./src/components/inventory/configuration/categories/AddCategoryDialog.vue')['default']
+    AddClientDialog: typeof import('./src/components/inventory/client/AddClientDialog.vue')['default']
     AddEditAddressDialog: typeof import('./src/components/dialogs/AddEditAddressDialog.vue')['default']
     AddEditPermissionDialog: typeof import('./src/components/dialogs/AddEditPermissionDialog.vue')['default']
     AddEditRoleDialog: typeof import('./src/components/dialogs/AddEditRoleDialog.vue')['default']
@@ -46,6 +47,7 @@ declare module 'vue' {
     CustomRadiosWithIcon: typeof import('./src/@core/components/app-form-elements/CustomRadiosWithIcon.vue')['default']
     CustomRadiosWithImage: typeof import('./src/@core/components/app-form-elements/CustomRadiosWithImage.vue')['default']
     DeleteCategoryDialog: typeof import('./src/components/inventory/configuration/categories/DeleteCategoryDialog.vue')['default']
+    DeleteClientDialog: typeof import('./src/components/inventory/client/DeleteClientDialog.vue')['default']
     DeletePriceProductDialog: typeof import('./src/components/inventory/product/prices/DeletePriceProductDialog.vue')['default']
     DeleteProductDialog: typeof import('./src/components/inventory/product/DeleteProductDialog.vue')['default']
     DeleteProviderDialog: typeof import('./src/components/inventory/configuration/providers/DeleteProviderDialog.vue')['default']
@@ -58,6 +60,7 @@ declare module 'vue' {
     DeleteWareHouseProductDialog: typeof import('./src/components/inventory/product/warehouses/DeleteWareHouseProductDialog.vue')['default']
     DialogCloseBtn: typeof import('./src/@core/components/DialogCloseBtn.vue')['default']
     EditCategoryDialog: typeof import('./src/components/inventory/configuration/categories/EditCategoryDialog.vue')['default']
+    EditClientDialog: typeof import('./src/components/inventory/client/EditClientDialog.vue')['default']
     EditPriceProductDialog: typeof import('./src/components/inventory/product/prices/EditPriceProductDialog.vue')['default']
     EditProviderDialog: typeof import('./src/components/inventory/configuration/providers/EditProviderDialog.vue')['default']
     EditRoleDialog: typeof import('./src/components/inventory/role/EditRoleDialog.vue')['default']

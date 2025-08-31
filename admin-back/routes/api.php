@@ -65,8 +65,9 @@ Route::group([
     Route::resource('product-warehouse', ProductWarehouseController::class);
     Route::resource('product-wallet', ProductWalletController::class);
 
+    
     Route::resource('clients', ClientController::class);
-
 });
+
 
 Route::get("products-excel", [ProductController::class, 'download_excel']);

@@ -77,7 +77,7 @@ export default [
     title: 'Clientes',
     icon: { icon: 'ri-p2p-line' },
     permission: 'list_client',
-    to: 'second-page',
+    to: 'client-list',
   },
   {
     title: 'Ventas',

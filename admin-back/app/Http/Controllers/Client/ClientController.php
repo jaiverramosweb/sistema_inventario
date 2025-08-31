@@ -17,12 +17,6 @@ class ClientController extends Controller
     public function index(Request $request)
     {
         $search         = $request->search;
-        $category_id    = $request->category_id;
-        $warehouse_id   = $request->warehouse_id;
-        $unit_id        = $request->unit_id;
-        $sucursale_id   = $request->sucursale_id;
-        $available      = $request->available;
-        $is_gift        = $request->is_gift;
 
         $clients = Client::where(DB::raw("clients.name || ' ' || clients.n_document || ' ' || clients.phone || ' ' || COALESCE(clients.email,'')"), 'ilike', '%' . $search . '%')
                     ->orderBy('id', 'desc')
@@ -58,8 +52,14 @@ class ClientController extends Controller
             ]);
         }
 
-        $request->request->add(['user_id' => auth('api')->user()->id]);
-        $request->request->add(['sucursal_id' => auth('api')->user()->sucuarsal_id]);
+        $user = auth('api')->user();
+
+        $request->merge(['user_id' => $user->id]);
+        $request->merge(['sucursal_id' => $user->sucuarsal_id]);
+
+        // return response()->json([
+        //     'user' => $request->all()
+        // ]);
 
         $client = Client::create($request->all());
 
