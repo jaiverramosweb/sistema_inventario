@@ -3,6 +3,7 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\Client\ClientController;
 use App\Http\Controllers\Config\CategoryController;
 use App\Http\Controllers\Config\ProviderController;
 use App\Http\Controllers\Config\SucursalController;
@@ -63,6 +64,8 @@ Route::group([
 
     Route::resource('product-warehouse', ProductWarehouseController::class);
     Route::resource('product-wallet', ProductWalletController::class);
+
+    Route::resource('clients', ClientController::class);
 
 });
 
