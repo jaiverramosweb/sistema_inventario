@@ -14,6 +14,7 @@ use App\Http\Controllers\Product\ProductController;
 use App\Http\Controllers\Product\ProductWalletController;
 use App\Http\Controllers\Product\ProductWarehouseController;
 use App\Http\Controllers\Roles\RoleController;
+use App\Http\Controllers\Sale\SaleController;
 use App\Http\Controllers\User\UserController;
 
 // Route::get('/user', function (Request $request) {
@@ -65,8 +66,11 @@ Route::group([
     Route::resource('product-warehouse', ProductWarehouseController::class);
     Route::resource('product-wallet', ProductWalletController::class);
 
-    
     Route::resource('clients', ClientController::class);
+
+    Route::post('sales/index', [SaleController::class, 'index']);
+    Route::get('sales/config', [SaleController::class, 'config']);
+    Route::resource('sales', SaleController::class);
 });
 
 
