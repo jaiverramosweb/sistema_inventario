@@ -268,6 +268,16 @@ watch(warehouse_id, value => {
 })
 
 watch(unit_id, value => {
+  if(!value){
+    return
+  }
+
+  if(is_gift.value == 2){
+    price_unit.value = 0
+    discount.value = 0
+    
+    return
+  }
 
   let AUTH_USER = JSON.parse(localStorage.getItem('user'))
 
