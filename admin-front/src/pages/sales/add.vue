@@ -23,6 +23,8 @@ const client_selected = ref(null)
 const isShowDialog = ref(false)
 const isShowDialogClient = ref(false)
 
+const sale_details = ref([]) 
+
 const warning_client = ref(null)
 const warning_warehouse = ref(null)
 const warning_client_product = ref(null)
@@ -140,6 +142,70 @@ const addNew = (New) => {
   selectedClient(New)
 }
 
+const addProduct = () => {
+  warning_warehouse.value = null
+
+  if(!unit_id.value){
+    setTimeout(() => {      
+      warning_warehouse.value = 'Es necesario seleccionar una unidad'
+    }, 25)
+  }
+
+  if(price_unit.value && is_gift.value == 1){
+    setTimeout(() => {      
+      warning_warehouse.value = 'Es necesario ingresar un precio'
+    }, 25)
+  }
+
+  if(!quantity.value || quantity.value == 0){
+    setTimeout(() => {      
+      warning_warehouse.value = 'Es necesario ingresar un a cantidad'
+    }, 25)
+  }
+
+  if(is_gift.value == 2){
+    price_unit.value = 0
+    discount.value = 0
+  }
+
+  let unit_selected = units.value.find(unit => unit.id == unit_id.value)
+  let iva = Number(price_unit.value) * (select_product.value.importe_iva*0.01)
+  let subtotal = Number(price_unit.value) - Number(discount.value) + iva
+
+  let exists_product = sale_details.value.find(detail => detail.product.id === select_product.value.id && detail.unit_id === unit_id.value)
+
+  if(exists_product){
+    setTimeout(() => {      
+      warning_warehouse.value = 'El producto ya se encuentra agregado con la misma unidad en el detalle.'
+    }, 25)
+
+    return
+  }
+
+  if(select_product.value.is_discount == 2){
+
+    let max_discount = (select_product.value.max_descount*0.01) * Number(price_unit.value)
+
+    if(max_discount < discount.value){
+      warning_warehouse.value = 'El descuento maximo permitido es de $ ' + max_discount.toFixed(2)
+    }
+
+  }  
+
+  sale_details.value.push({
+    product: select_product.value,
+    unit_id: unit_id.value,
+    unit: unit_selected.name,
+    price_unit: price_unit.value,
+    quantity: quantity.value,
+    discount: discount.value,
+    is_gift: is_gift.value,
+    iva: iva.toFixed(2),
+    subtotal: subtotal.toFixed(2),
+    total: (subtotal * quantity.value).toFixed(2)
+  })
+}
+
 const clearCam = () => {
   price_unit.value = 0
   unit_id.value = null
@@ -223,6 +289,23 @@ watch(unit_id, value => {
     }
   }
   
+})
+
+watch(is_gift, value => {
+  if(value == 2){
+    price_unit.value = 0
+    discount.value = 0
+  } else {
+    if(select_product.value){
+
+      let UNIT = unit_id.value
+      unit_id.vaue = null
+      setTimeout(() => {
+        unit_id.vaue = UNIT
+      }, 25)
+
+    }
+  }
 })
 </script>
 
@@ -352,6 +435,7 @@ watch(unit_id, value => {
                       type="number"
                       placeholder="10"
                       v-model="price_unit"
+                      :disabled="is_gift == 2 ? true : false"
                     />
                   </VCol>
                   <VCol cols="4">
@@ -376,12 +460,13 @@ watch(unit_id, value => {
                       type="number"
                       placeholder="10"
                       v-model="discount"
+                      :disabled="is_gift == 2 ? true : false"
                     />
                   </VCol>
                 </VRow>
               </VCol>
               <VCol cols="2">
-                <VBtn color="primary">
+                <VBtn color="primary" @click="addProduct">
                   <VIcon icon="ri-add-circle-line" />
                 </VBtn>
               </VCol>
@@ -409,7 +494,7 @@ watch(unit_id, value => {
                     Precio unitario
                   </th>
                   <th class="text-uppercase">
-                    Csntidad
+                    Cantidad
                   </th>
                   <th class="text-uppercase">
                     Descuento(%)
@@ -421,12 +506,40 @@ watch(unit_id, value => {
                     Subtotal
                   </th>
                   <th class="text-uppercase">
+                    Total
+                  </th>
+                  <th class="text-uppercase">
                     Acción
                   </th>
                 </tr>
               </thead>
 
               <tbody>
+                <tr v-for="(item, index) in sale_details" :key="index">
+                  <td>{{ item.product.title }}</td>
+                  <td>{{ item.unit }}</td>
+                  <td style="white-space: nowrap;">
+                    $ {{ item.price_unit }}
+                  </td>
+                  <td>{{ item.quantity }}</td>
+                  <td style="white-space: nowrap;">
+                    $ {{ item.discount }}
+                  </td>
+                  <td style="white-space: nowrap;">
+                    $ {{ item.iva }}
+                  </td>
+                  <td style="white-space: nowrap;">
+                    $ {{ item.subtotal }}
+                  </td>
+                  <td style="white-space: nowrap;">
+                    $ {{ item.total }}
+                  </td>
+                  <td>
+                    <IconBtn size="small">
+                      <VIcon icon="ri-delete-bin-line" />
+                    </IconBtn>
+                  </td>
+                </tr>
               </tbody>
             </VTable>
           </VCol>
