@@ -351,6 +351,13 @@
     "watchTriggerable": true,
     "watchWithFilter": true,
     "whenever": true,
-    "PERMISOS": true
+    "PERMISOS": true,
+    "DirectiveBinding": true,
+    "MaybeRef": true,
+    "MaybeRefOrGetter": true,
+    "onWatcherCleanup": true,
+    "useId": true,
+    "useModel": true,
+    "useTemplateRef": true
   }
 }

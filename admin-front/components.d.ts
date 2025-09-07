@@ -36,6 +36,7 @@ declare module 'vue' {
     CardStatisticsVertical: typeof import('./src/@core/components/cards/CardStatisticsVertical.vue')['default']
     CardStatisticsWithIcon: typeof import('./src/@core/components/cards/CardStatisticsWithIcon.vue')['default']
     CardStatisticsWithImages: typeof import('./src/@core/components/cards/CardStatisticsWithImages.vue')['default']
+    ClientSearchDialog: typeof import('./src/components/inventory/sale/ClientSearchDialog.vue')['default']
     ConfirmDialog: typeof import('./src/components/dialogs/ConfirmDialog.vue')['default']
     copy: typeof import('./src/components/inventory/configuration/warehouses/EditWarehouseDialog copy.vue')['default']
     CreateAppDialog: typeof import('./src/components/dialogs/CreateAppDialog.vue')['default']

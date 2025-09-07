@@ -58,6 +58,7 @@ Route::group([
     Route::resource('unit-conversions', UnitConversionController::class);
 
     Route::get('products/config', [ProductController::class, 'config']);
+    Route::get('products/search_product', [ProductController::class, 'searchProduct']);
     Route::post('products/index', [ProductController::class, 'index']);
     Route::post('products/import-excel', [ProductController::class, 'import_excel']);
     Route::post('products/{id}', [ProductController::class, 'update']);
@@ -70,6 +71,7 @@ Route::group([
 
     Route::post('sales/index', [SaleController::class, 'index']);
     Route::get('sales/config', [SaleController::class, 'config']);
+    Route::get('sales/search_client', [SaleController::class, 'searchClient']);    
     Route::resource('sales', SaleController::class);
 });
 

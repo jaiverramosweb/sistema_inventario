@@ -14,6 +14,7 @@ use App\Models\Sucursale;
 use App\Models\Unit;
 use App\Models\Warehouse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
 
@@ -144,6 +145,28 @@ class ProductController extends Controller
         return response()->json([
             'status' => 200,
             'product' => $product_resource
+        ]);
+    }
+
+    public function searchProduct(Request $request)
+    {
+        $search = $request->get('search');
+
+        if (!$search) {
+            return response()->json([
+                'products' => []
+            ]);
+        }
+
+        $products = Product::where(DB::raw("products.title || ' ' || products.sku"), 'ilike', '%' . $search . '%')
+                    ->where('status', 'Activo')
+                    ->orderBy('id', 'desc')
+                    ->get();
+
+        $products_collection = ProductResource::collection($products);
+
+        return response()->json([
+            'products' => $products_collection
         ]);
     }
 

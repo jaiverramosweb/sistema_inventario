@@ -85,7 +85,7 @@ export default [
     children: [
       {
         title: 'Registrar',
-        to: 'second-page',
+        to: 'sales-add',
         permission: 'register_sale',
         icon: { icon: 'ri-radio-button-line' },
       },

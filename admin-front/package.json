@@ -26,7 +26,7 @@
     "@tiptap/pm": "2.3.0",
     "@tiptap/starter-kit": "2.3.0",
     "@tiptap/vue-3": "2.3.0",
-    "@vue/babel-plugin-jsx": "^1.2.2",
+    "@vue/babel-plugin-jsx": "1.2.2",
     "@vueuse/core": "10.9.0",
     "@vueuse/math": "10.9.0",
     "apexcharts": "3.49.0",
@@ -90,6 +90,7 @@
     "eslint-plugin-unicorn": "51.0.1",
     "eslint-plugin-vue": "9.25.0",
     "msw": "2.2.14",
+    "parse5": "^8.0.0",
     "postcss-html": "1.6.0",
     "postcss-scss": "4.0.9",
     "sass": "1.75.0",
@@ -111,17 +112,17 @@
     "vue-shepherd": "3.0.0"
   },
   "resolutions": {
-    "postcss": "^8",
-    "@tiptap/core": "^2",
-    "@types/video.js": "^7",
-    "pug": "^3",
+    "postcss": "8",
+    "@tiptap/core": "2",
+    "@types/video.js": "7",
+    "pug": "3",
     "stylelint-order": "6.0.3"
   },
   "overrides": {
-    "postcss": "^8",
-    "@tiptap/core": "^2",
-    "@types/video.js": "^7",
-    "pug": "^3",
+    "postcss": "8",
+    "@tiptap/core": "2",
+    "@types/video.js": "7",
+    "pug": "3",
     "stylelint-order": "6.0.3"
   },
   "packageManager": "pnpm@9.0.6",

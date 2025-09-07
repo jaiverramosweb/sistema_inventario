@@ -5,9 +5,11 @@ namespace App\Http\Controllers\Sale;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\SaleRequest;
 use App\Http\Resources\SaleResource;
+use App\Models\Client;
 use App\Models\Sale;
 use App\Models\Warehouse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class SaleController extends Controller
 {
@@ -37,7 +39,37 @@ class SaleController extends Controller
             'warehouses' => $warehouses->map(function ($warehouse) {
                 return [
                     'id' => $warehouse->id,
-                    'name' => $warehouse->name
+                    'name' => $warehouse->name,
+                    'sucursale_id' => $warehouse->sucursal_id,
+                ];
+            })
+        ]);
+    }
+
+    public function searchClient(Request $request)
+    {
+        $search = $request->get('search');
+
+        if (!$search) {
+            return response()->json([
+                'clients' => []
+            ]);
+        }
+
+         $clients = Client::where(DB::raw("clients.name || ' ' || clients.n_document || ' ' || clients.phone || ' ' || COALESCE(clients.email,'')"), 'ilike', '%' . $search . '%')
+                    ->where('status', 1)
+                    ->orderBy('id', 'desc')
+                    ->get();
+
+        return response()->json([
+            'clients' => $clients->map(function ($client) {
+                return [
+                    'id' => $client->id,
+                    'name' => $client->name,
+                    'type_document' => $client->type_document,
+                    'n_document' => $client->n_document,
+                    'phone' => $client->phone,
+                    'type_client' => $client->type_client,
                 ];
             })
         ]);
