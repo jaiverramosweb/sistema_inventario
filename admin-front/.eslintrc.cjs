@@ -49,7 +49,7 @@ module.exports = {
     'object-curly-spacing': ['error', 'always'],
 
     // Enforce camelCase naming convention
-    'camelcase': 'error',
+    'camelcase': 'off',
 
     // Disable max-len
     'max-len': 'off',
@@ -58,7 +58,7 @@ module.exports = {
     'semi': ['error', 'never'],
 
     // add parens ony when required in arrow function
-    'arrow-parens': ['error', 'as-needed'],
+    'arrow-parens': ['off'],
 
     // add new line above comment
     'newline-before-return': 'error',

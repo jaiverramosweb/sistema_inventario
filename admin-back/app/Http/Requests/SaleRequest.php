@@ -22,10 +22,8 @@ class SaleRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'user_id' => 'nullable',
             'client_id' => 'nullable',
             'type_client' => 'nullable',
-            'sucursal_id' => 'nullable',
             'subtotal' => 'nullable',
             'total' => 'nullable',
             'iva' => 'nullable',
@@ -33,9 +31,10 @@ class SaleRequest extends FormRequest
             'state_mayment' => 'nullable',
             'debt' => 'nullable',
             'paid_out' => 'nullable',
-            'date_validation' => 'nullable',
             'date_completed' => 'nullable',
-            'description' => 'nullable'
+            'description' => 'nullable',
+            'sale_details' => 'nullable|array',
+            'payments' => 'nullable|array',
         ];
     }
 }

@@ -12,8 +12,12 @@ const quantity = ref(0)
 const price_unit = ref(0)
 const is_gift = ref(1)
 const discount = ref(0)
+const description = ref(null)
+
+const payments = ref([])
 const method_payment = ref(null)
 const amount = ref(0)
+const payment_total = ref(0)
 
 const search_client = ref(null)
 const list_clients = ref([])
@@ -25,9 +29,31 @@ const isShowDialogClient = ref(false)
 
 const sale_details = ref([]) 
 
+const iva_total = ref(0)
+const discount_total = ref(0)
+const subtotal_total = ref(0)
+const total_total = ref(0)
+
 const warning_client = ref(null)
 const warning_warehouse = ref(null)
 const warning_client_product = ref(null)
+const warning_payment = ref(null)
+const warning_sale = ref(null)
+
+const radioContent = [
+  {
+    title: 'Venta',
+    value: '1',
+    icon: 'ri-shopping-cart-line',
+  },
+  {
+    title: 'Cotización',
+    value: '2',
+    icon: 'ri-file-list-3-line',
+  },
+]
+
+const selectedRadio = ref('1')
 
 onMounted( () => {
   config()
@@ -53,7 +79,7 @@ const querySelections = query => {
           console.log(response)
         },
       })
-      // console.log(resp.products) 
+
       items.value = resp.products
 
       loading.value = false
@@ -64,21 +90,6 @@ const querySelections = query => {
 }
 
 // Fin busqueda de productos
-
-const radioContent = [
-  {
-    title: 'Venta',
-    value: '1',
-    icon: 'ri-shopping-cart-line',
-  },
-  {
-    title: 'Cotización',
-    value: '2',
-    icon: 'ri-file-list-3-line',
-  },
-]
-
-const selectedRadio = ref('1')
 
 const config = async () => {
   try {
@@ -135,7 +146,7 @@ const searchClient = async () => {
 const selectedClient = (client) => {
   client_selected.value = client
   search_client.value = client.name
-  clearCam()
+  cleanFildProduct()
 }
 
 const addNew = (New) => {
@@ -151,7 +162,7 @@ const addProduct = () => {
     }, 25)
   }
 
-  if(price_unit.value && is_gift.value == 1){
+  if(price_unit.value == 0 && is_gift.value == 1){
     setTimeout(() => {      
       warning_warehouse.value = 'Es necesario ingresar un precio'
     }, 25)
@@ -169,7 +180,12 @@ const addProduct = () => {
   }
 
   let unit_selected = units.value.find(unit => unit.id == unit_id.value)
-  let iva = Number(price_unit.value) * (select_product.value.importe_iva*0.01)
+  let iva = 0
+
+  if(select_product.value.tax_selected == 1){
+    iva = Number(price_unit.value) * (select_product.value.importe_iva*0.01)
+  } 
+
   let subtotal = Number(price_unit.value) - Number(discount.value) + iva
 
   let exists_product = sale_details.value.find(detail => detail.product.id === select_product.value.id && detail.unit_id === unit_id.value)
@@ -190,8 +206,23 @@ const addProduct = () => {
       warning_warehouse.value = 'El descuento maximo permitido es de $ ' + max_discount.toFixed(2)
     }
 
-  }  
+  }
 
+  if(select_product.value.available == 2){
+    let warehouse_product = select_product.value.warehouses
+    let warehouse_selected = warehouse_product.find(warehouse => warehouse.warehouse_id == warehouse_id.value && warehouse.unit_id == unit_id.value)
+
+    if(warehouse_selected){
+      if(warehouse_selected.stock < quantity.value){
+        setTimeout(() => {      
+          warning_warehouse.value = 'El stock disponible de este producto es .' + warehouse_selected.stock
+        }, 25)
+
+        return
+      }
+    }
+  }
+  
   sale_details.value.push({
     product: select_product.value,
     unit_id: unit_id.value,
@@ -204,15 +235,179 @@ const addProduct = () => {
     subtotal: subtotal.toFixed(2),
     total: (subtotal * quantity.value).toFixed(2)
   })
+
+  setTimeout(() => {
+    reportDetails()
+    cleanFildProduct()
+  }, 25)
 }
 
-const clearCam = () => {
+const reportDetails = () => {
+  // Suma total de impuesto
+  iva_total.value = sale_details.value.reduce((suma, details) => suma + (Number(price_unit) * details.quantity), 0)
+
+  // Suma total de descuento
+  discount_total.value = sale_details.value.reduce((suma, details) => suma + (Number(details.discount) * details.quantity), 0)
+  
+  // Suma total de subtotal
+  subtotal_total.value = sale_details.value.reduce((suma, details) => suma + ((Number(details.price_unit)) * details.quantity), 0) // + Number(details.iva)
+
+  // Suma total de total
+  total_total.value = sale_details.value.reduce((suma, details) => suma + Number(details.total), 0)
+}
+
+const deleteDetail = (index) => {
+
+  let total_delete = sale_details.value[index].total
+
+  if((total_total.value - total_delete) < payment_total.value){
+    setTimeout(() => {      
+      warning_warehouse.value = 'No se puede eliminar este producto por que el pago cancelado es mayor'
+    }, 25)
+
+    return
+  }
+
+  sale_details.value.splice(index, 1)
+
+  setTimeout(() => {
+    reportDetails()
+  }, 25)
+}
+
+const addPayment = () => {
+  warning_payment.value = null
+
+  if(total_total.value == 0){
+    warning_payment.value = 'El total de la venta debe de ser mayor a 0 para agregar un metodo de pago'
+
+    return
+  }
+
+  if(amount.value == 0){
+    warning_payment.value = 'El monto que desea agregar debe de ser mayor a 0'
+
+    return
+  }
+
+  if(!method_payment.value){
+    warning_payment.value = 'Debe de seleccionar un metodo de pago'
+
+    return
+  }
+
+  if((payment_total.value + Number(amount.value)) > total_total.value){
+    warning_payment.value = 'El total pagado no puede ser mayor al de la venta'
+
+    return
+  }
+
+  payments.value.unshift({
+    method_payment: method_payment.value,
+    amount: Number(amount.value),
+  })
+  paymentTotal()
+  cleanFieldPayment()
+}
+
+const paymentTotal = () => {
+  payment_total.value = payments.value.reduce((suma, payment) => suma + Number(payment.amount), 0)
+}
+
+const deletePayment = (index) => {
+  payments.value.splice(index, 1)
+  paymentTotal()
+}
+
+const cleanFildProduct = () => {
   price_unit.value = 0
   unit_id.value = null
   quantity.value = 0
   is_gift.value = 1
   discount.value = 0
 }
+
+const cleanFieldPayment = () => {
+  method_payment.value = null
+  amount.value = 0
+}
+
+const store = async () => {
+  try{
+    warning_sale.value = null
+    if(sale_details.value.length == 0){
+      warning_sale.value = "Es necesario agregar un producto al detalle"
+
+      return
+    }
+
+    if(!warehouse_id.value){
+      warning_sale.value = "Es necesario seleccionar un almacen para la venta"
+
+      return
+    }
+
+    if(!client_selected.value){
+      warning_sale.value = "Es necesario seleccionar un cliente"
+
+      return
+    }
+
+    if(selectedRadio.value == 1 && payments.value.length == 0){
+      warning_sale.value = "Es necesario dar un adelanto para la venta"
+
+      return
+    }
+
+    let state_mayment = 1 // pago pendiente
+
+    if(selectedRadio.value == 1){
+      if(payment_total.value != total_total.value){
+        state_mayment = 2 // Se establece el estado de pago como "parcial" o "deuda"
+      }
+
+      if(payment_total.value == total_total.value){
+        state_mayment = 3 // pago total de la venta
+      }
+    }
+
+    let data = {
+      client_id: client_selected.value.id,
+      type_client: client_selected.value.type_client,
+      subtotal: subtotal_total.value + discount_total.value,
+      total: total_total.value,
+      iva: iva_total.value,
+      state: selectedRadio.value,
+      state_mayment: state_mayment,
+      debt: total_total.value - payment_total.value,
+      paid_out: payment_total.value,
+      description: description.value,
+      sale_details: sale_details.value,
+      payments: payments.value,
+    }
+
+    const resp = await $api('sales', {
+      method: 'POST',
+      body: data,
+      onResponseError({ response }) {
+        warning_sale.value = response._data.error
+      },
+    })
+
+    console.log(resp)
+
+  }catch (error){
+    console.log(error)
+  }
+}
+
+watch(selectedRadio, value => {
+  if(value == 2){
+    payments.value = []
+    payment_total.value = 0
+    cleanFieldPayment()
+  }
+})
 
 watch(search, query => {
 
@@ -247,7 +442,7 @@ watch(select_product, value => {
         name: wh.unit,
       }
     })
-    clearCam()
+    cleanFildProduct()
 
   }
 })
@@ -262,7 +457,7 @@ watch(warehouse_id, value => {
       }
     })
 
-    clearCam()
+    cleanFildProduct()
   }
 
 })
@@ -275,7 +470,7 @@ watch(unit_id, value => {
   if(is_gift.value == 2){
     price_unit.value = 0
     discount.value = 0
-    
+
     return
   }
 
@@ -307,11 +502,10 @@ watch(is_gift, value => {
     discount.value = 0
   } else {
     if(select_product.value){
-
       let UNIT = unit_id.value
-      unit_id.vaue = null
+      unit_id.value = null
       setTimeout(() => {
-        unit_id.vaue = UNIT
+        unit_id.value = UNIT
       }, 25)
 
     }
@@ -545,7 +739,7 @@ watch(is_gift, value => {
                     $ {{ item.total }}
                   </td>
                   <td>
-                    <IconBtn size="small">
+                    <IconBtn size="small" @click="deleteDetail(index)">
                       <VIcon icon="ri-delete-bin-line" />
                     </IconBtn>
                   </td>
@@ -559,19 +753,19 @@ watch(is_gift, value => {
             <table style="width: 100%">
               <tr>
                 <td>Impuesto</td>
-                <td>$150.000</td>
+                <td>$ {{ iva_total }}</td>
               </tr>
               <tr>
                 <td>Descuento</td>
-                <td>$150.000</td>
+                <td>$ {{ discount_total }}</td>
               </tr>
               <tr>
                 <td>Subtotal</td>
-                <td>$150.000</td>
+                <td>$ {{ subtotal_total }}</td>
               </tr>
               <tr>
                 <td>Total</td>
-                <td>$150.000</td>
+                <td>$ {{ total_total }}</td>
               </tr>
             </table>
           </VCol>
@@ -583,7 +777,7 @@ watch(is_gift, value => {
     <VCard class="mb-6">
       <VCardText>
         <VRow>
-          <VCol cols="8">
+          <VCol cols="8" v-if="selectedRadio == 1">
             <VRow>
               <VCol cols="4">
                 <VSelect
@@ -607,10 +801,15 @@ watch(is_gift, value => {
                 />
               </VCol>
               <VCol cols="4">
-                <VBtn color="primary">
+                <VBtn color="primary" @click="addPayment">
                   <VIcon icon="ri-add-circle-line" />
                 </VBtn>
               </VCol>
+              <VCol cols="12" v-if="warning_payment">
+                <VAlert border="start" border-color="warning">
+                  {{ warning_payment }}
+                </VAlert>
+              </VCol>              
             </VRow>
 
              <VRow>
@@ -631,6 +830,25 @@ watch(is_gift, value => {
                   </thead>
 
                   <tbody>
+                    <tr v-for="(item, index) in payments" :key="index">
+                      <td>{{ item.method_payment }}</td>
+                      <td>$ {{ item.amount }}</td>
+                      <td>
+                        <IconBtn size="small" @click="deletePayment(index)">
+                          <VIcon icon="ri-delete-bin-line" />
+                        </IconBtn>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>Total</td>
+                      <td>$ {{ payment_total }}</td>
+                      <td></td>
+                    </tr>
+                    <tr>
+                      <td>Deuda</td>
+                      <td>$ {{ (total_total - payment_total).toFixed(2) }}</td>
+                      <td></td>
+                    </tr>
                   </tbody>
                 </VTable>
               </VCol>
@@ -640,7 +858,18 @@ watch(is_gift, value => {
             <VTextarea
               label="Descripción"
               placeholder=""
+              v-model="description"
             />
+          </VCol>
+          <VCol cols="12" v-if="warning_sale">
+            <VAlert border="start" border-color="warning">
+              {{ warning_sale }}
+            </VAlert>
+          </VCol>
+          <VCol cols="12">
+            <VBtn block @click="store" class="mt-3">
+              Crear
+            </VBtn>
           </VCol>
         </VRow>
       </VCardText>
