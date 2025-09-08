@@ -24,6 +24,7 @@ class SaleRequest extends FormRequest
         return [
             'client_id' => 'nullable',
             'type_client' => 'nullable',
+            'discount' => 'nullable',
             'subtotal' => 'nullable',
             'total' => 'nullable',
             'iva' => 'nullable',

@@ -24,7 +24,9 @@ class Sale extends Model
         'paid_out',
         'date_validation',
         'date_completed',
-        'description'
+        'description',
+        'discount',
+        'state_delivery'
     ];
 
     public function setCreatedAtAttribute($value)

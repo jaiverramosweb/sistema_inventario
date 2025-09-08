@@ -226,6 +226,7 @@ const addProduct = () => {
   sale_details.value.push({
     product: select_product.value,
     unit_id: unit_id.value,
+    warehouse_id: warehouse_id.value,
     unit: unit_selected.name,
     price_unit: price_unit.value,
     quantity: quantity.value,
@@ -374,6 +375,7 @@ const store = async () => {
     let data = {
       client_id: client_selected.value.id,
       type_client: client_selected.value.type_client,
+      discount: discount_total.value,
       subtotal: subtotal_total.value + discount_total.value,
       total: total_total.value,
       iva: iva_total.value,

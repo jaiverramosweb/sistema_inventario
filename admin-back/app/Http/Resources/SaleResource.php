@@ -24,6 +24,7 @@ class SaleResource extends JsonResource
             'sucursal_id'       => $this->sucursal_id,
             'sucursale'         => $this->sucursale->name,
             'subtotal'          => $this->subtotal,
+            'discount'          => $this->discount,
             'total'             => $this->total,
             'iva'               => $this->iva,
             'state'             => $this->state,

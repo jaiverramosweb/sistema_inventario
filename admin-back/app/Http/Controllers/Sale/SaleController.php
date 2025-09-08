@@ -6,10 +6,15 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\SaleRequest;
 use App\Http\Resources\SaleResource;
 use App\Models\Client;
+use App\Models\ProductWarehouse;
 use App\Models\Sale;
+use App\Models\SaleDetail;
+use App\Models\SaleDetailAttention;
+use App\Models\SalePayment;
 use App\Models\Warehouse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class SaleController extends Controller
 {
@@ -80,8 +85,111 @@ class SaleController extends Controller
      */
     public function store(SaleRequest $request)
     {
-        Sale::create($request->validated());
+        $sale_details = $request->sale_details;
+        $payments = $request->payments;
 
+        try {
+            DB::transaction();
+
+            $validatedData = $request->validated();
+            $validatedData['user_id'] = auth('api')->user()->id;
+            $validatedData['sucursal_id'] = auth('api')->user()->sucuarsal_id;
+            $validatedData['date_validation'] = $request->state == 1 ? now() : null;
+            $validatedData['date_completed'] = $request->state_mayment == 3 ? now() : null;
+
+            $sale = Sale::create($validatedData);
+
+            $state_delivery = 1;
+            $counter_complte = 0;
+
+            foreach ($sale_details as $value) {
+
+                $wharehouse_product = ProductWarehouse::where('product_id', $value['product']['id'])
+                    ->where('warehouse_id', $value['warehouse_id'])
+                    ->where('unit_id', $value['unit_id'])
+                    ->first();
+
+                $state_attention = 1; // estado en pendiente
+                $quantity = 0;
+                $quantity_pending = $value['quantity'];
+
+                if($wharehouse_product && $wharehouse_product->stock >= $value['quantity']){ // Entrega completa
+                    $state_attention = 3; // estado de atencion completo
+                    $quantity = $value['quantity'];
+
+                    $wharehouse_product->update([
+                        'stock' => $wharehouse_product->stock - $value['quantity']
+                    ]);
+
+                    $quantity_pending =0 ;
+                    $counter_complte++;
+
+                } else {
+                    if($wharehouse_product && $wharehouse_product->stock > 0 && $wharehouse_product->stock < $value['quantity']){
+                        $state_attention = 2; // estado de atencion incompleto
+                        $quantity = $wharehouse_product->stock;
+                    
+                        $quantity_pending = $value['quantity'] - $wharehouse_product->stock;
+
+                        $wharehouse_product->update([
+                            'stock' => 0
+                        ]);
+
+                        $state_delivery = 2; // estado de entrega parcial
+                    }
+                }
+                
+                $detail = SaleDetail::create([
+                    'sale_id' => $sale->id,
+                    'product_id' => $value['product']['id'],
+                    'product_categoryid' => $value['product']['category_id'],
+                    'unit_id' => $value['unit_id'],
+                    'warehouse_id' => $value['warehouse_id'],
+                    'quantity' => $value['quantity'],
+                    'quantity_pending' => $quantity_pending,
+                    'price_unit' => $value['price_unit'],
+                    'discount' => $value['discount'],
+                    'iva' => $value['iva'],
+                    'subtotal' => $value['subtotal'],
+                    'total' => $value['total'],
+                    'state_attention' => $state_attention,
+                ]);
+
+                if($quantity > 0){
+                    SaleDetailAttention::create([
+                        'sale_detail_id' => $detail->id,
+                        'product_id' => $value['product']['id'],
+                        'warehouse_id' => $value['warehouse_id'],
+                        'unit_id' => $value['unit_id'],
+                        'quantity' => $quantity,
+                    ]);
+                }
+
+
+            }
+
+            if($counter_complte == count($sale_details)){
+                $state_delivery = 3; // estado de entrega completo
+            }
+
+            foreach ($payments as $value) {
+                SalePayment::create([
+                    'sale_id' => $sale->id,
+                    'payment_method' => $value['method_payment'],
+                    'amount' => $value['amount'],
+                ]);
+            }
+
+            $sale->update([
+                'state_delivery' => $state_delivery
+            ]);
+
+            DB::commit();
+        } catch (\Throwable $th) {
+            DB::rollBack();
+            throw new HttpException(500, $th->getMessage());
+        }
+        
         return response()->json([
             'status' => 201
         ]);
