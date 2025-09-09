@@ -29,7 +29,7 @@ class SaleController extends Controller
         $sale_resource = SaleResource::collection($sales);
 
         return response()->json([
-            'sales' => $sale_resource
+            'data' => $sale_resource
         ]);
     }
 

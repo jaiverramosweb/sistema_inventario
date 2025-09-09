@@ -34,7 +34,8 @@ class SaleResource extends JsonResource
             'date_validation'   => $this->date_validation,
             'date_completed'    => $this->date_completed,
             'description'       => $this->description,
-            'created_at'        => $this->created_at->format("Y-m-d"),
+            'state_delivery'    => $this->state_delivery,
+            'created_at'        => $this->created_at->format("Y-m-d h:i A"),
         ];
     }
 }

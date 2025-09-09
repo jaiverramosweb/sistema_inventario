@@ -91,7 +91,7 @@ export default [
       },
       {
         title: 'Listado',
-        to: 'second-page',
+        to: 'sales-list',
         permission: 'list_sale',
         icon: { icon: 'ri-radio-button-line' },
       },
