@@ -40,6 +40,8 @@ const warning_client_product = ref(null)
 const warning_payment = ref(null)
 const warning_sale = ref(null)
 
+const success_sale = ref(null)
+
 const radioContent = [
   {
     title: 'Venta',
@@ -208,7 +210,7 @@ const addProduct = () => {
 
   }
 
-  if(select_product.value.available == 2){
+  if(selectedRadio.value == 1 && select_product.value.available == 2){
     let warehouse_product = select_product.value.warehouses
     let warehouse_selected = warehouse_product.find(warehouse => warehouse.warehouse_id == warehouse_id.value && warehouse.unit_id == unit_id.value)
 
@@ -245,7 +247,7 @@ const addProduct = () => {
 
 const reportDetails = () => {
   // Suma total de impuesto
-  iva_total.value = sale_details.value.reduce((suma, details) => suma + (Number(price_unit) * details.quantity), 0)
+  iva_total.value = sale_details.value.reduce((suma, details) => suma + (Number(details.iva) * details.quantity), 0)
 
   // Suma total de descuento
   discount_total.value = sale_details.value.reduce((suma, details) => suma + (Number(details.discount) * details.quantity), 0)
@@ -336,6 +338,8 @@ const cleanFieldPayment = () => {
 const store = async () => {
   try{
     warning_sale.value = null
+    success_sale.value = null
+
     if(sale_details.value.length == 0){
       warning_sale.value = "Es necesario agregar un producto al detalle"
 
@@ -396,11 +400,31 @@ const store = async () => {
       },
     })
 
-    console.log(resp)
+    if(resp.status == 201){
+      success_sale.value = `la ${selectedRadio == 1 ? 'Venta' : 'Cotización'} se registro con exito`
+      cleanFieldForm()
+    }
 
   }catch (error){
     console.log(error)
   }
+}
+
+const cleanFieldForm = () => {
+  payments.value = []
+  sale_details.value = []
+  payment_total.value = 0
+  description.value = null
+  warehouse_id.value = null
+  client_selected.value = null
+  search_client.value = null
+  total_total.value = 0
+  subtotal_total.value = 0
+  discount_total.value = 0
+  iva_total.value = 0
+
+  cleanFieldPayment()
+  cleanFildProduct()
 }
 
 watch(selectedRadio, value => {
@@ -866,6 +890,11 @@ watch(is_gift, value => {
           <VCol cols="12" v-if="warning_sale">
             <VAlert border="start" border-color="warning">
               {{ warning_sale }}
+            </VAlert>
+          </VCol>
+          <VCol cols="12" v-if="success_sale">
+            <VAlert border="start" border-color="success">
+              {{ success_sale }}
             </VAlert>
           </VCol>
           <VCol cols="12">

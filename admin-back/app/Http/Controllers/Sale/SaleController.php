@@ -89,15 +89,24 @@ class SaleController extends Controller
         $payments = $request->payments;
 
         try {
-            DB::transaction();
+            DB::beginTransaction();
 
-            $validatedData = $request->validated();
-            $validatedData['user_id'] = auth('api')->user()->id;
-            $validatedData['sucursal_id'] = auth('api')->user()->sucuarsal_id;
-            $validatedData['date_validation'] = $request->state == 1 ? now() : null;
-            $validatedData['date_completed'] = $request->state_mayment == 3 ? now() : null;
-
-            $sale = Sale::create($validatedData);
+            $sale = Sale::create([
+                'user_id' => auth('api')->user()->id,
+                'sucursal_id' => auth('api')->user()->sucuarsal_id,
+                'client_id' => $request->client_id,
+                'type_client' => $request->type_client,
+                'subtotal' => $request->subtotal,
+                'total' => $request->total,
+                'iva' => $request->iva,
+                'state' => $request->state,
+                'state_mayment' => $request->state_mayment,
+                'debt' => $request->debt,
+                'paid_out' => $request->paid_out,
+                'date_validation' =>  $request->state == 1 ? now() : null,
+                'date_completed' => $request->state_mayment == 3 ? now() : null,
+                'description' => $request->description
+            ]);
 
             $state_delivery = 1;
             $counter_complte = 0;
