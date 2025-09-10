@@ -27,7 +27,15 @@ const totalPage = ref(0)
 const list = async () => {
   try {
     let dataSearch = {
-      search: search.value
+      search: search.value,
+      type_client: type_client.value,
+      search_client: search_client.value,
+      start_date: range_date.value ? range_date.value.split("to")[0] : "",
+      end_date: range_date.value ? range_date.value.split("to")[1] : "",
+      type: type.value,
+      state_delivery: state_delivery.value,
+      state_payment: state_payment.value,
+      search_product: search_product.value
     }
 
     const resp = await $api(`sales/index?page=${currentPage.value}`, {
@@ -49,6 +57,13 @@ const list = async () => {
 const reset = () => {
   search.value = ''
   currentPage.value = 1
+  type_client.value = null
+  search_client.value = null
+  range_date.value = null
+  type.value = null
+  state_delivery.value = null
+  state_payment.value = null
+  search_product.value = null
 
   list()
 }
@@ -88,7 +103,36 @@ const downloadExcel = () => {
     QUERY_PARAMS += "&search=" + search.value
   }
 
-  window.open(import.meta.env.VITE_API_BASE_URL + 'products-excel?z=1' + QUERY_PARAMS, '_blank')
+  if(type_client.value){
+    QUERY_PARAMS += "&type_client=" + type_client.value
+  }
+
+  if(search_client.value){
+    QUERY_PARAMS += "&search_client=" + search_client.value
+  }
+
+  if(range_date.value){
+    QUERY_PARAMS += "&start_date=" + range_date.value.split("to")[0]
+    QUERY_PARAMS += "&end_date=" + range_date.value.split("to")[1]
+  }
+
+  if(type.value){
+    QUERY_PARAMS += "&type=" + type.value
+  }
+
+  if(state_delivery.value){
+    QUERY_PARAMS += "&state_delivery=" + state_delivery.value
+  }
+
+  if(state_payment.value){
+    QUERY_PARAMS += "&state_payment=" + state_payment.value
+  }
+
+  if(search_product.value){
+    QUERY_PARAMS += "&search_product=" + search_product.value
+  }
+
+  window.open(import.meta.env.VITE_API_BASE_URL + 'sales-excel?z=1' + QUERY_PARAMS, '_blank')
 }
 
 watch(currentPage, (page) => {

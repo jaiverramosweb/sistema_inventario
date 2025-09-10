@@ -36,6 +36,42 @@ class SaleResource extends JsonResource
             'description'       => $this->description,
             'state_delivery'    => $this->state_delivery,
             'created_at'        => $this->created_at->format("Y-m-d h:i A"),
+            'sale_details'      => $this->saleDetails->map(function ($detail) {
+                return [
+                    'id'                => $detail->id,
+                    'product_id'        => $detail->product_id,
+                    'product'           => [
+                        'id'            => $detail->product->id,
+                        'title'         => $detail->product->title,
+                        'sku'           => $detail->product->sku,
+                    ],
+                    'unit_id'           => $detail->unit_id,
+                    'unit'              => $detail->unit->name,
+                    'warehouse_id'      => $detail->warehouse_id,
+                    'warehouse'         => $detail->warehouse->name,
+                    'product_categoryid' => $detail->product_categoryid,
+                    'product_category'  => $detail->productCategory->title,
+                    'quantity'          => $detail->quantity,
+                    'price_unit'        => $detail->price_unit,
+                    'discount'          => $detail->discount,
+                    'iva'               => $detail->iva,
+                    'subtotal'          => $detail->subtotal,
+                    'total'             => $detail->total,
+                    'state_attention'   => $detail->state_attention,
+                    'description'       => $detail->description,
+                    'quantity_pending'  => $detail->quantity_pending,
+                    'state_attention'   => $detail->state_attention,
+                ];  
+            }),
+            'payments'          => $this->payments->map(function ($payment) {
+                return [
+                    'id'                => $payment->id,
+                    'payment_method'    => $payment->payment_method,
+                    'n_trasaction'      => $payment->n_trasaction,
+                    'banco'             => $payment->banco,
+                    'amount'            => $payment->amount
+                ];
+            })
         ];
     }
 }

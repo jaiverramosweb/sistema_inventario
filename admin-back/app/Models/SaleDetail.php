@@ -23,7 +23,9 @@ class SaleDetail extends Model
         'subtotal',
         'total',
         'state_attention',
-        'description'
+        'description',
+        'quantity_pending',
+        'state_attention',
     ];
 
     public function setCreatedAtAttribute($value)

@@ -210,7 +210,7 @@ const addProduct = () => {
 
   }
 
-  if(selectedRadio.value == 1 && select_product.value.available == 2){
+  if(selectedRadio.value == '1' && select_product.value.available == 2){
     let warehouse_product = select_product.value.warehouses
     let warehouse_selected = warehouse_product.find(warehouse => warehouse.warehouse_id == warehouse_id.value && warehouse.unit_id == unit_id.value)
 
@@ -358,7 +358,7 @@ const store = async () => {
       return
     }
 
-    if(selectedRadio.value == 1 && payments.value.length == 0){
+    if(selectedRadio.value == '1' && payments.value.length == 0){
       warning_sale.value = "Es necesario dar un adelanto para la venta"
 
       return
@@ -366,7 +366,7 @@ const store = async () => {
 
     let state_mayment = 1 // pago pendiente
 
-    if(selectedRadio.value == 1){
+    if(selectedRadio.value == '1'){
       if(payment_total.value != total_total.value){
         state_mayment = 2 // Se establece el estado de pago como "parcial" o "deuda"
       }
@@ -380,7 +380,7 @@ const store = async () => {
       client_id: client_selected.value.id,
       type_client: client_selected.value.type_client,
       discount: discount_total.value,
-      subtotal: subtotal_total.value + discount_total.value,
+      subtotal: subtotal_total.value,
       total: total_total.value,
       iva: iva_total.value,
       state: selectedRadio.value,
@@ -401,7 +401,7 @@ const store = async () => {
     })
 
     if(resp.status == 201){
-      success_sale.value = `la ${selectedRadio == 1 ? 'Venta' : 'Cotización'} se registro con exito`
+      success_sale.value = `la ${selectedRadio == '1' ? 'Venta' : 'Cotización'} se registro con exito`
       cleanFieldForm()
     }
 
@@ -803,7 +803,7 @@ watch(is_gift, value => {
     <VCard class="mb-6">
       <VCardText>
         <VRow>
-          <VCol cols="8" v-if="selectedRadio == 1">
+          <VCol cols="8" v-if="selectedRadio == '1'">
             <VRow>
               <VCol cols="4">
                 <VSelect

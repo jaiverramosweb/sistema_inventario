@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Sale;
 
+use App\Exports\Sale\SaleDownloadExcel;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\SaleRequest;
 use App\Http\Resources\SaleResource;
@@ -15,6 +16,7 @@ use App\Models\Warehouse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpKernel\Exception\HttpException;
+use Maatwebsite\Excel\Facades\Excel;
 
 class SaleController extends Controller
 {
@@ -23,13 +25,25 @@ class SaleController extends Controller
      */
     public function index(Request $request)
     {
-        $sales = Sale::orderBy('id', 'desc')
-            ->get();
+        $search = $request->search;
+        $type_client = $request->type_client;
+        $search_client = $request->search_client;
+        $start_date = $request->start_date;
+        $end_date = $request->end_date;
+        $type = $request->type;
+        $state_delivery = $request->state_delivery;
+        $state_payment = $request->state_payment;
+        $search_product = $request->search_product;
+
+        $sales = Sale::filterAdvance($search, $type_client, $search_client, $start_date, $end_date, $type, $state_delivery, $state_payment, $search_product)
+            ->orderBy('id', 'desc')
+            ->paginate(25);
 
         $sale_resource = SaleResource::collection($sales);
 
         return response()->json([
-            'data' => $sale_resource
+            'data' => $sale_resource,
+            "last_page" => $sale_resource->lastPage()
         ]);
     }
 
@@ -96,6 +110,7 @@ class SaleController extends Controller
                 'sucursal_id' => auth('api')->user()->sucuarsal_id,
                 'client_id' => $request->client_id,
                 'type_client' => $request->type_client,
+                'discount' => $request->discount,
                 'subtotal' => $request->subtotal,
                 'total' => $request->total,
                 'iva' => $request->iva,
@@ -241,5 +256,24 @@ class SaleController extends Controller
         return response()->json([
             'status' => 200
         ]);
+    }
+
+    public function download_excel(Request $request)
+    {
+        $search = $request->get('search');
+        $type_client = $request->get('type_client');
+        $search_client = $request->get('search_client');
+        $start_date = $request->get('start_date');
+        $end_date = $request->get('end_date');
+        $type = $request->get('type');
+        $state_delivery = $request->get('state_delivery');
+        $state_payment = $request->get('state_payment');
+        $search_product = $request->get('search_product');
+
+        $sales = Sale::filterAdvance($search, $type_client, $search_client, $start_date, $end_date, $type, $state_delivery, $state_payment, $search_product)
+            ->orderBy('id', 'desc')
+            ->get();
+
+        return Excel::download(new SaleDownloadExcel($sales), date('Y-m-d') . '_lista_ventas.xlsx');
     }
 }
