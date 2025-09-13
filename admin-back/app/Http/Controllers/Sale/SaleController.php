@@ -103,6 +103,8 @@ class SaleController extends Controller
         $payments = $request->payments;
 
         try {
+            date_default_timezone_set('America/Bogota');
+
             DB::beginTransaction();
 
             $sale = Sale::create([
@@ -215,7 +217,8 @@ class SaleController extends Controller
         }
         
         return response()->json([
-            'status' => 201
+            'status' => 201,
+            'sale' => new SaleResource($sale)
         ]);
     }
 

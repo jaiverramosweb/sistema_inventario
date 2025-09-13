@@ -70,7 +70,6 @@ const reset = () => {
 
 
 const editItem = (item) => {
-  console.log(item)
   router.push({
     name: 'sales-edit-id',
     params: { id: item.id },
@@ -331,7 +330,7 @@ watch(currentPage, (page) => {
               {{ item.id }}
             </td>
             <td>
-              {{ item.client }}
+              {{ item.client.name }}
             </td>
             <td>
               {{ item.type_client == 1 ? 'Cliente' : 'Cliente Empresa' }}

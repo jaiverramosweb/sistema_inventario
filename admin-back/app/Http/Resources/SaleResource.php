@@ -19,7 +19,13 @@ class SaleResource extends JsonResource
             'user_id'           => $this->user_id,
             'user'              => $this->user->name,
             'client_id'         => $this->client_id,
-            'client'            => $this->client->name,
+            'client'            => [
+                'id'            => $this->client->id,
+                'name'          => $this->client->name,
+                'type_client'   => $this->client->type_client,
+                'n_document'    => $this->client->n_document,
+                'type_document' => $this->client->type_document
+            ],
             'type_client'       => $this->type_client,
             'sucursal_id'       => $this->sucursal_id,
             'sucursale'         => $this->sucursale->name,
@@ -36,6 +42,7 @@ class SaleResource extends JsonResource
             'description'       => $this->description,
             'state_delivery'    => $this->state_delivery,
             'created_at'        => $this->created_at->format("Y-m-d h:i A"),
+            'created_at_format' => $this->created_at->format("Y-m-d"),
             'sale_details'      => $this->saleDetails->map(function ($detail) {
                 return [
                     'id'                => $detail->id,
@@ -44,6 +51,37 @@ class SaleResource extends JsonResource
                         'id'            => $detail->product->id,
                         'title'         => $detail->product->title,
                         'sku'           => $detail->product->sku,
+                        'tax_selected'  => $detail->product->tax_selected,
+                        'importe_iva'   => $detail->product->importe_iva,
+                        'warehouses'    => $detail->product->warehouses->map(function ($warehouse){
+                            return [
+                                'id'            => $warehouse->id,
+                                'warehouse_id'  => $warehouse->warehouse_id,
+                                'unit_id'       => $warehouse->unit_id,
+                                'stock'         => $warehouse->stock,
+                                'umbral'        => $warehouse->umbral,
+                                'warehouse'     => $warehouse->warehouse->name,
+                                'unit'          => $warehouse->unit->name,
+                            ];
+                        }),
+                        "wallets"       => $detail->product->wallets->map(function ($wallet){
+                            return [
+                                'id'                => $wallet->id,
+                                'type_client'       => $wallet->type_client,
+                                'type_client_name'  => $wallet->type_client == 1 ? 'Cliente final' : 'Cliente empresa',
+                                'unit_id'           => $wallet->unit_id,
+                                'sucursal_id'       => $wallet->sucursal_id,
+                                'price'             => $wallet->price,
+                                'sucursal'          => $wallet->sucursal ? $wallet->sucursal->name : null,
+                                'unit'              => $wallet->unit->name,
+                            ];
+                        }),
+                        'price_general' => $detail->product->price_general,
+                        'price_company' => $detail->product->price_company,
+                        'is_discount'   => $detail->product->is_discount,
+                        'max_descount'  => $detail->product->max_descount,
+                        'available'     => $detail->product->available,
+                        'is_gift'       => $detail->product->is_gift,
                     ],
                     'unit_id'           => $detail->unit_id,
                     'unit'              => $detail->unit->name,
@@ -60,13 +98,12 @@ class SaleResource extends JsonResource
                     'state_attention'   => $detail->state_attention,
                     'description'       => $detail->description,
                     'quantity_pending'  => $detail->quantity_pending,
-                    'state_attention'   => $detail->state_attention,
                 ];  
             }),
             'payments'          => $this->payments->map(function ($payment) {
                 return [
                     'id'                => $payment->id,
-                    'payment_method'    => $payment->payment_method,
+                    'method_payment'    => $payment->payment_method,
                     'n_trasaction'      => $payment->n_trasaction,
                     'banco'             => $payment->banco,
                     'amount'            => $payment->amount

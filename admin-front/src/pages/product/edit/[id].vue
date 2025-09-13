@@ -1,4 +1,6 @@
 <script setup>
+definePage({ meta: { permission: 'edit_product' } })
+
 import {
   useDropZone,
   useFileDialog,
@@ -426,8 +428,6 @@ const update = async () => {
     console.error(error)
   }
 }
-
-definePage({ meta: { permission: 'edit_product' } })
 </script>
 
 <template>
