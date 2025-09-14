@@ -22,7 +22,7 @@ const emit = defineEmits(["update:isDialogVisible", "editSaleDetail"]);
 
 onMounted(() => {
 
-  console.log(props.saleDetailSelected)
+  // console.log(props.saleDetailSelected)
 
   units.value = props.saleDetailSelected.product.warehouses
     .filter((warehouse) => warehouse.warehouse_id == props.saleDetailSelected.warehouse_id)
@@ -118,7 +118,7 @@ const update = async () => {
   if (props.saleDetailSelected.product.tax_selected == 1) {
     iva = Number(price_unit.value) * (props.saleDetailSelected.product.importe_iva * 0.01);
   }
-  
+
   let data = {
     unit_id: unit_id.value,
     price_unit: price_unit.value ?? 0,
@@ -228,6 +228,7 @@ const dialogVisibleUpdate = (val) => {
                 item-title="name"
                 item-value="id"
                 v-model="unit_id"
+                :disabled="props.saleDetailSelected.state_attention != 1 ? true : false"
                 @update:modalValue="selectedUnit"
               />
             </VCol>

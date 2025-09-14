@@ -71,11 +71,11 @@ class SaleDetailController extends Controller
         return response()->json([
             'status' => 200,
             'data' => new SaleDetailsResource($details),
-            'discount' => $discount,
-            'iva' => $iva,
-            'subtotal' => $subtotal,
-            'total' => $total,
-            'debt' => $debt,
+            'discount' => round($discount, 2),
+            'iva' => round($iva, 2),
+            'subtotal' => round($subtotal, 2),
+            'total' => round($total, 2),
+            'debt' => round($debt, 2),
         ]);
     }
 
@@ -90,11 +90,11 @@ class SaleDetailController extends Controller
         $details = SaleDetail::findOrFail($id);
         $sale = $details->sale;
 
-        $paid_out = (float)$$sale->paid_out;
+        $paid_out = (float)$sale->paid_out;
         $discount_old = (float)$details->discount * $details->quantity;
-        $iva_old = (float)$$details->iva * $details->quantity;
-        $subtotal_old = (float)$$details->subtotal;
-        $total_old = (float)$$details->total;
+        $iva_old = (float)$details->iva * $details->quantity;
+        $subtotal_old = (float)$details->subtotal;
+        $total_old = (float)$details->total;
 
         $subtotal_detail = ((float)$request->price_unit - (float)$request->discount) + (float)$request->iva;
         $total_detail = $subtotal_detail * (int)$request->quantity;
@@ -106,7 +106,7 @@ class SaleDetailController extends Controller
             ]);
         }
 
-        if((((float)$$sale->total - (float)$$details->total) + (float)$$total_detail) < $paid_out){
+        if((((float)$sale->total - (float)$details->total) + (float)$total_detail) < $paid_out){
             return response()->json([
                 'status' => 403,
                 'message' => 'No se puede editar este producto por que el monto sera menos que el cancelado',
@@ -159,9 +159,9 @@ class SaleDetailController extends Controller
             ->where('state_attention', 3)
             ->count();
 
-        if($sale->saleDetail->count == $detail_attention_count){
+        if ($sale->saleDetails()->count() == $detail_attention_count) {
             $state_delivery = 3;
-        } else if($detail_attention_count > 0) {
+        } elseif ($detail_attention_count > 0) {
             $state_delivery = 2;
         }
 
@@ -179,11 +179,11 @@ class SaleDetailController extends Controller
         return response()->json([
             'status' => 200,
             'data' => new SaleDetailsResource($details),
-            'discount' => $sale->discount,
-            'iva' => $sale->iva,
-            'subtotal' => $sale->subtotal,
-            'total' => $sale->total,
-            'debt' => $sale->debt,
+            'discount' => round($sale->discount, 2),
+            'iva' => round($sale->iva, 2),
+            'subtotal' => round($sale->subtotal, 2),
+            'total' => round($sale->total, 2),
+            'debt' => round($sale->debt, 2),
         ]);
     }
 
@@ -250,11 +250,12 @@ class SaleDetailController extends Controller
 
         return response()->json([
             'status' => 200,
-            'discount' => $sale->discount,
-            'iva' => $sale->iva,
-            'subtotal' => $sale->subtotal,
-            'total' => $sale->total,
-            'debt' => $sale->debt,
+            'id' => $id,
+            'discount' => round($sale->discount, 2),
+            'iva' => round($sale->iva, 2),
+            'subtotal' => round($sale->subtotal, 2),
+            'total' => round($sale->total, 2),
+            'debt' => round($sale->debt, 2),
         ]);
     }
 }

@@ -41,6 +41,8 @@ const total_total = ref(0);
 const sale_selected = ref(null);
 
 const selected_detail_edit = ref(null)
+const selected_detail_delete = ref(null)
+
 
 const warning_client = ref(null);
 const warning_warehouse = ref(null);
@@ -281,7 +283,6 @@ const addProduct = async () => {
     sale_details.value.push(resp.data);
 
     setTimeout(() => {
-      // reportDetails()
       iva_total.value = resp.iva;
       discount_total.value = resp.discount;
       subtotal_total.value = resp.subtotal;
@@ -319,7 +320,7 @@ const reportDetails = () => {
   );
 };
 
-const deleteDetail = (index) => {
+const deleteDetail = (item, index) => {
   let total_delete = sale_details.value[index].total;
 
   if (total_total.value - total_delete < payment_total.value) {
@@ -329,7 +330,10 @@ const deleteDetail = (index) => {
     }, 25);
 
     return;
-  }
+  } 
+
+  isShowDialogDeleteDetail.value = true;
+  selected_detail_delete.value = item;
 
   sale_details.value.splice(index, 1);
 
@@ -337,6 +341,19 @@ const deleteDetail = (index) => {
     reportDetails();
   }, 25);
 };
+
+const saleDetailDelete = (item) => {
+  total_total.value = item.total
+  iva_total.value = item.iva
+  subtotal_total.value = item.subtotal
+  discount_total.value = item.discount
+
+  let index = sale_details.value.findIndex((detail) => detail.id == item.id)
+
+  if(index != -1){
+    sale_details.value.splice(index, 1)
+  }
+}
 
 const addPayment = () => {
   warning_payment.value = null;
@@ -525,6 +542,19 @@ const show = async () => {
     console.log(error);
   }
 };
+
+const saleDetailUpdate = (item) => {
+  total_total.value = item.total
+  iva_total.value = item.iva
+  subtotal_total.value = item.subtotal
+  discount_total.value = item.discount
+
+  let index = sale_details.value.findIndex((detail) => detail.id == item.data.id)
+
+  if(index != -1){
+    sale_details.value[index] = item.data
+  }
+}
 
 watch(selectedRadio, (value) => {
   if (value == 2) {
@@ -872,7 +902,7 @@ watch(is_gift, (value) => {
                       <IconBtn size="small" @click="editItem(item)">
                         <VIcon icon="ri-pencil-line" />
                       </IconBtn>
-                      <IconBtn size="small" @click="deleteDetail(index)">
+                      <IconBtn size="small" @click="deleteDetail(item, index)" v-if="item.state_attention == 1" >
                         <VIcon icon="ri-delete-bin-line" />
                       </IconBtn>
                     </div>
@@ -1023,7 +1053,13 @@ watch(is_gift, (value) => {
       :saleDetailSelected="selected_detail_edit"
       :type_client="client_selected.type_client"
       :typeSale="selectedRadio"
+      @editSaleDetail="saleDetailUpdate"
     />
-    <!-- <DeleteDetailDialog v-model:isDialogVisible="isShowDialogDeleteDetail" /> -->
+    <DeleteDetailDialog 
+      v-if="selected_detail_delete && isShowDialogDeleteDetail" 
+      v-model:isDialogVisible="isShowDialogDeleteDetail"
+      :detailSelected="selected_detail_delete"
+      @deleteDetail="saleDetailDelete"
+    />
   </div>
 </template>
