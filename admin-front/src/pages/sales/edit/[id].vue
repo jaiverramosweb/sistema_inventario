@@ -26,11 +26,6 @@ const list_clients = ref([]);
 
 const client_selected = ref(null);
 
-const isShowDialog = ref(false);
-const isShowDialogClient = ref(false);
-const isShowDialogEditDetail = ref(false);
-const isShowDialogDeleteDetail = ref(false);
-
 const sale_details = ref([]);
 
 const iva_total = ref(0);
@@ -40,9 +35,18 @@ const total_total = ref(0);
 
 const sale_selected = ref(null);
 
+const isShowDialog = ref(false);
+const isShowDialogClient = ref(false);
+const isShowDialogEditDetail = ref(false);
+const isShowDialogDeleteDetail = ref(false);
+const isPaymentShowDialog = ref(false);
+const isPaymentDeleteDialog = ref(false);
+
+
 const selected_detail_edit = ref(null)
 const selected_detail_delete = ref(null)
-
+const selected_payment_edit = ref(null)
+const selected_payment_delete = ref(null)
 
 const warning_client = ref(null);
 const warning_warehouse = ref(null);
@@ -355,7 +359,7 @@ const saleDetailDelete = (item) => {
   }
 }
 
-const addPayment = () => {
+const addPayment = async () => {
   warning_payment.value = null;
 
   if (total_total.value == 0) {
@@ -383,12 +387,30 @@ const addPayment = () => {
     return;
   }
 
-  payments.value.unshift({
+  const data = {
+    sale_id: route.params.id,
     method_payment: method_payment.value,
     amount: Number(amount.value),
-  });
-  paymentTotal();
-  cleanFieldPayment();
+  }
+
+  try {
+    const resp = await $api(`sale-payments`, {
+      method: "POST",
+      body: data,
+      onResponseError({ response }) {
+        warning_sale.value = response._data.error;
+      },
+    });
+
+    payments.value.unshift(resp.payment);
+    payment_total.value = resp.payment_total
+    paymentTotal();
+    cleanFieldPayment();
+
+  } catch (error) {
+    console.log(error);
+  }
+
 };
 
 const paymentTotal = () => {
@@ -398,9 +420,40 @@ const paymentTotal = () => {
   );
 };
 
-const deletePayment = (index) => {
-  payments.value.splice(index, 1);
-  paymentTotal();
+const editPayment = (item) => {
+  selected_payment_edit.value = item
+  isPaymentShowDialog.value = true
+}
+
+const paymentUpdate = (item) => {
+  let payment_update = item.payment
+  payment_total.value = item.payment_total
+
+  let index = payments.value.findIndex((payment) => payment.id == payment_update.id)
+
+  if(index != -1){
+    payments.value[index] = payment_update
+  }
+}
+
+const deletePayment = (item) => {
+  isPaymentDeleteDialog.value = true
+  selected_payment_delete.value = item
+}
+
+const salePaymentDelete = (item) => {
+  payment_total.value = item.payment_total
+
+  let index = payments.value.findIndex((payment) => payment.id == item.payment.id)
+
+  if(index != -1){
+    payments.value.splice(index, 1)
+  }
+
+  isPaymentDeleteDialog.value = false
+}
+
+const paymentDelete = (item) => {
 };
 
 const cleanFildProduct = () => {
@@ -992,7 +1045,10 @@ watch(is_gift, (value) => {
                       <td>{{ item.method_payment }}</td>
                       <td>$ {{ item.amount }}</td>
                       <td>
-                        <IconBtn size="small" @click="deletePayment(index)">
+                        <IconBtn size="small" @click="editPayment(item)">
+                          <VIcon icon="ri-pencil-line" />
+                        </IconBtn>
+                        <IconBtn size="small" @click="deletePayment(item)">
                           <VIcon icon="ri-delete-bin-line" />
                         </IconBtn>
                       </td>
@@ -1060,6 +1116,21 @@ watch(is_gift, (value) => {
       v-model:isDialogVisible="isShowDialogDeleteDetail"
       :detailSelected="selected_detail_delete"
       @deleteDetail="saleDetailDelete"
+    />
+
+    <PaymentEditDialog 
+      v-if="selected_payment_edit && isPaymentShowDialog" 
+      v-model:isDialogVisible="isPaymentShowDialog"
+      :paymentSelected="selected_payment_edit"
+      :saleId="Number(route.params.id)"
+      @editPayment="paymentUpdate"
+    />
+
+    <PaymentDeleteDialog 
+      v-if="selected_payment_delete && isPaymentDeleteDialog"
+      v-model:isDialogVisible="isPaymentDeleteDialog"
+      :paymentSelected="selected_payment_delete"
+      @deletePayment="salePaymentDelete"
     />
   </div>
 </template>

@@ -1,35 +1,33 @@
-<script setup>
+editPayment<script setup>
 const props = defineProps({
   isDialogVisible: {
     type: Boolean,
     required: true,
   },
-  sucursales: {
+  paymentSelected: {
     type: Object,
     required: true,
   },
-  warehouseSelected: {
-    type: Object,
+  saleId: {
+    type: Number,
     required: true,
   },
 })
 
 onMounted(() => {
-  name.value = props.warehouseSelected.name
-  sucursal_id.value = props.warehouseSelected.sucursal_id
-  address.value = props.warehouseSelected.address
-  status.value = props.warehouseSelected.status
+  method_payment.value = props.paymentSelected.method_payment
+  amount.value = props.paymentSelected.amount
 })
 
-const emit = defineEmits(['update:isDialogVisible', 'editWarehouse'])
-const name = ref(null)
-const sucursal_id = ref(null)
-const status = ref(null)
-const address = ref(null)
+const emit = defineEmits(['update:isDialogVisible', 'editPayment'])
+
+const method_payment = ref(null)
+const amount = ref(0)
+
+
 const warning = ref(null)
 const error_exists = ref(null)
 const success = ref(null)
-
 
 
 const update = async () => {
@@ -37,33 +35,15 @@ const update = async () => {
   error_exists.value = null
   success.value = null
 
-  if (!name.value) {
-    warning.value = 'Se debe de agregar un nombre'
-
-    return
-  }
-
-  if (!sucursal_id.value) {
-    warning.value = 'Se debe de agregar una sucursal'
-
-    return
-  }
-
-  if (!address.value) {
-    warning.value = 'Se debe de agregar una dirección'
-
-    return
-  }
 
   let data = {
-    name: name.value,
-    sucursal_id: sucursal_id.value,
-    address: address.value,
-    status: status.value,
+    payment_method: method_payment.value,
+    amount: amount.value,
+    sale_id: props.saleId,
   }
 
   try {
-    const resp = await $api(`warehouses/${props.warehouseSelected.id}`, {
+    const resp = await $api(`sale-payments/${props.paymentSelected.id}`, {
       method: 'PUT',
       body: data,
       onResponseError({ response }) {
@@ -72,13 +52,13 @@ const update = async () => {
     })
 
     if (resp.status == 403) {
-      error_exists.value = 'Almacen ya existe'
+      error_exists.value = resp.message
     }
 
     if (resp.status == 200) {
       success.value = 'Editado con exito'
 
-      emit('editWarehouse', resp.warehouses)
+      emit('editPayment', resp)
       setTimeout(() => {
         emit('update:isDialogVisible', false)
       }, 1000)
@@ -106,7 +86,7 @@ const dialogVisibleUpdate = val => {
       <VCardText class="pt-5">
         <div class="text-center pb-6">
           <h4 class="text-h4 mb-2">
-            Editar almacen
+            Editar pago: {{ method_payment }}
           </h4>
 
         </div>
@@ -114,24 +94,23 @@ const dialogVisibleUpdate = val => {
         <!-- 👉 Form -->
         <VForm class="mt-4" @submit.prevent="update">
           <VRow>
-            <VCol cols="12">
-              <VTextField v-model="name" label="Nombre" placeholder="Ejemplo: Sucursal" />
-            </VCol>
 
-            <VCol cols="12">
-              <VTextarea v-model="address" label="Dirección" placeholder="Ejemplo: Carrera #14" />
-            </VCol>
-
-            <VCol cols="12">
-              <VSelect :items="props.sucursales" item-title="name" item-value="id" v-model="sucuarsal_id"
-                label="Sucursal" placeholder="Select Item" eager />
-            </VCol>
-
-            <VCol cols="12">
+            <VCol cols="6">
               <VSelect :items="[
-                'Activo',
-                'Inactivo'
-              ]" v-model="status" label="Estado" placeholder="Seleccione un estado" eager />
+                    'Efectivo',
+                    'Tarjeta de credito',
+                    'Tarjeta de debito',
+                    'Transferencia bancaria',
+                  ]" v-model="method_payment" label="Metodo de pago" eager />
+            </VCol>
+
+            <VCol cols="6">
+               <VTextField
+                  label="Monto"
+                  type="number"
+                  placeholder="10"
+                  v-model="amount"
+                />
             </VCol>
 
             <VAlert border="start" border-color="warning" v-if="warning">

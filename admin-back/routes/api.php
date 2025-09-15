@@ -16,6 +16,7 @@ use App\Http\Controllers\Product\ProductWarehouseController;
 use App\Http\Controllers\Roles\RoleController;
 use App\Http\Controllers\Sale\SaleController;
 use App\Http\Controllers\Sale\SaleDetailController;
+use App\Http\Controllers\Sale\SalePaimentController;
 use App\Http\Controllers\User\UserController;
 
 // Route::get('/user', function (Request $request) {
@@ -75,6 +76,7 @@ Route::group([
     Route::get('sales/search_client', [SaleController::class, 'searchClient']);
     Route::resource('sales', SaleController::class);
     Route::resource('sale-details', SaleDetailController::class);
+    Route::resource('sale-payments', SalePaimentController::class);
 });
 
 
