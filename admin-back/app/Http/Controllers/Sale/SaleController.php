@@ -18,6 +18,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Maatwebsite\Excel\Facades\Excel;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class SaleController extends Controller
 {
@@ -315,9 +316,13 @@ class SaleController extends Controller
      * Update the specified resource in storage.
      */
     public function update(SaleRequest $request, string $id)
-    {
+    {        
         $sale = Sale::findOrFail($id);
-        $sale->update($request->validated());
+        if($sale->state == 2 && $request->state == 1){
+            date_default_timezone_set('America/Bogota');
+            $request->request->add(['date_validation' => now()]);
+        }
+        $sale->update($request->all());
 
         return response()->json([
             'status' => 200
@@ -354,5 +359,13 @@ class SaleController extends Controller
             ->get();
 
         return Excel::download(new SaleDownloadExcel($sales), date('Y-m-d') . '_lista_ventas.xlsx');
+    }
+
+    public function sale_pdf($id)
+    {
+        $data = Sale::findOrFail($id);
+        $pdf = Pdf::loadView('sale.sale_pdf', compact('data'));
+        return $pdf->stream('venta_'.$id.'.pdf');
+        // return $pdf->download('venta_'.$id.'.pdf');
     }
 }

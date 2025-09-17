@@ -66,6 +66,11 @@ class Sale extends Model
         return $this->hasMany(SalePayment::class);
     }
 
+    public function getFirstPaymentAttribute()
+    {
+        return $this->payments->first();
+    }
+
     public function scopeFilterAdvance($query, $search, $type_client, $search_client, $start_date, $end_date, $type, $state_delivery, $state_payment, $search_product)
     {
         if($search){

@@ -83,3 +83,4 @@ Route::group([
 
 Route::get("products-excel",    [ProductController::class, 'download_excel']);
 Route::get("sales-excel",       [SaleController::class, 'download_excel']);
+Route::get("sales-pdf/{id}",    [SaleController::class, 'sale_pdf']);

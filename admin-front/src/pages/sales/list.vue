@@ -141,6 +141,10 @@ const downloadExcel = () => {
   window.open(import.meta.env.VITE_API_BASE_URL + 'sales-excel?z=1' + QUERY_PARAMS, '_blank')
 }
 
+const downloadPdf = (item) => {
+  window.open(import.meta.env.VITE_API_BASE_URL + 'sales-pdf/' + item.id, '_blank')
+}
+
 watch(currentPage, (page) => {
   list()
 })
@@ -393,6 +397,9 @@ watch(currentPage, (page) => {
             </td>
             <td>
               <div class="d-flex gap-1">
+                <IconBtn size="small" @click="downloadPdf(item)">
+                  <VIcon icon="ri-file-pdf-2-line" />
+                </IconBtn>
                 <IconBtn size="small" @click="showItem(item)">
                   <VIcon icon="ri-file-list-2-line" />
                 </IconBtn>
