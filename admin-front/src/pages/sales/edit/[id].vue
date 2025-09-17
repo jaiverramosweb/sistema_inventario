@@ -56,18 +56,7 @@ const warning_sale = ref(null);
 
 const success_sale = ref(null);
 
-const radioContent = [
-  {
-    title: "Venta",
-    value: "1",
-    icon: "ri-shopping-cart-line",
-  },
-  {
-    title: "Cotización",
-    value: "2",
-    icon: "ri-file-list-3-line",
-  },
-];
+const radioContent = ref([])
 
 const selectedRadio = ref("1");
 
@@ -539,6 +528,7 @@ const update = async () => {
         selectedRadio == "1" ? "Venta" : "Cotización"
       } se edito con exito`;
       // cleanFieldForm()
+      show()
     }
   } catch (error) {
     console.log(error);
@@ -569,6 +559,8 @@ const cleanFieldForm = () => {
 
 const show = async () => {
   try {
+    radioContent.value = []
+
     const resp = await $api(`sales/${route.params.id}`, {
       method: "get",
       onResponseError({ response }) {
@@ -591,6 +583,22 @@ const show = async () => {
     payments.value = resp.sale.payments;
     payment_total.value = resp.sale.paid_out;
     description.value = resp.sale.description;
+
+    radioContent.value.push({
+      title: "Venta",
+      value: "1",
+      icon: "ri-shopping-cart-line",
+    })
+
+    if(resp.sale.state == 2){
+      radioContent.value.push({
+        title: "Cotización",
+        value: "2",
+        icon: "ri-file-list-3-line",
+      })
+    }
+
+
   } catch (error) {
     console.log(error);
   }
@@ -607,6 +615,33 @@ const saleDetailUpdate = (item) => {
   if(index != -1){
     sale_details.value[index] = item.data
   }
+}
+
+const stockAttentionDetail = async (item) => {
+  try{
+
+    let data = {
+      sale_detail_id: item.id
+    }
+
+    const resp = await $api(`stock-attention-detail`, {
+      method: "POST",
+      body: data,
+      onResponseError({ response }) {
+        warning_sale.value = response._data.error;
+      },
+    });
+
+    let index = sale_details.value.findIndex((detail) => detail.id == resp.data.id)
+
+    if(index != -1){
+      sale_details.value[index] = resp.data
+    }
+
+    
+  }catch (error){
+    console.log(error)
+  } 
 }
 
 watch(selectedRadio, (value) => {
@@ -952,6 +987,14 @@ watch(is_gift, (value) => {
                   <td style="white-space: nowrap">$ {{ item.total }}</td>
                   <td>
                     <div class="d-flex gap-1">
+                      <VBtn
+                        v-if="item.state_attention != 3 && item.state == 1"
+                        color="primary"
+                        icon="ri-contract-line"
+                        variant="text"
+                        @click="stockAttentionDetail(item)"
+                      />
+
                       <IconBtn size="small" @click="editItem(item)">
                         <VIcon icon="ri-pencil-line" />
                       </IconBtn>

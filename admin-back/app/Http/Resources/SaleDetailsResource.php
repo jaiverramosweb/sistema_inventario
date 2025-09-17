@@ -20,6 +20,7 @@ class SaleDetailsResource extends JsonResource
         'product'           => [
             'id'            => $this->product->id,
             'title'         => $this->product->title,
+            'imagen'        => $this->product->product_imagen ?? null,
             'sku'           => $this->product->sku,
             'tax_selected'  => $this->product->tax_selected,
             'importe_iva'   => $this->product->importe_iva,
@@ -65,7 +66,7 @@ class SaleDetailsResource extends JsonResource
         'iva'               => $this->iva,
         'subtotal'          => $this->subtotal,
         'total'             => $this->total,
-        'state_attention'   => $this->state_attention,
+        'state_attention'   => $this->state_attention ?? 1,
         'description'       => $this->description,
         'quantity_pending'  => $this->quantity_pending
         ];

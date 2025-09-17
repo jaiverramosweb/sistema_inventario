@@ -6,6 +6,7 @@ use App\Exports\Sale\SaleDownloadExcel;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\SaleRequest;
 use App\Http\Resources\SaleResource;
+use App\Http\Resources\SaleDetailsResource;
 use App\Models\Client;
 use App\Models\ProductWarehouse;
 use App\Models\Sale;
@@ -44,6 +45,78 @@ class SaleController extends Controller
         return response()->json([
             'data' => $sale_resource,
             "last_page" => $sale_resource->lastPage()
+        ]);
+    }
+
+    public function stockAttentionDetailx(Request $request)
+    {
+        $sale_detail_id = $request->sale_detail_id;
+        $sale_detail = SaleDetail::find($sale_detail_id);
+
+        $state_attention = $sale_detail->state_attention; // estado en pendiente
+        $quantity = 0;
+        $quantity_pending = $sale_detail->quantity_pending;
+
+        $wharehouse_product = ProductWarehouse::where('product_id', $sale_detail->product_id)
+            ->where('warehouse_id', $sale_detail->warehouse_id)
+            ->where('unit_id', $sale_detail->unit_id)
+            ->first();
+
+        if($wharehouse_product && $wharehouse_product->stock >= $sale_detail->quantity_pending){ // Entrega completa
+            $state_attention = 3; // estado de atencion completo
+            $quantity = $sale_detail->quantity_pending;
+
+            $wharehouse_product->update([
+                'stock' => $wharehouse_product->stock - $sale_detail->quantity_pending
+            ]);
+
+            $quantity_pending =0 ;
+
+        } else {
+            if($wharehouse_product && $wharehouse_product->stock > 0 && $wharehouse_product->stock < $sale_detail->quantity_pending){
+                $state_attention = 2; // estado de atencion incompleto
+                $quantity = $wharehouse_product->stock;
+            
+                $quantity_pending = $sale_detail->quantity_pending - $wharehouse_product->stock;
+
+                $wharehouse_product->update([
+                    'stock' => 0
+                ]);
+            }
+        }
+
+        $sale_detail->update([
+            'state_attention' => $state_attention,
+            'quantity_pending' => $quantity_pending
+        ]);
+
+        if($quantity > 0){
+            SaleDetailAttention::create([
+                'sale_detail_id' => $sale_detail->id,
+                'product_id' => $sale_detail->product_id,
+                'warehouse_id' => $sale_detail->warehouse_id,
+                'unit_id' => $sale_detail->unit_id,
+                'quantity' => $quantity,
+            ]);
+        }
+
+        $counter_complte = 0;
+        $counter_detail = 0;
+
+        $counter_complte = SaleDetail::where('sale_id', $sale_detail->sale_id)->where('state_attention', 3)->count();
+        $counter_detail = SaleDetail::where('sale_id', $sale_detail->sale_id)->count();
+
+        if($counter_complte == $counter_detail){
+            $sale = $sale_detail->sale;
+
+            $sale->update([
+                'state_delivery' => 3 // estado de entrega completo
+            ]);
+        }
+
+        return response()->json([
+            'status' => 200,            
+            'data' => new SaleDetailsResource($sale_detail)
         ]);
     }
 
@@ -130,40 +203,43 @@ class SaleController extends Controller
 
             foreach ($sale_details as $value) {
 
-                $wharehouse_product = ProductWarehouse::where('product_id', $value['product']['id'])
-                    ->where('warehouse_id', $value['warehouse_id'])
-                    ->where('unit_id', $value['unit_id'])
-                    ->first();
-
                 $state_attention = 1; // estado en pendiente
                 $quantity = 0;
                 $quantity_pending = $value['quantity'];
 
-                if($wharehouse_product && $wharehouse_product->stock >= $value['quantity']){ // Entrega completa
-                    $state_attention = 3; // estado de atencion completo
-                    $quantity = $value['quantity'];
-
-                    $wharehouse_product->update([
-                        'stock' => $wharehouse_product->stock - $value['quantity']
-                    ]);
-
-                    $quantity_pending =0 ;
-                    $counter_complte++;
-
-                } else {
-                    if($wharehouse_product && $wharehouse_product->stock > 0 && $wharehouse_product->stock < $value['quantity']){
-                        $state_attention = 2; // estado de atencion incompleto
-                        $quantity = $wharehouse_product->stock;
-                    
-                        $quantity_pending = $value['quantity'] - $wharehouse_product->stock;
-
+                if($sale->state == 1){
+                    $wharehouse_product = ProductWarehouse::where('product_id', $value['product']['id'])
+                        ->where('warehouse_id', $value['warehouse_id'])
+                        ->where('unit_id', $value['unit_id'])
+                        ->first();
+    
+                    if($wharehouse_product && $wharehouse_product->stock >= $value['quantity']){ // Entrega completa
+                        $state_attention = 3; // estado de atencion completo
+                        $quantity = $value['quantity'];
+    
                         $wharehouse_product->update([
-                            'stock' => 0
+                            'stock' => $wharehouse_product->stock - $value['quantity']
                         ]);
-
-                        $state_delivery = 2; // estado de entrega parcial
+    
+                        $quantity_pending =0 ;
+                        $counter_complte++;
+    
+                    } else {
+                        if($wharehouse_product && $wharehouse_product->stock > 0 && $wharehouse_product->stock < $value['quantity']){
+                            $state_attention = 2; // estado de atencion incompleto
+                            $quantity = $wharehouse_product->stock;
+                        
+                            $quantity_pending = $value['quantity'] - $wharehouse_product->stock;
+    
+                            $wharehouse_product->update([
+                                'stock' => 0
+                            ]);
+    
+                            $state_delivery = 2; // estado de entrega parcial
+                        }
                     }
                 }
+
                 
                 $detail = SaleDetail::create([
                     'sale_id' => $sale->id,

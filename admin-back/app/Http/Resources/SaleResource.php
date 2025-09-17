@@ -44,61 +44,7 @@ class SaleResource extends JsonResource
             'created_at'        => $this->created_at->format("Y-m-d h:i A"),
             'created_at_format' => $this->created_at->format("Y-m-d"),
             'sale_details'      => $this->saleDetails->map(function ($detail) {
-                return [
-                    'id'                => $detail->id,
-                    'product_id'        => $detail->product_id,
-                    'product'           => [
-                        'id'            => $detail->product->id,
-                        'title'         => $detail->product->title,
-                        'sku'           => $detail->product->sku,
-                        'tax_selected'  => $detail->product->tax_selected,
-                        'importe_iva'   => $detail->product->importe_iva,
-                        'warehouses'    => $detail->product->warehouses->map(function ($warehouse){
-                            return [
-                                'id'            => $warehouse->id,
-                                'warehouse_id'  => $warehouse->warehouse_id,
-                                'unit_id'       => $warehouse->unit_id,
-                                'stock'         => $warehouse->stock,
-                                'umbral'        => $warehouse->umbral,
-                                'warehouse'     => $warehouse->warehouse->name,
-                                'unit'          => $warehouse->unit->name,
-                            ];
-                        }),
-                        "wallets"       => $detail->product->wallets->map(function ($wallet){
-                            return [
-                                'id'                => $wallet->id,
-                                'type_client'       => $wallet->type_client,
-                                'type_client_name'  => $wallet->type_client == 1 ? 'Cliente final' : 'Cliente empresa',
-                                'unit_id'           => $wallet->unit_id,
-                                'sucursal_id'       => $wallet->sucursal_id,
-                                'price'             => $wallet->price,
-                                'sucursal'          => $wallet->sucursal ? $wallet->sucursal->name : null,
-                                'unit'              => $wallet->unit->name,
-                            ];
-                        }),
-                        'price_general' => $detail->product->price_general,
-                        'price_company' => $detail->product->price_company,
-                        'is_discount'   => $detail->product->is_discount,
-                        'max_descount'  => $detail->product->max_descount,
-                        'available'     => $detail->product->available,
-                        'is_gift'       => $detail->product->is_gift,
-                    ],
-                    'unit_id'           => $detail->unit_id,
-                    'unit'              => $detail->unit->name,
-                    'warehouse_id'      => $detail->warehouse_id,
-                    'warehouse'         => $detail->warehouse->name,
-                    'product_categoryid' => $detail->product_categoryid,
-                    'product_category'  => $detail->productCategory->title,
-                    'quantity'          => $detail->quantity,
-                    'price_unit'        => $detail->price_unit,
-                    'discount'          => $detail->discount,
-                    'iva'               => $detail->iva,
-                    'subtotal'          => $detail->subtotal,
-                    'total'             => $detail->total,
-                    'state_attention'   => $detail->state_attention,
-                    'description'       => $detail->description,
-                    'quantity_pending'  => $detail->quantity_pending,
-                ];  
+                return new SaleDetailsResource($detail);  
             }),
             'payments'          => $this->payments->map(function ($payment) {
                 return [

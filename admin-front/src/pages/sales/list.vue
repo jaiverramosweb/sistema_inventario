@@ -7,7 +7,9 @@ definePage({ meta: { permission: 'list_sale' } })
 
 const router = useRouter()
 
+const isShowDialog = ref(false)
 const isShowDialogDelete = ref(false)
+const saleSelected = ref(null)
 const saletSelectedDelete = ref(null)
 
 const data = ref([])
@@ -84,7 +86,7 @@ const deleteItem = (item) => {
 const deleteNew = (item) => {
   let backup = data.value
   data.value = []
-  let INDEX = backup.findIndex(pro => pro.id == item.id)
+  let INDEX = backup.findIndex(sale => sale.id == item.id)
   if (INDEX != -1) {
     backup.splice(INDEX, 1)
   }
@@ -92,6 +94,11 @@ const deleteNew = (item) => {
   setTimeout(() => {
     data.value = backup
   }, 50)
+}
+
+const showItem = (item) => {
+  isShowDialog.value = true
+  saleSelected.value = item
 }
 
 
@@ -386,6 +393,9 @@ watch(currentPage, (page) => {
             </td>
             <td>
               <div class="d-flex gap-1">
+                <IconBtn size="small" @click="showItem(item)">
+                  <VIcon icon="ri-file-list-2-line" />
+                </IconBtn>
                 <IconBtn size="small" @click="editItem(item)">
                   <VIcon icon="ri-pencil-line" />
                 </IconBtn>
@@ -405,7 +415,17 @@ watch(currentPage, (page) => {
 
     </VCard>
 
-    <!-- <DeleteUserDialog v-if="saletSelectedDelete && isShowDialogDelete"
-      v-model:isDialogVisible="isShowDialogDelete" :productSelected="saletSelectedDelete" @deleteProduct="deleteNew" /> -->
+    <SaleDeleteDialog 
+      v-if="saletSelectedDelete && isShowDialogDelete"
+      v-model:isDialogVisible="isShowDialogDelete" 
+      :saleSelected="saletSelectedDelete" 
+      @deleteSale="deleteNew" 
+    />
+
+    <SaleDetailShowDialog 
+      v-if="saleSelected && isShowDialog"
+      v-model:isDialogVisible="isShowDialog" 
+      :saleSelected="saleSelected"
+    />
   </div>
 </template>
