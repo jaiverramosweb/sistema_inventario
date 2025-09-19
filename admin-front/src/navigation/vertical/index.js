@@ -101,7 +101,7 @@ export default [
     title: 'Devolución',
     icon: { icon: 'ri-loop-right-line' },
     permission: 'return',
-    to: 'second-page',
+    to: 'refound-list',
   },
   { heading: 'Almacen',permissions: ['register_purchase','list_purchase','register_transport','list_transport','conversions','kardex'] },
   {

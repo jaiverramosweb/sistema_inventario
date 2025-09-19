@@ -4,29 +4,24 @@ onMounted(() => {
   config()
 })
 
-definePage({ meta: { permission: 'list_product' } })
+definePage({ meta: { permission: 'return' } })
 
 const search = ref('')
 
 const router = useRouter()
 
+const isShowDialogAdd = ref(false)
 const isShowDialogDelete = ref(false)
 const productSelectedDelete = ref(null)
 
 const data = ref([])
-const sucursales = ref([])
 const warehouses = ref([])
 const units = ref([])
-const categories = ref([])
 
-const category_id = ref(null)
 const warehouse_id = ref(null)
 const unit_id = ref(null)
-const sucursale_id = ref(null)
-const available = ref(null)
-const is_gift = ref(null)
-
-const isImportExcelDialog = ref(false)
+const type = ref(null)
+const state = ref(null)
 
 const currentPage = ref(1)
 const totalPage = ref(0)
@@ -35,15 +30,13 @@ const list = async () => {
   try {
     let dataSearch = {
       search: search.value,
-      category_id: category_id.value,
       warehouse_id: warehouse_id.value,
       unit_id: unit_id.value,
-      sucursale_id: sucursale_id.value,
-      available: available.value,
-      is_gift: is_gift.value,
+      type: type.value,
+      state: state.value,
     }
 
-    const resp = await $api(`products/index?page=${currentPage.value}`, {
+    const resp = await $api(`refound-products/index?page=${currentPage.value}`, {
       method: 'POST',
       body: dataSearch,
       onResponseError({ response }) {
@@ -61,12 +54,10 @@ const list = async () => {
 
 const reset = () => {
   search.value = ''
-  category_id.value = null
-  warehouse_id.value = null
   unit_id.value = null
   sucursale_id.value = null
-  available.value = null
-  is_gift.value = null
+  type.value = null
+  state.value = null
   currentPage.value = 1
 
   list()
@@ -80,23 +71,20 @@ const config = async () => {
         console.log(response)
       },
     })
-
-    // console.log(resp)
-    sucursales.value = resp.sucursales
     warehouses.value = resp.warehouses
     units.value = resp.units
-    categories.value = resp.categories
 
   } catch (error) {
     console.log(error)
   }
 }
 
+const openCreateRefound = () => {
+  isShowDialogAdd.value = true
+}
+
 const editItem = (item) => {
-  router.push({
-    name: 'product-edit-id',
-    params: { id: item.id },
-  })
+  console.log(item)
 }
 
 const deleteItem = (item) => {
@@ -117,47 +105,6 @@ const deleteNew = (item) => {
   }, 50)
 }
 
-const avatarText = value => {
-  if (!value)
-    return ''
-
-  const nameArray = value.split(' ')
-
-  return nameArray.map(word => word.charAt(0).toUpperCase()).join('')
-}
-
-const downloadExcel = () => {
-  let QUERY_PARAMS = ""
-
-  if(search.value){
-    QUERY_PARAMS += "&search=" + search.value
-  }
-  if(category_id.value){
-    QUERY_PARAMS += "&category_id=" + category_id.value
-  }
-  if(warehouse_id.value){
-    QUERY_PARAMS += "&warehouse_id=" + warehouse_id.value
-  }
-  if(unit_id.value){
-    QUERY_PARAMS += "&unit_id=" + unit_id.value
-  }
-  if(sucursale_id.value){
-    QUERY_PARAMS += "&sucursale_id=" + sucursale_id.value
-  }
-  if(available.value){
-    QUERY_PARAMS += "&available=" + available.value
-  }
-  if(is_gift.value){
-    QUERY_PARAMS += "&is_gift=" + is_gift.value
-  }
-
-  window.open(import.meta.env.VITE_API_BASE_URL + 'products-excel?z=1' + QUERY_PARAMS, '_blank')
-}
-
-const ImmportProducts = () => {
-  list()
-}
-
 watch(currentPage, (page) => {
   list()
 })
@@ -165,7 +112,7 @@ watch(currentPage, (page) => {
 
 <template>
   <div>
-    <VCard title="🖥️ Productos">
+    <VCard title="📥 Devoluciones de productos">
 
       <VCardText>
         <VRow>
@@ -178,16 +125,6 @@ watch(currentPage, (page) => {
                   v-model="search" 
                   density="compact" 
                   @keyup.enter="list" 
-                />
-              </VCol>
-              <VCol cols="3">
-                <VSelect
-                  placeholder="-- Seleccione --"
-                  label="Categoría"
-                  :items="categories"
-                  item-title="name"
-                  item-value="id"
-                  v-model="category_id"
                 />
               </VCol>
               <VCol cols="3">
@@ -212,32 +149,22 @@ watch(currentPage, (page) => {
               </VCol>
               <VCol cols="3">
                 <VSelect
-                  :items="sucursales"
-                  placeholder="-- seleccione --"
-                  label="Sucursales"
-                  item-title="name"
-                  item-value="id"
-                  v-model="sucursale_id"
-                />
-              </VCol>
-              <VCol cols="3">
-                <VSelect
                   placeholder="-- Seleccione --"
-                  label="Disponibilidad"
-                  :items="[{ id: 1, name: 'Vender sin Stock' }, { id: 2, name: 'No vender sin Stock' }]"
+                  label="Tipo"
+                  :items="[{ id: 1, name: 'Reparación' }, { id: 2, name: 'Reemplazo' }, { id: 3, name: 'Devolución' }]"
                   item-title="name"
                   item-value="id"
-                  v-model="available"
+                  v-model="type"
                 />
               </VCol>
               <VCol cols="2">
                 <VSelect
                   placeholder="-- Seleccione --"
-                  label="¿Regalo?"
-                  :items="[{ id: 1, name: 'No' }, { id: 2, name: 'Si' }]"
+                  label="Estado"
+                  :items="[{ id: 1, name: 'Pendiente' }, { id: 2, name: 'Revisión' }, { id: 3, name: 'Reparado' }, { id: 4, name: 'Descartado' }]"
                   item-title="name"
                   item-value="id"
-                  v-model="is_gift"
+                  v-model="state"
                 />
               </VCol>
               <VCol cols="4">
@@ -269,39 +196,13 @@ watch(currentPage, (page) => {
                   </VTooltip>
                 </VBtn>
 
-                <VBtn
-                  color="error"
-                  class="mx-1"
-                  prepend-icon="ri-file-excel-2-line"
-                  @click="downloadExcel"
-                >
-                  <VTooltip
-                    activator="parent"
-                    location="top"
-                  >
-                    Exportar
-                  </VTooltip>
-                </VBtn>
-                <VBtn
-                  color="success"
-                  class="mx-1"
-                  prepend-icon="ri-file-excel-line"
-                  @click="isImportExcelDialog = !isImportExcelDialog"
-                >
-                  <VTooltip
-                    activator="parent"
-                    location="top"
-                  >
-                    Importar
-                  </VTooltip>
-                </VBtn>
               </VCol>
             </VRow>
           </VCol>
 
           <VCol cols="2" class="text-end">
-            <VBtn @click="router.push({ name: 'product-add' })">
-              Agregar
+            <VBtn @click="openCreateRefound">
+              Agregar 
               <VIcon end icon="ri-add-line" />
             </VBtn>
           </VCol>
@@ -312,31 +213,28 @@ watch(currentPage, (page) => {
         <thead>
           <tr>
             <th class="text-uppercase">
+              N° Venta
+            </th>
+            <th class="text-uppercase">
+              Cliente
+            </th>
+            <th class="text-uppercase">
               Producto
             </th>
             <th class="text-uppercase">
-              SKU
+              Unidad
             </th>
             <th class="text-uppercase">
-              Categoria
+              Almacen
             </th>
             <th class="text-uppercase">
-              ¿Es un regalo?
-            </th>
+              Cantidad
+            </th>            
             <th class="text-uppercase">
-              ¿Tiene descuento?
-            </th>
-            <th class="text-uppercase">
-              Inporte IVA
-            </th>
-            <th class="text-uppercase">
-              Dias de garatia
+              Tipo
             </th>
             <th class="text-uppercase">
               Estado
-            </th>
-            <th class="text-uppercase">
-              Estado Stock
             </th>
             <th class="text-uppercase">
               Fecha de registro
@@ -385,9 +283,6 @@ watch(currentPage, (page) => {
               {{ item.warranty_day }} dias
             </td>
             <td>
-              {{ item.status }}
-            </td>
-            <td>
               <VChip color="primary" v-if="item.status_stok == 1">
                 Disponible
               </VChip>
@@ -422,9 +317,11 @@ watch(currentPage, (page) => {
 
     </VCard>
 
+    <RefoundAddDialog 
+      v-model:isDialogVisible="isShowDialogAdd"
+    />
 
-    <ImportExcelProduct v-model:isDialogVisible="isImportExcelDialog" @importExcel="ImmportProducts"/>
-    <DeleteUserDialog v-if="productSelectedDelete && isShowDialogDelete"
-      v-model:isDialogVisible="isShowDialogDelete" :productSelected="productSelectedDelete" @deleteProduct="deleteNew" />
+    <!-- <DeleteUserDialog v-if="productSelectedDelete && isShowDialogDelete"
+      v-model:isDialogVisible="isShowDialogDelete" :productSelected="productSelectedDelete" @deleteProduct="deleteNew" /> -->
   </div>
 </template>
