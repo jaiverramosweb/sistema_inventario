@@ -6,7 +6,7 @@ const props = defineProps({
   },
 })
 
-const emit = defineEmits(['update:isDialogVisible'])
+const emit = defineEmits(['update:isDialogVisible', 'refoundAddProduct'])
 
 const sale_id = ref(null)
 const sale = ref(null)
@@ -86,11 +86,38 @@ const store = async () => {
       },
     })
 
-    console.log(resp)
+    if(resp.status == 403){
+      error_exists.value = resp.message
+      return
+    }
+
+    if(resp.status == 201){
+      success.value = 'La devolucion se registro correctamente'
+      emit('refoundAddProduct', resp.data)
+      sale_id.value = null
+      sale_detail_id.value = null
+      type.value = 1
+      quantity.value = null
+      description.value = null
+      sale.value = null
+
+      setTimeout(() => {
+        warning.value = null
+        error_exists.value = null
+        success.value = null
+        onFormReset()
+      }, 30)
+    }
 
   } catch (error) {
     console.log(error)
   }
+}
+
+const reset = () => {
+  sale_id.value = null
+  sale.value = null
+  sale_detail_id.value = null
 }
 
 const onFormReset = () => {
@@ -111,7 +138,7 @@ const dialogVisibleUpdate = val => {
       <VCardText class="pt-5">
         <div class="text-center pb-6">
           <h4 class="text-h4 mb-2">
-            Crear Devolución
+            Crear Incidencia
           </h4>
 
         </div>
@@ -151,6 +178,7 @@ const dialogVisibleUpdate = val => {
                   <VTooltip
                     activator="parent"
                     location="top"
+                    @click="reset"
                   >
                     Limpiar
                   </VTooltip>
@@ -240,7 +268,7 @@ const dialogVisibleUpdate = val => {
               </VRadioGroup>
             </VCol>
 
-            <VCol cols="3">
+            <VCol cols="3" v-if="sale">
               <VSelect
                   placeholder="-- Seleccione --"
                   label="Tipo"
@@ -251,7 +279,7 @@ const dialogVisibleUpdate = val => {
                 />
             </VCol>
 
-            <VCol cols="3">
+            <VCol cols="3" v-if="sale">
               <VTextField
                 label="Cantidad"
                 placeholder=""
@@ -260,7 +288,7 @@ const dialogVisibleUpdate = val => {
               />
             </VCol>
 
-             <VCol cols="6">
+            <VCol cols="6" v-if="sale">
               <VTextarea
                 label="Descripción"
                 v-model="description"
@@ -283,7 +311,7 @@ const dialogVisibleUpdate = val => {
             </VCol>
 
             <VCol cols="12" class="d-flex flex-wrap justify-center gap-4" @click="store">
-              <VBtn type="submit">
+              <VBtn >
                 Guardar
               </VBtn>
 

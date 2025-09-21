@@ -49,7 +49,7 @@ class SaleController extends Controller
         ]);
     }
 
-    public function stockAttentionDetailx(Request $request)
+    public function stockAttentionDetails(Request $request)
     {
         $sale_detail_id = $request->sale_detail_id;
         $sale_detail = SaleDetail::find($sale_detail_id);

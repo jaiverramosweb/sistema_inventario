@@ -132,7 +132,7 @@ export const PERMISOS = [
       ]
   },
   {
-      'name': 'Devolución',
+      'name': 'Incidencias',
       'permisos': [
           {
               name: 'Disponible',

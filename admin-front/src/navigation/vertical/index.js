@@ -98,7 +98,7 @@ export default [
     ],
   },
   {
-    title: 'Devolución',
+    title: 'Incidencias',
     icon: { icon: 'ri-loop-right-line' },
     permission: 'return',
     to: 'refound-list',

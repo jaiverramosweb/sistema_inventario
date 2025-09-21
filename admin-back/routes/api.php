@@ -73,7 +73,7 @@ Route::group([
     Route::resource('clients', ClientController::class);
 
     Route::post('sales/index', [SaleController::class, 'index']);
-    Route::post('stock-attention-detail', [SaleController::class, 'stockAttentionDetailx']);
+    Route::post('stock-attention-detail', [SaleController::class, 'stockAttentionDetails']);
     Route::get('sales/config', [SaleController::class, 'config']);
     Route::get('sales/search_client', [SaleController::class, 'searchClient']);
     Route::resource('sales', SaleController::class);

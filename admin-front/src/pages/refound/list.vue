@@ -11,8 +11,11 @@ const search = ref('')
 const router = useRouter()
 
 const isShowDialogAdd = ref(false)
+const isShowDialogEdit = ref(false)
 const isShowDialogDelete = ref(false)
-const productSelectedDelete = ref(null)
+const refoundSelectedEdit = ref(null)
+const refoundSelectedDelete = ref(null)
+
 
 const data = ref([])
 const warehouses = ref([])
@@ -22,6 +25,9 @@ const warehouse_id = ref(null)
 const unit_id = ref(null)
 const type = ref(null)
 const state = ref(null)
+const sale_id = ref(null)
+const range_date = ref(null)
+const search_client = ref(null) 
 
 const currentPage = ref(1)
 const totalPage = ref(0)
@@ -34,6 +40,10 @@ const list = async () => {
       unit_id: unit_id.value,
       type: type.value,
       state: state.value,
+      sale_id: sale_id.value,
+      search_client: search_client.value,
+      start_date: range_date.value ? range_date.value.split("to")[0] : null,
+      end_date: range_date.value ? range_date.value.split("to")[1] : null,
     }
 
     const resp = await $api(`refound-products/index?page=${currentPage.value}`, {
@@ -54,11 +64,15 @@ const list = async () => {
 
 const reset = () => {
   search.value = ''
+  warehouse_id.value = null
   unit_id.value = null
-  sucursale_id.value = null
   type.value = null
   state.value = null
+  sale_id.value = null
+  search_client.value = null
+  state.value = null
   currentPage.value = 1
+  range_date.value = null
 
   list()
 }
@@ -83,26 +97,35 @@ const openCreateRefound = () => {
   isShowDialogAdd.value = true
 }
 
+const refoundProductAdd = (newItem) => {
+  data.value.unshift(newItem)
+}
+
 const editItem = (item) => {
-  console.log(item)
+  isShowDialogEdit.value = true
+  refoundSelectedEdit.value = item
+}
+
+const refoundProductEdit = (newItem) => {
+  let backup = data.value
+  data.value = []
+  let INDEX = backup.findIndex(pro => pro.id == newItem.id)
+  if (INDEX != -1) {
+    backup[INDEX] = newItem
+  }
+  data.value = backup
 }
 
 const deleteItem = (item) => {
-  productSelectedDelete.value = item
+  refoundSelectedDelete.value = item
   isShowDialogDelete.value = true
 }
 
 const deleteNew = (item) => {
-  let backup = data.value
-  data.value = []
-  let INDEX = backup.findIndex(pro => pro.id == item.id)
+  let INDEX = data.value.findIndex(pro => pro.id == item.id)
   if (INDEX != -1) {
-    backup.splice(INDEX, 1)
+    data.value.splice(INDEX, 1)
   }
-
-  setTimeout(() => {
-    data.value = backup
-  }, 50)
 }
 
 watch(currentPage, (page) => {
@@ -112,12 +135,12 @@ watch(currentPage, (page) => {
 
 <template>
   <div>
-    <VCard title="📥 Devoluciones de productos">
+    <VCard title="📥 Incidencias de productos">
 
       <VCardText>
         <VRow>
           <VCol cols="10">
-            <VRow>
+            <VRow>              
               <VCol cols="3">
                 <VTextField 
                   label="Busqueda" 
@@ -128,6 +151,25 @@ watch(currentPage, (page) => {
                 />
               </VCol>
               <VCol cols="3">
+                <VTextField 
+                  label="N° venta" 
+                  placeholder="" 
+                  v-model="sale_id" 
+                  density="compact" 
+                  @keyup.enter="list" 
+                />
+              </VCol>
+              <VCol cols="3">
+                <VTextField 
+                  label="Cliente" 
+                  placeholder="" 
+                  v-model="search_client" 
+                  density="compact" 
+                  @keyup.enter="list" 
+                />
+              </VCol>
+              
+              <VCol cols="3">
                 <VSelect
                   :items="warehouses"
                   placeholder="-- seleccione --"
@@ -137,7 +179,7 @@ watch(currentPage, (page) => {
                   v-model="warehouse_id"
                 />
               </VCol>
-              <VCol cols="3">
+              <VCol cols="2">
                 <VSelect
                   :items="units"
                   placeholder="-- seleccione --"
@@ -147,7 +189,7 @@ watch(currentPage, (page) => {
                   v-model="unit_id"
                 />
               </VCol>
-              <VCol cols="3">
+              <VCol cols="2">
                 <VSelect
                   placeholder="-- Seleccione --"
                   label="Tipo"
@@ -157,7 +199,7 @@ watch(currentPage, (page) => {
                   v-model="type"
                 />
               </VCol>
-              <VCol cols="2">
+              <VCol cols="2" v-if="type == 1">
                 <VSelect
                   placeholder="-- Seleccione --"
                   label="Estado"
@@ -167,7 +209,15 @@ watch(currentPage, (page) => {
                   v-model="state"
                 />
               </VCol>
-              <VCol cols="4">
+              <VCol cols="3">
+                <AppDateTimePicker
+                  v-model="range_date"
+                  label="Rango de fecha"
+                  placeholder="Seleccione la fecha"
+                  :config="{ mode: 'range' }"
+                />
+              </VCol>
+              <VCol cols="3">
                 <VBtn
                   color="info"
                   class="mx-1"
@@ -234,9 +284,6 @@ watch(currentPage, (page) => {
               Tipo
             </th>
             <th class="text-uppercase">
-              Estado
-            </th>
-            <th class="text-uppercase">
               Fecha de registro
             </th>
             <th class="text-uppercase">
@@ -251,46 +298,42 @@ watch(currentPage, (page) => {
             :key="item.id"
           >
             <td>
+              {{ item.sale_id }}
+            </td>
+            <td>
+              {{ item.client }}
+            </td>
+            <td>
               <div class="d-flex align-center">
-                <VAvatar size="32" :color="item.imagen ? '' : 'primary'"
-                  :class="item.imagen ? '' : 'v-avatar-light-bg primary--text'"
-                  :variant="!item.imagen ? 'tonal' : undefined">
-                  <VImg v-if="item.imagen" :src="item.imagen" />
-                  <span v-else class="text-sm">{{ avatarText(item.title) }}</span>
+                <VAvatar size="32" :color="item.product.imagen ? '' : 'primary'"
+                  :class="item.product.imagen ? '' : 'v-avatar-light-bg primary--text'"
+                  :variant="!item.product.imagen ? 'tonal' : undefined">
+                  <VImg v-if="item.product.imagen" :src="item.product.imagen" />
+                  <span v-else class="text-sm">{{ avatarText(item.product.title) }}</span>
                 </VAvatar>
                 <div class="d-flex ms-3">
-                  <span class="">{{ item.title }}</span>
+                  <span class="">{{ item.product.title }}</span>
                 </div>
               </div>
             </td>
             <td>
-              {{ item.sku }}
+              {{ item.unit }}
             </td>
             <td>
-              {{ item.category }}
+              {{ item.warehouse }}
             </td>
             <td>
-              {{ item.is_gift == 1 ? 'No' : 'Si' }}
+              {{ item.quantity }}
             </td>
             <td>
-              {{ item.is_discount == 1 ? 'No' : 'Si' }} <br>
-              <span v-if="item.is_discount != 1" style="text-wrap-mode: nowrap;">Descunto: {{ item.max_descount }} %</span>
-            </td>
-            <td>
-              {{ item.importe_iva }}
-            </td>
-            <td>
-              {{ item.warranty_day }} dias
-            </td>
-            <td>
-              <VChip color="primary" v-if="item.status_stok == 1">
-                Disponible
+              <VChip color="primary" v-if="item.type == 1">
+                Reparación
               </VChip>
-              <VChip color="warning" v-if="item.status_stok == 2">
-                Por agotar
+              <VChip color="success" v-if="item.type == 2">
+                Reemplazo
               </VChip>
-              <VChip color="error" v-if="item.status_stok == 3">
-                Agotado
+              <VChip color="warning" v-if="item.type == 3">
+                Devolución
               </VChip>
             </td>
             <td>
@@ -301,7 +344,7 @@ watch(currentPage, (page) => {
                 <IconBtn size="small" @click="editItem(item)">
                   <VIcon icon="ri-pencil-line" />
                 </IconBtn>
-                <IconBtn size="small" @click="deleteItem(item)">
+                <IconBtn size="small" @click="deleteItem(item)" v-if="item.type == 1">
                   <VIcon icon="ri-delete-bin-line" />
                 </IconBtn>
               </div>
@@ -319,9 +362,17 @@ watch(currentPage, (page) => {
 
     <RefoundAddDialog 
       v-model:isDialogVisible="isShowDialogAdd"
+      @refoundAddProduct="refoundProductAdd"
     />
 
-    <!-- <DeleteUserDialog v-if="productSelectedDelete && isShowDialogDelete"
-      v-model:isDialogVisible="isShowDialogDelete" :productSelected="productSelectedDelete" @deleteProduct="deleteNew" /> -->
+    <RedoundEditDialog 
+      v-if="isShowDialogEdit && refoundSelectedEdit"
+      v-model:isDialogVisible="isShowDialogEdit"
+      :refoundSelected="refoundSelectedEdit"
+      @refoundEditProduct="refoundProductEdit"
+    />
+
+    <RefoundDeleteDialog v-if="refoundSelectedDelete && isShowDialogDelete"
+      v-model:isDialogVisible="isShowDialogDelete" :refoundSelected="refoundSelectedDelete" @refoundDeleteProduct="deleteNew" />
   </div>
 </template>
