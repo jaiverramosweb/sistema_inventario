@@ -459,7 +459,6 @@ watch(search, query => {
   }
 })
 
-// filtrar para traer las unidades del almacen
 watch(select_product, value => {
   if(value){
     units.value = value.warehouses.filter(warehouse => warehouse.warehouse_id == warehouse_id.value).map(wh => {

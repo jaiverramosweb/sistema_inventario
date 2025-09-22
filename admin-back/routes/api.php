@@ -13,6 +13,7 @@ use App\Http\Controllers\Config\WarehouseController;
 use App\Http\Controllers\Product\ProductController;
 use App\Http\Controllers\Product\ProductWalletController;
 use App\Http\Controllers\Product\ProductWarehouseController;
+use App\Http\Controllers\Puchase\PuchaseController;
 use App\Http\Controllers\Roles\RoleController;
 use App\Http\Controllers\Sale\RefoundProductController;
 use App\Http\Controllers\Sale\SaleController;
@@ -83,6 +84,9 @@ Route::group([
     Route::post('refound-products/index', [RefoundProductController::class, 'index']);
     Route::get('refound-products/search-sale/{id}', [RefoundProductController::class, 'searchSale']);
     Route::resource('refound-products', RefoundProductController::class);
+
+    Route::get('pushases/config', [PuchaseController::class, 'config']);
+    Route::resource('pushases', PuchaseController::class);
 });
 
 

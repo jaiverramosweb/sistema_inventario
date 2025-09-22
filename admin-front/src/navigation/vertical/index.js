@@ -110,15 +110,15 @@ export default [
     children: [
       {
         title: 'Registrar',
-        to: 'second-page',
+        to: 'purchase-add',
         permission: 'register_purchase',
-        icon: { icon: 'ri-computer-line' },
+        icon: { icon: 'ri-radio-button-line' },
       },
       {
         title: 'Listado',
         to: 'second-page',
         permission: 'list_purchase',
-        icon: { icon: 'ri-bar-chart-line' },
+        icon: { icon: 'ri-radio-button-line' },
       },
     ],
   },
