@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Puchase;
 
 use App\Http\Controllers\Controller;
 use App\Models\Provider;
+use App\Models\Puchase;
+use App\Models\PuchaseDetail;
 use App\Models\Unit;
 use App\Models\Warehouse;
 use Illuminate\Http\Request;
@@ -21,7 +23,7 @@ class PuchaseController extends Controller
     public function config()
     {
         date_default_timezone_set('America/Bogota');
-        
+
         $warehouses = Warehouse::select('id', 'name', 'sucursal_id')->where('status', 'Activo')->get();
         $units = Unit::select('id', 'name')->where('status', 'Activo')->get();
         $providers = Provider::select('id', 'name', 'ruc')->where('status', 'Activo')->get();
@@ -39,7 +41,34 @@ class PuchaseController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $puchase = Puchase::create([
+            'warehouse_id' => $request->warehouse_id,
+            'user_id' => auth('api')->user()->id,
+            'sucuarsal_id' =>  auth('api')->user()->sucuarsal_id,
+            'date_emition' => $request->date_emition,
+            'type_comprobant' => $request->type_comprobant,
+            'n_comprobant' => $request->n_comprobant,
+            'provider_id' => $request->provider_id,
+            'total' => $request->total,
+            'immporte' => $request->importe,
+            'iva' => $request->iva,
+            'description' => $request->description
+        ]);
+
+        foreach ($request->pushase_details as $value) {
+            PuchaseDetail::create([
+                'puchase_id' => $puchase->id,
+                'product_id' => $value['product']['id'],
+                'unit_id' => $value['unit_id'],
+                'quantity' => $value['quantity'],
+                'price_unit' => $value['price_unit'],
+                'total' => $value['total'],
+            ]);
+        }
+
+        return response()->json([
+            'status' => 201
+        ]);
     }
 
     /**

@@ -157,7 +157,7 @@ const store = async () => {
       return
     }
 
-    if(!provider_id,value){
+    if(!provider_id.value){
       warning_purchase.value = 'Es necesario seleccionar un proveedor'
       return
     }
@@ -198,7 +198,21 @@ const store = async () => {
       },
     })
 
-    console.log(resp)
+    if(resp.status == 201){
+      success_purchase.value = 'Compra registrada correctamente'
+
+      setTimeout(() => {
+        warehouse_id.value = null
+        provider_id.value = null
+        type_comprobant.value = null
+        n_comprobant.value = null
+        description.value = null
+        pushase_details.value = []
+        importe.value = 0
+        iva.value = 0
+        total.value = 0
+      }, 25);
+    }
 
   } catch (error) {
     console.log(error)
