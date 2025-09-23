@@ -10,6 +10,7 @@ use App\Models\PuchaseDetail;
 use App\Models\Unit;
 use App\Models\Warehouse;
 use Illuminate\Http\Request;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class PuchaseController extends Controller
 {
@@ -57,7 +58,12 @@ class PuchaseController extends Controller
     }
 
     public function pushases_pdf($id)
-    {}
+    {
+        $purchase = Puchase::findOrFail($id);
+
+        $pdf = Pdf::loadView('purchase.purchase_pdf', compact('purchase'));
+        return $pdf->stream('compra_'.$id.'.pdf');
+    }
 
     /**
      * Store a newly created resource in storage.

@@ -64,6 +64,12 @@ class Puchase extends Model
         return $this->hasMany(PuchaseDetail::class);
     }
 
+    public function getDateEmitionFormatAttribute()
+    {
+        return Carbon::parse($this->date_emition)->format("Y/m/d");
+    }
+
+
     public function scopeFilterAdvance($query, $search, $warehouse_id, $unit_id, $provider_id, $type_comprobant, $start_date, $end_date, $search_product)
     {
         if($search){
