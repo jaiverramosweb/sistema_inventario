@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Puchase;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\PuchaseResource;
 use App\Models\Provider;
 use App\Models\Puchase;
 use App\Models\PuchaseDetail;
@@ -15,9 +16,28 @@ class PuchaseController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        //
+        $search = $request->search;
+        $warehouse_id = $request->warehouse_id;
+        $unit_id = $request->unit_id;
+        $provider_id = $request->provider_id;
+        $type_comprobant = $request->type_comprobant;
+        $start_date = $request->start_date;
+        $end_date = $request->end_date;
+        $search_product = $request->search_product;
+
+        $purchases = Puchase::filterAdvance($search, $warehouse_id, $unit_id, $provider_id, $type_comprobant, $start_date, $end_date, $search_product)
+            ->orderBy('id', 'desc')
+            ->paginate(25);
+
+        $purchases_collection = PuchaseResource::collection($purchases);
+
+        return response()->json([
+            'status' => 200,
+            'data' => $purchases_collection,
+            "last_page" => $purchases_collection->lastPage()
+        ]);
     }
 
     public function config()
@@ -35,6 +55,9 @@ class PuchaseController extends Controller
             'today' => now()->format("Y-m-d")
         ]);
     }
+
+    public function pushases_pdf($id)
+    {}
 
     /**
      * Store a newly created resource in storage.

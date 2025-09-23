@@ -1,4 +1,5 @@
 <script setup>
+definePage({ meta: { permission: 'register_purchase' } })
 
 const user = localStorage.getItem("user") ? JSON.parse(localStorage.getItem("user")) : null
 

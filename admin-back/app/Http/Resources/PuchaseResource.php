@@ -22,7 +22,7 @@ class PuchaseResource extends JsonResource
             'user_id' => $this->user_id,
             'user' => $this->user->name,
             'sucuarsal_id' => $this->sucuarsal_id,
-            'sucursale' => $this->sucursale->name,
+            'sucursale' => $this->sucursal->name,
             'date_emition' => Carbon::parse( $this->date_emition)->format("Y-m-d"),
             'state' => $this->state,
             'type_comprobant' => $this->type_comprobant,

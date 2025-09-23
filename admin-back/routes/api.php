@@ -86,6 +86,7 @@ Route::group([
     Route::resource('refound-products', RefoundProductController::class);
 
     Route::get('pushases/config', [PuchaseController::class, 'config']);
+    Route::post('pushases/index', [PuchaseController::class, 'index']);
     Route::resource('pushases', PuchaseController::class);
 });
 
@@ -93,3 +94,4 @@ Route::group([
 Route::get("products-excel",    [ProductController::class, 'download_excel']);
 Route::get("sales-excel",       [SaleController::class, 'download_excel']);
 Route::get("sales-pdf/{id}",    [SaleController::class, 'sale_pdf']);
+Route::get("pushases-pdf/{id}", [PuchaseController::class, 'pushases_pdf']);

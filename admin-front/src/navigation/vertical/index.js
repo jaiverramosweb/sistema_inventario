@@ -116,7 +116,7 @@ export default [
       },
       {
         title: 'Listado',
-        to: 'second-page',
+        to: 'purchase-list',
         permission: 'list_purchase',
         icon: { icon: 'ri-radio-button-line' },
       },
