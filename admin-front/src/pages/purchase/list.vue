@@ -91,7 +91,7 @@ const config = async () => {
 
 const editItem = (item) => {
   router.push({
-    name: 'product-edit-id',
+    name: 'purchase-edit-id',
     params: { id: item.id },
   })
 }

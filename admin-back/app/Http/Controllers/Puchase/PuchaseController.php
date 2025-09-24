@@ -105,7 +105,12 @@ class PuchaseController extends Controller
      */
     public function show(string $id)
     {
-        //
+        $purchase = Puchase::findOrFail($id);
+
+        return response()->json([
+            'status' => 200,
+            'data' => new PuchaseResource($purchase)
+        ]);
     }
 
     /**
@@ -113,7 +118,12 @@ class PuchaseController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        //
+        $purchase = Puchase::findOrFail($id);
+        $purchase->update($request->all());
+
+        return response()->json([
+            'status' => 200
+        ]);
     }
 
     /**
