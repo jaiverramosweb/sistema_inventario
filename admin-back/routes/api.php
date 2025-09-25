@@ -14,6 +14,7 @@ use App\Http\Controllers\Product\ProductController;
 use App\Http\Controllers\Product\ProductWalletController;
 use App\Http\Controllers\Product\ProductWarehouseController;
 use App\Http\Controllers\Puchase\PuchaseController;
+use App\Http\Controllers\Puchase\PuchaseDetailController;
 use App\Http\Controllers\Roles\RoleController;
 use App\Http\Controllers\Sale\RefoundProductController;
 use App\Http\Controllers\Sale\SaleController;
@@ -88,6 +89,7 @@ Route::group([
     Route::get('pushases/config', [PuchaseController::class, 'config']);
     Route::post('pushases/index', [PuchaseController::class, 'index']);
     Route::resource('pushases', PuchaseController::class);
+    Route::resource('pushase-details', PuchaseDetailController::class);
 });
 
 

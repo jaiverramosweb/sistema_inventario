@@ -1,4 +1,6 @@
 <script setup>
+import { ref } from 'vue';
+
 definePage({ meta: { permission: 'edit_purchase' } })
 
 const route = useRoute("purchase-edit-id");
@@ -19,11 +21,14 @@ const importe = ref(0)
 const iva = ref(0)
 const total = ref(0)
 
-
 const pushase_details = ref([])
 
 const warning_purchase = ref(null)
 const success_purchase = ref(null)
+
+const isEditDetailDialog = ref(false)
+const isDeleteDetailDialog = ref(false)
+const detailsSelected = ref(null)
 
 // Busqueda de productos
 const loading = ref(false)
@@ -89,7 +94,7 @@ watch(unit_id, value => {
 
 // Fin busqueda de productos
 
-const addProduct = () => {
+const addProduct = async () => {
   warning_warehouse.value = null
 
   if(!select_product.value){
@@ -114,24 +119,47 @@ const addProduct = () => {
 
   let unit_selected = units.value.find(unit => unit.id == unit_id.value)  
 
-  pushase_details.value.push({
+  const data = {
+    puchase_id: route.params.id,
+    warehouse_id: warehouse_id.value,
     product: select_product.value,
     unit_id: unit_id.value,
     unit: unit_selected.name,
     price_unit: price_unit.value,
     quantity: quantity.value,
     total: Number((price_unit.value * quantity.value).toFixed(2))
-  })
+  }
+  
+  try {
+    const resp = await $api(`pushase-details`, {
+      method: 'POST',
+      body: data,
+      onResponseError({ response }) {
+        warning_purchase.value = response._data.error
+      },
+    })
 
-  setTimeout(() => {
-    calculatePuchaseTotal()
+    pushase_details.value.push(resp.data)
 
-    search.value = ''
-    select_product.value = null
-    unit_id.value = null
-    price_unit.value = 0
-    quantity.value = 0    
-  }, 25);
+    importe.value = resp.immporte
+    iva.value = resp.iva
+    total.value = resp.total
+
+    setTimeout(() => {
+      search.value = ''
+      select_product.value = null
+      unit_id.value = null
+      price_unit.value = 0
+      quantity.value = 0    
+    }, 25);
+
+  } catch (error) {
+    console.log(error)
+  }
+
+  
+
+  console.log(resp)
 
 }
 
@@ -141,12 +169,10 @@ const calculatePuchaseTotal = () => {
   total.value = Number((importe.value + iva.value).toFixed(2))
 }
 
-const deleteItem = (index) => {
-  pushase_details.value.splice(index, 1)
+const deleteItem = (item) => {
+  detailsSelected.value = item
+  isDeleteDetailDialog.value = true
 
-  setTimeout(() => {
-    calculatePuchaseTotal()
-  }, 25);
 }
 
 const update = async () => {
@@ -229,7 +255,7 @@ const show = async () => {
     n_comprobant.value = resp.data.n_comprobant
     description.value = resp.data.description
     pushase_details.value = resp.data.details
-    importe.value = resp.data.importe
+    importe.value = resp.data.immporte
     iva.value = resp.data.iva
     total.value = resp.data.total
 
@@ -237,6 +263,35 @@ const show = async () => {
     console.log(error)
   }
 } 
+
+const editItem = (item) => {
+  detailsSelected.value = item
+  isEditDetailDialog.value = true
+}
+
+const purchaseDetailEdit = (item) => {
+  const data = item.data
+  let index = pushase_details.value.findIndex(detail => detail.id == data.id)
+  if(index != -1){
+    pushase_details.value[index] = data
+  }
+
+  importe.value = item.immporte
+  iva.value = item.iva
+  total.value = item.total  
+}
+
+const purchaseDetailDelete = (item) => {
+  let index = pushase_details.value.findIndex(detail => detail.id == item.id)
+
+  if(index != -1){
+    pushase_details.value.splice(index, 1)
+  }
+
+  importe.value = item.immporte
+  iva.value = item.iva
+  total.value = item.total  
+}
 
 onMounted( () => {
   config()
@@ -458,9 +513,14 @@ onMounted( () => {
                 <td>{{ item.quantity }}</td>
                 <td>$ {{ item.total }}</td>
                 <td>
-                  <IconBtn size="small" @click="deleteItem(index)">
-                    <VIcon icon="ri-delete-bin-line" />
-                  </IconBtn>
+                  <div class="d-flex gap-1">
+                    <IconBtn size="small" @click="editItem(item)">
+                      <VIcon icon="ri-pencil-line" />
+                    </IconBtn>
+                    <IconBtn size="small" @click="deleteItem(item)">
+                      <VIcon icon="ri-delete-bin-line" />
+                    </IconBtn>
+                  </div>
                 </td>
               </tr>
 
@@ -473,6 +533,8 @@ onMounted( () => {
                     placeholder=""
                     type="number"
                     v-model="importe"
+                    style="margin-top: 1rem;"
+                    disabled
                   />
                 </td>
                 <td>
@@ -481,6 +543,8 @@ onMounted( () => {
                     placeholder=""
                     type="number"
                     v-model="iva"
+                    style="margin-top: 1rem;"
+                    disabled
                   />
                 </td>
                 <td>
@@ -489,6 +553,8 @@ onMounted( () => {
                     placeholder=""
                     type="number"
                     v-model="total"
+                    style="margin-top: 1rem;"
+                    disabled
                   />
                 </td>
               </tr>
@@ -514,5 +580,23 @@ onMounted( () => {
         </VBtn>
       </VCol>
     </VRow>
+
+
+    <EditPurchaseDetailDialog 
+      v-if="detailsSelected && isEditDetailDialog"
+      v-model:isDialogVisible="isEditDetailDialog"
+      :purchaseDetailSelected="detailsSelected"
+      :units="units"
+      :puchase_id="route.params.id"
+      @editPurchaseDetail="purchaseDetailEdit"
+    />
+
+    <DeletePurchaseDetailDialog 
+    v-if="detailsSelected && isDeleteDetailDialog"
+      v-model:isDialogVisible="isDeleteDetailDialog"
+      :detailSelected="detailsSelected"
+      @deleteDetail="purchaseDetailDelete"
+    />
+
   </div>
 </template>

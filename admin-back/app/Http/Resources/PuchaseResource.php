@@ -36,24 +36,7 @@ class PuchaseResource extends JsonResource
             'description' => $this->description,
             'created_at' => $this->created_at->format("Y-m-d h:i A"),
             'details' => $this->puchaseDetails->map(function ($detail) {
-                return [
-                    'id' => $detail->id,
-                    'product_id' => $detail->product_id,
-                    'product' => [
-                        'title' => $detail->product->title,
-                        'sku' => $detail->product->sku,
-                    ],
-                    'unit_id' => $detail->unit_id,
-                    'unit' => $detail->unit->name,
-                    'quantity' => $detail->quantity,
-                    'price_unit' => $detail->price_unit,
-                    'total' => $detail->total,
-                    'state' => $detail->state,
-                    'user_delivery' => $detail->user_delivery,
-                    'date_delivery' => $detail->date_delivery,
-                    'description' => $detail->description,
-                    'created_at' => $detail->created_at->format("Y-m-d h:i A")
-                ];
+                return new PurchaseDetailResource($detail);
             }),
         ];
     }
