@@ -293,6 +293,35 @@ const purchaseDetailDelete = (item) => {
   total.value = item.total  
 }
 
+const purchaseDetailAttention = async (item) => {
+  try {
+    const data = {
+      purchace_id: route.params.id,
+      purchace_detail_id: item.id
+    }
+
+    const resp = await $api(`pushase-details/attention`, {
+      method: 'POST',
+      body: data,
+      onResponseError({ response }) {
+        warning_purchase.value = response._data.error
+      },
+    })
+
+    if(resp.status == 200){
+      const index = pushase_details.value.findIndex(detail => detail.id == resp.data.id)
+
+      if(index != -1){
+        pushase_details.value[index].state = resp.data
+      }
+    }
+
+
+  } catch (error) {
+    console.log(error)
+  }
+}
+
 onMounted( () => {
   config()
   show()
@@ -485,6 +514,9 @@ onMounted( () => {
             <thead>
               <tr>
                 <th class="text-uppercase">
+                  E. Entrega
+                </th>
+                <th class="text-uppercase">
                   Producto
                 </th>
                 <th class="text-uppercase">
@@ -507,17 +539,33 @@ onMounted( () => {
 
             <tbody>
               <tr v-for="(item, index) in pushase_details" :key="index">
+                <td>
+                  <VChip color="error" v-if="item.state == 1">
+                    Pendiente
+                  </VChip>
+                  <VChip color="success" v-if="item.state == 2">
+                    Entregado
+                  </VChip>
+                </td>
                 <td>{{ item.product.title }}</td>
                 <td>{{ item.unit }}</td>
-                <td>$ {{ item.price_unit }}</td>
+                <td style="white-space: nowrap">$ {{ item.price_unit }}</td>
                 <td>{{ item.quantity }}</td>
-                <td>$ {{ item.total }}</td>
+                <td style="white-space: nowrap">$ {{ item.total }}</td>
                 <td>
                   <div class="d-flex gap-1">
+                    <VBtn
+                      v-if="item.state == 1"
+                      color="primary"
+                      icon="ri-contract-line"
+                      variant="text"
+                      @click="purchaseDetailAttention(item)"
+                    />
+
                     <IconBtn size="small" @click="editItem(item)">
                       <VIcon icon="ri-pencil-line" />
                     </IconBtn>
-                    <IconBtn size="small" @click="deleteItem(item)">
+                    <IconBtn size="small" @click="deleteItem(item)" v-if="item.state != 2">
                       <VIcon icon="ri-delete-bin-line" />
                     </IconBtn>
                   </div>

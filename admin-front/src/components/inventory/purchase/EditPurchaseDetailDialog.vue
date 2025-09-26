@@ -178,6 +178,7 @@ const dialogVisibleUpdate = (val) => {
                 label="Cantidad"
                 type="number"
                 placeholder="10"
+                :disabled="props.purchaseDetailSelected.state != 1 ? true : false"
                 v-model="quantity"
               />
             </VCol>

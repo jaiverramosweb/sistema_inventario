@@ -89,6 +89,7 @@ Route::group([
     Route::get('pushases/config', [PuchaseController::class, 'config']);
     Route::post('pushases/index', [PuchaseController::class, 'index']);
     Route::resource('pushases', PuchaseController::class);
+    Route::post('pushase-details/attention', [PuchaseDetailController::class, 'attention']);
     Route::resource('pushase-details', PuchaseDetailController::class);
 });
 

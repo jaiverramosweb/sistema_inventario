@@ -54,6 +54,7 @@ declare module 'vue' {
     DeleteProductDialog: typeof import('./src/components/inventory/product/DeleteProductDialog.vue')['default']
     DeleteProviderDialog: typeof import('./src/components/inventory/configuration/providers/DeleteProviderDialog.vue')['default']
     DeletePurchaseDetailDialog: typeof import('./src/components/inventory/purchase/DeletePurchaseDetailDialog.vue')['default']
+    DeletePurchaseDialog: typeof import('./src/components/inventory/purchase/DeletePurchaseDialog.vue')['default']
     DeleteRoleDialog: typeof import('./src/components/inventory/role/DeleteRoleDialog.vue')['default']
     DeleteSucursalDialog: typeof import('./src/components/inventory/configuration/sucursales/DeleteSucursalDialog.vue')['default']
     DeleteUnitComversionDialog: typeof import('./src/components/inventory/configuration/unit_conversions/DeleteUnitComversionDialog.vue')['default']

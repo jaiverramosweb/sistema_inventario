@@ -131,6 +131,18 @@ class PuchaseController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        $purchase = Puchase::findOrFail($id);
+        if($purchase->state != 1){
+            return response()->json([
+            'status' => 403,
+            'message' => 'No puedes eliminar esta compra por que ya a iniciado su proceso de entrega'
+        ]);
+        }
+        
+        $purchase->delete();
+
+        return response()->json([
+            'status' => 200
+        ]);
     }
 }

@@ -11,7 +11,7 @@ const search = ref('')
 const router = useRouter()
 
 const isShowDialogDelete = ref(false)
-const productSelectedDelete = ref(null)
+const purchaseSelectedDelete = ref(null)
 
 const data = ref([])
 const warehouses = ref([])
@@ -97,21 +97,15 @@ const editItem = (item) => {
 }
 
 const deleteItem = (item) => {
-  productSelectedDelete.value = item
+  purchaseSelectedDelete.value = item
   isShowDialogDelete.value = true
 }
 
 const deleteNew = (item) => {
-  let backup = data.value
-  data.value = []
-  let INDEX = backup.findIndex(pro => pro.id == item.id)
+  let INDEX = data.value.findIndex(pro => pro.id == item.id)
   if (INDEX != -1) {
-    backup.splice(INDEX, 1)
+    data.value.splice(INDEX, 1)
   }
-
-  setTimeout(() => {
-    data.value = backup
-  }, 50)
 }
 
 const downloadPdf = (item) => {
@@ -309,7 +303,7 @@ watch(currentPage, (page) => {
                 <IconBtn size="small" @click="editItem(item)">
                   <VIcon icon="ri-pencil-line" />
                 </IconBtn>
-                <IconBtn size="small" @click="deleteItem(item)">
+                <IconBtn size="small" @click="deleteItem(item)" v-if="item.state == 1">
                   <VIcon icon="ri-delete-bin-line" />
                 </IconBtn>
               </div>
@@ -325,7 +319,10 @@ watch(currentPage, (page) => {
 
     </VCard>
 
-    <!-- <DeleteUserDialog v-if="productSelectedDelete && isShowDialogDelete"
-      v-model:isDialogVisible="isShowDialogDelete" :productSelected="productSelectedDelete" @deleteProduct="deleteNew" /> -->
+    <DeletePurchaseDialog 
+    v-if="purchaseSelectedDelete && isShowDialogDelete"
+      v-model:isDialogVisible="isShowDialogDelete" 
+      :purchaseSelected="purchaseSelectedDelete" 
+      @deletePurchase="deleteNew" />
   </div>
 </template>
