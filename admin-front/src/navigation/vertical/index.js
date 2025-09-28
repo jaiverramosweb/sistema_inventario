@@ -128,15 +128,15 @@ export default [
     children: [
       {
         title: 'Registrar',
-        to: 'second-page',
+        to: 'transport-add',
         permission: 'register_transport',
-        icon: { icon: 'ri-computer-line' },
+        icon: { icon: 'ri-radio-button-line' },
       },
       {
         title: 'Listado',
         to: 'second-page',
         permission: 'list_transport',
-        icon: { icon: 'ri-bar-chart-line' },
+        icon: { icon: 'ri-radio-button-line' },
       },
     ],
   },

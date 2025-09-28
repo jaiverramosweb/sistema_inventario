@@ -20,6 +20,8 @@ use App\Http\Controllers\Sale\RefoundProductController;
 use App\Http\Controllers\Sale\SaleController;
 use App\Http\Controllers\Sale\SaleDetailController;
 use App\Http\Controllers\Sale\SalePaimentController;
+use App\Http\Controllers\Transport\TransportController;
+use App\Http\Controllers\Transport\TransportDetailController;
 use App\Http\Controllers\User\UserController;
 
 // Route::get('/user', function (Request $request) {
@@ -91,6 +93,11 @@ Route::group([
     Route::resource('pushases', PuchaseController::class);
     Route::post('pushase-details/attention', [PuchaseDetailController::class, 'attention']);
     Route::resource('pushase-details', PuchaseDetailController::class);
+
+    Route::get('transports/config', [TransportController::class, 'config']);
+    Route::post('transports/index', [TransportController::class, 'index']);
+    Route::resource('transports', TransportController::class);
+    Route::resource('transport-details', TransportDetailController::class);
 });
 
 
