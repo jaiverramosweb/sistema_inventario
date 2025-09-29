@@ -99,7 +99,7 @@ const deleteItem = (item) => {
 }
 
 const deleteNew = (item) => {
-  let INDEX = data.value.findIndex(pro => pro.id == item.id)
+  let INDEX = data.value.findIndex(transport => transport.id == item.id)
   if (INDEX != -1) {
     data.value.splice(INDEX, 1)
   }
@@ -275,10 +275,19 @@ watch(currentPage, (page) => {
                 Solicitud
               </VChip>
               <VChip color="warning" v-if="item.state == 2">
-                Parcial
+                Revisión salida
               </VChip>
-              <VChip color="success" v-if="item.state == 3">
-                Completo
+              <VChip color="warning" v-if="item.state == 3">
+                Salida
+              </VChip>
+              <VChip color="primary" v-if="item.state == 4">
+                Llegada
+              </VChip>
+              <VChip color="primary" v-if="item.state == 5">
+                Revisión llegada
+              </VChip>
+              <VChip color="success" v-if="item.state == 6">
+                Entrega
               </VChip>
             </td>
             <td>
@@ -297,7 +306,7 @@ watch(currentPage, (page) => {
           </tr>
         </tbody>
       </VTable>
-
+      
       <VPagination
         v-model="currentPage"
         :length="totalPage"
@@ -305,10 +314,10 @@ watch(currentPage, (page) => {
 
     </VCard>
 
-    <!-- <DeletePurchaseDialog 
+    <DeleteTransportDialog 
     v-if="transportSelectedDelete && isShowDialogDelete"
       v-model:isDialogVisible="isShowDialogDelete" 
-      :purchaseSelected="transportSelectedDelete" 
-      @deletePurchase="deleteNew" /> -->
+      :transportSelected="transportSelectedDelete" 
+      @deleteTransport="deleteNew" />
   </div>
 </template>

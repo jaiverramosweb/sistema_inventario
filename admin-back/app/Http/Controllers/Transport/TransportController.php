@@ -113,7 +113,7 @@ class TransportController extends Controller
     {
         $transport = Transport::findOrFail($id);
 
-        if($request->state >= 3 && $transport->state != 6){
+        if($request->state >= 3 && $transport->state < 3){
             $n_details = TransportDetail::where('transport_id', $id)->count();
             $n_state_exit = TransportDetail::where('transport_id', $id)->where('state', 2)->count();
 

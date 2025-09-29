@@ -98,6 +98,8 @@ Route::group([
     Route::post('transports/index', [TransportController::class, 'index']);
     Route::resource('transports', TransportController::class);
     Route::resource('transport-details', TransportDetailController::class);
+    Route::post('transport-details/attention-exit', [TransportDetailController::class, 'attentionExit']);
+    Route::post('transport-details/attention-delivery', [TransportDetailController::class, 'attentionDelivery']);
 });
 
 

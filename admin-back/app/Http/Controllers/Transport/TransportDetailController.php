@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Transport;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\TransportDetailResource;
+use App\Models\ProductWarehouse;
 use App\Models\Transport;
 use App\Models\TransportDetail;
 use Illuminate\Http\Request;
@@ -54,11 +55,6 @@ class TransportDetailController extends Controller
             'iva' => $newIVA,
             'total' => $newTotal
         ]);
-    }
-
-    public function show(string $id)
-    {
-        //
     }
 
     /**
@@ -114,6 +110,95 @@ class TransportDetailController extends Controller
             'total' => $newTotal,
             'impote' => $newImport,
             'iva' => $newIVA
+        ]);
+    }
+
+    public function attentionExit(Request $request)
+    {
+        date_default_timezone_set('America/Bogota');
+
+        $transport_detail_id = $request->transport_detail_id;
+        $detail = TransportDetail::findOrFail($transport_detail_id);
+        $transport = $detail->transport;
+
+        if($detail->state != 1){
+            return response()->json([
+                'status' => 403,
+                'message' => 'No se puede dar salida a este producto por que ya se atendio'
+            ]);
+        }
+
+        $product_warehouse = ProductWarehouse::where('product_id', $detail->product_id)
+            ->where('unit_id', $detail->unit_id)
+            ->where('warehouse_id', $transport->warehause_start_id)
+            ->first();
+
+        if($product_warehouse->stock < $detail->quantity){
+            return response()->json([
+                'status' => 403,
+                'message' => 'No se puede atender la cantidad solicitada por que unicamente tenemos ' . $product_warehouse->stock . ' unidades'
+            ]);
+        }
+
+        $product_warehouse->update([
+            'stock' => $product_warehouse->stock - $detail->quantity
+        ]);
+
+        $detail->update([
+            'state' => 2,
+            'user_exit_id' => auth('api')->user()->id,
+            'date_exit' => now()
+        ]);
+
+        return response()->json([
+            'status' => 200,
+            'data' => new TransportDetailResource($detail)
+        ]);
+    }
+
+    public function attentionDelivery(Request $request)
+    {
+        date_default_timezone_set('America/Bogota');
+
+        $transport_detail_id = $request->transport_detail_id;
+        $detail = TransportDetail::findOrFail($transport_detail_id);
+        $transport = $detail->transport;
+
+        if($detail->state == 3){
+            return response()->json([
+                'status' => 403,
+                'message' => 'No se puede dar salida a este producto por que ya se atendio'
+            ]);
+        }
+
+        $product_warehouse = ProductWarehouse::where('product_id', $detail->product_id)
+            ->where('unit_id', $detail->unit_id)
+            ->where('warehouse_id', $transport->warehause_end_id)
+            ->first();
+
+        if(!$product_warehouse){
+            ProductWarehouse::create([
+                'product_id' => $detail->product_id,
+                'unit_id' => $detail->unit_id,
+                'warehouse_id' => $transport->warehause_end_id,
+                'unit_id' => $detail->unit_id,
+                'stock' => $detail->quantity
+            ]);
+        }
+
+        $product_warehouse->update([
+            'stock' => $product_warehouse->stock + $detail->quantity
+        ]);
+
+        $detail->update([
+            'state' => 3,
+            'user_delivery_id' => auth('api')->user()->id,
+            'date_delivery' => now()
+        ]);
+
+        return response()->json([
+            'status' => 200,
+            'data' => new TransportDetailResource($detail)
         ]);
     }
 

@@ -297,9 +297,64 @@ const show = async () => {
   }
 }
 
-const transportDetailExit = async (item) => {}
+const transportDetailExit = async (item) => {
+  warning_transport.value = null
 
-const transportDetailAdd = async (item) => {}
+  try{
+    const resp = await $api(`transport-details/attention-exit`, {
+      method: 'POST',
+      body: {
+        transport_detail_id: item.id
+      },
+      onResponseError({ response }) {
+        warning_transport.value = response._data.error
+      },
+    })
+
+    if(resp.status == 203){
+      warning_transport.value = resp.message
+    } else {
+      let INDEX = transport_details.value.findIndex(detail => detail.id == resp.data.id)
+  
+      if(INDEX != -1){
+        transport_details.value[INDEX] = resp.data
+      }
+    }
+
+
+  }catch (error) {
+    console.log(error)
+  }
+}
+
+const transportDetailAdd = async (item) => {
+  warning_transport.value = null
+
+  try{
+    const resp = await $api(`transport-details/attention-delivery`, {
+      method: 'POST',
+      body: {
+        transport_detail_id: item.id
+      },
+      onResponseError({ response }) {
+        warning_transport.value = response._data.error
+      },
+    })
+
+    if(resp.status == 203){
+      warning_transport.value = resp.message
+    } else {
+      let INDEX = transport_details.value.findIndex(detail => detail.id == resp.data.id)
+  
+      if(INDEX != -1){
+        transport_details.value[INDEX] = resp.data
+      }
+    }
+
+  }catch (error) {
+    console.log(error)
+  }
+}
 
 const editItem = (item) => {
   detailsSelected.value = item
@@ -416,7 +471,7 @@ onMounted( () => {
 
               <VCol cols="3">
                 <VSelect
-                  :items="[{id: 1, name: 'Pendiente'}, {id: 2, name: 'Revisión salida'}, {id: 3, name: 'Salida'}, {id: 4, name: 'Llegada'}, {id: 5, name: 'Revisión llegada'}, {id: 6, name: 'Entrega'}]"
+                  :items="[{id: 1, name: 'Solicitud'}, {id: 2, name: 'Revisión salida'}, {id: 3, name: 'Salida'}, {id: 4, name: 'Llegada'}, {id: 5, name: 'Revisión llegada'}, {id: 6, name: 'Entrega'}]"
                   label="Estado"
                   placeholder="-- Seleccione --"
                   v-model="state"
@@ -556,7 +611,7 @@ onMounted( () => {
                     Salida
                   </VChip>
                   <VChip color="success" v-if="item.state == 3">
-                    Entrada
+                    Entregado
                   </VChip>
                 </td>
                 <td>{{ item.product.title }}</td>
@@ -576,7 +631,7 @@ onMounted( () => {
 
                   <!-- Dar entrada a los productos -->
                   <VBtn
-                    v-if="item.state >= 3"
+                    v-if="item.state== 2"
                     color="primary"
                     icon="ri-file-list-3-line"
                     variant="text"
