@@ -43,6 +43,8 @@ declare module 'vue-router/auto-routes' {
     'sales-list': RouteRecordInfo<'sales-list', '/sales/list', Record<never, never>, Record<never, never>>,
     'second-page': RouteRecordInfo<'second-page', '/second-page', Record<never, never>, Record<never, never>>,
     'transport-add': RouteRecordInfo<'transport-add', '/transport/add', Record<never, never>, Record<never, never>>,
+    'transport-edit-id': RouteRecordInfo<'transport-edit-id', '/transport/edit/:id', { id: ParamValue<true> }, { id: ParamValue<false> }>,
+    'transport-list': RouteRecordInfo<'transport-list', '/transport/list', Record<never, never>, Record<never, never>>,
     'users': RouteRecordInfo<'users', '/users', Record<never, never>, Record<never, never>>,
   }
 }

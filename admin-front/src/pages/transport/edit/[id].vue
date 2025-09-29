@@ -1,32 +1,29 @@
 <script setup>
-definePage({ meta: { permission: 'edit_purchase' } })
+definePage({ meta: { permission: 'edit_transport' } })
 
-const route = useRoute("purchase-edit-id");
+const route = useRoute('transport-edit-id')
+
 const user = localStorage.getItem("user") ? JSON.parse(localStorage.getItem("user")) : null
 
 const units = ref([])
 const warehouses = ref([])
-const providers = ref([])
+
 const quantity = ref(0)
 const price_unit = ref(0)
-const warehouse_id = ref(null)
-const date_emission = ref(null)
-const type_comprobant = ref(null)
-const n_comprobant = ref(null)
-const provider_id = ref(null)
+const warehause_start_id = ref(null)
+const warehause_end_id = ref(null)
+const date_emision = ref(null)
+
 const description = ref(null)
-const importe = ref(0)
+const impote = ref(0)
 const iva = ref(0)
 const total = ref(0)
+const state = ref(1)
 
-const pushase_details = ref([])
+const transport_details = ref([])
 
-const warning_purchase = ref(null)
-const success_purchase = ref(null)
-
-const isEditDetailDialog = ref(false)
-const isDeleteDetailDialog = ref(false)
-const detailsSelected = ref(null)
+const warning_transport = ref(null)
+const success_transport = ref(null)
 
 // Busqueda de productos
 const loading = ref(false)
@@ -37,6 +34,10 @@ const select_product = ref(null)
 const items = ref([])
 
 const warning_warehouse = ref(null)
+
+const isEditDetailDialog = ref(false)
+const isDeleteDetailDialog = ref(false)
+const detailsSelected = ref(null)
 
 const querySelections = query => {
   loading.value = true
@@ -65,8 +66,20 @@ watch(search, query => {
 
   warning_warehouse.value = null
 
-  if(warehouse_id.value == null){
-    warning_warehouse.value = 'Por favor, seleccione un almacén para buscar productos.'
+  if(warehause_start_id.value == null){
+    warning_warehouse.value = 'Por favor, seleccione un almacén de salida.'
+    
+    return
+  }
+
+  if(warehause_end_id.value == null){
+    warning_warehouse.value = 'Por favor, seleccione un almacén de entrega.'
+
+    return
+  }
+
+  if(warehause_start_id.value == warehause_end_id.value){
+    warning_warehouse.value = 'Por favor, seleccione almacenes diferentes.'
 
     return
   }
@@ -79,17 +92,33 @@ watch(search, query => {
 })
 
 watch(select_product, value => {
-  console.log(value)
+  if(value){
+    units.value = value.warehouses.filter(warehouse => warehouse.warehouse_id == warehause_start_id.value).map(wh => {
+      return {
+        id: wh.unit_id,
+        name: wh.unit,
+      }
+    })
+  }
 })
 
-watch(warehouse_id, value => {
-  console.log(value)
+watch(warehause_start_id, value => {
+
+  if(select_product.value){
+    units.value = select_product.value.warehouses.filter(warehouse => warehouse.warehouse_id == value).map(wh => {
+      return {
+        id: wh.unit_id,
+        name: wh.unit,
+      }
+    })
+
+  }
+
 })
 
 watch(unit_id, value => {
  console.log(value)
 })
-
 // Fin busqueda de productos
 
 const addProduct = async () => {
@@ -115,11 +144,10 @@ const addProduct = async () => {
     return
   }
 
-  let unit_selected = units.value.find(unit => unit.id == unit_id.value)  
+  let unit_selected = units.value.find(unit => unit.id == unit_id.value)
 
   const data = {
-    puchase_id: route.params.id,
-    warehouse_id: warehouse_id.value,
+    transport_id: route.params.id,
     product: select_product.value,
     unit_id: unit_id.value,
     unit: unit_selected.name,
@@ -127,44 +155,44 @@ const addProduct = async () => {
     quantity: quantity.value,
     total: Number((price_unit.value * quantity.value).toFixed(2))
   }
-  
+
   try {
-    const resp = await $api(`pushase-details`, {
+
+    const resp = await $api(`transport-details`, {
       method: 'POST',
       body: data,
       onResponseError({ response }) {
-        warning_purchase.value = response._data.error
+        warning_transport.value = response._data.error
       },
     })
 
-    pushase_details.value.push(resp.data)
+    if(resp.status == 203){
+      warning_transport.value = resp.message
+    } else {
+      transport_details.value.push(resp.data)
+      impote.value = resp.impote
+      iva.value = resp.iva
+      total.value = resp.total
+  
+      setTimeout(() => {
+        search.value = ''
+        select_product.value = null
+        unit_id.value = null
+        price_unit.value = 0
+        quantity.value = 0    
+      }, 25);
+    }
 
-    importe.value = resp.immporte
-    iva.value = resp.iva
-    total.value = resp.total
-
-    setTimeout(() => {
-      search.value = ''
-      select_product.value = null
-      unit_id.value = null
-      price_unit.value = 0
-      quantity.value = 0    
-    }, 25);
 
   } catch (error) {
     console.log(error)
   }
-
-  
-
-  console.log(resp)
-
 }
 
-const calculatePuchaseTotal = () => {
-  importe.value = Number(pushase_details.value.reduce((acc, item) => acc + item.total, 0).toFixed(2))
-  iva.value = Number((importe.value * 0.18).toFixed(2))
-  total.value = Number((importe.value + iva.value).toFixed(2))
+const calculateTransportTotal = () => {
+  impote.value = Number(transport_details.value.reduce((acc, item) => acc + item.total, 0).toFixed(2))
+  iva.value = Number((impote.value * 0.18).toFixed(2))
+  total.value = Number((impote.value + iva.value).toFixed(2))
 }
 
 const deleteItem = (item) => {
@@ -174,43 +202,52 @@ const deleteItem = (item) => {
 }
 
 const update = async () => {
-  warning_purchase.value = null
-  success_purchase.value = null
+  warning_transport.value = null
+  success_transport.value = null
 
   try {
 
-    if(!provider_id.value){
-      warning_purchase.value = 'Es necesario seleccionar un proveedor'
+    if(!warehause_start_id.value){
+      warning_transport.value = 'Es necesario seleccionar un almacén de salida'
       return
     }
 
-    if(!type_comprobant.value){
-      warning_purchase.value = 'Es necesario seleccionar un tipo de comprobante'
+    if(!warehause_end_id.value){
+      warning_transport.value = 'Es necesario seleccionar un almacén de entrega'
       return
     }
 
-    if(!n_comprobant.value){
-      warning_purchase.value = 'Es necesario digitar un N° de comprobante'
+    if(warehause_start_id.value == warehause_end_id.value){
+      warning_transport.value = 'Es necesario seleccionar almacenes diferentes'
+      return
+    }
+
+    if(transport_details.value.length == 0){
+      warning_transport.value = 'Es necesario agregar al menos un producto a la compra'
       return
     }
 
     const data = {
-      provider_id: provider_id.value,
-      type_comprobant: type_comprobant.value,
-      n_comprobant: n_comprobant.value,
+      warehause_start_id: warehause_start_id.value,
+      warehause_end_id: warehause_end_id.value,
       description: description.value,
+      state: state.value
     }
 
-    const resp = await $api(`pushases/${route.params.id}`, {
+    const resp = await $api(`transports/${route.params.id}`, {
       method: 'PATCH',
       body: data,
       onResponseError({ response }) {
-        warning_purchase.value = response._data.error
+        warning_transport.value = response._data.error
       },
     })
 
-    if(resp.status == 201){
-      success_purchase.value = 'Compra se a actualizado correctamente'
+    if(resp.status == 203){
+      warning_transport.value = resp.message
+    }
+
+    if(resp.status == 200){
+      success_transport.value = 'Solicitud de transporte editada correctamente'
     }
 
   } catch (error) {
@@ -220,17 +257,16 @@ const update = async () => {
 
 const config = async () => {
   try {
-    const resp = await $api('pushases/config', { 
+    const resp = await $api('transports/config', { 
       method: 'get',
       onResponseError({ response }) {
         console.log(response)
       },
     })
 
-    units.value = resp.units
+    // units.value = resp.units
     warehouses.value = resp.warehouses
-    providers.value = resp.providers
-    // date_emission.value = resp.today
+    // date_emision.value = resp.today
 
   } catch (error) {
     console.log(error)
@@ -238,91 +274,68 @@ const config = async () => {
 }
 
 const show = async () => {
-  try{
-    const resp = await $api(`pushases/${route.params.id}`, { 
-      method: 'get',
+  try {
+    const resp = await $api(`transports/${route.params.id}`, {
+      method: 'GET',
       onResponseError({ response }) {
-        console.log(response)
+        warning_transport.value = response._data.error
       },
     })
 
-    warehouse_id.value = resp.data.warehouse_id
-    provider_id.value = resp.data.provider_id
-    date_emission.value = resp.data.date_emition
-    type_comprobant.value = resp.data.type_comprobant
-    n_comprobant.value = resp.data.n_comprobant
+    warehause_start_id.value = resp.data.warehause_start_id
+    warehause_end_id.value = resp.data.warehause_end_id
+    date_emision.value = resp.data.date_emision
     description.value = resp.data.description
-    pushase_details.value = resp.data.details
-    importe.value = resp.data.immporte
+    state.value = resp.data.state
+    transport_details.value = resp.data.details
+    impote.value = resp.data.impote
     iva.value = resp.data.iva
     total.value = resp.data.total
 
   } catch (error) {
     console.log(error)
   }
-} 
+}
+
+const transportDetailExit = async (item) => {}
+
+const transportDetailAdd = async (item) => {}
 
 const editItem = (item) => {
   detailsSelected.value = item
   isEditDetailDialog.value = true
 }
 
-const purchaseDetailEdit = (item) => {
-  const data = item.data
-  let index = pushase_details.value.findIndex(detail => detail.id == data.id)
-  if(index != -1){
-    pushase_details.value[index] = data
+const editTransportDetail = (item) => {
+  let DATA = item.data
+
+  let INDEX = transport_details.value.findIndex(detail => detail.id == DATA.id)
+
+  if(INDEX != -1){
+    transport_details.value[INDEX] = DATA
   }
 
-  importe.value = item.immporte
+  impote.value = item.impote
   iva.value = item.iva
-  total.value = item.total  
+  total.value = item.total
 }
 
-const purchaseDetailDelete = (item) => {
-  let index = pushase_details.value.findIndex(detail => detail.id == item.id)
+const transportDetailDelete = (item) => {
 
-  if(index != -1){
-    pushase_details.value.splice(index, 1)
+  let INDEX = transport_details.value.findIndex(detail => detail.id == item.id)
+
+  if(INDEX != -1){
+    transport_details.value.splice(index, 1)
   }
 
-  importe.value = item.immporte
+  impote.value = item.impote
   iva.value = item.iva
-  total.value = item.total  
-}
-
-const purchaseDetailAttention = async (item) => {
-  try {
-    const data = {
-      purchace_id: route.params.id,
-      purchace_detail_id: item.id
-    }
-
-    const resp = await $api(`pushase-details/attention`, {
-      method: 'POST',
-      body: data,
-      onResponseError({ response }) {
-        warning_purchase.value = response._data.error
-      },
-    })
-
-    if(resp.status == 200){
-      const index = pushase_details.value.findIndex(detail => detail.id == resp.data.id)
-
-      if(index != -1){
-        pushase_details.value[index].state = resp.data
-      }
-    }
-
-
-  } catch (error) {
-    console.log(error)
-  }
+  total.value = item.total
 }
 
 onMounted( () => {
-  config()
   show()
+  config()
 })
 
 </script>
@@ -332,10 +345,10 @@ onMounted( () => {
     <div class="d-flex flex-wrap justify-space-between gap-4 mb-6">
       <div class="d-flex flex-column justify-center">
         <h4 class="text-h4 mb-1">
-          🗃️ Editar una compra
+          🚚 Editar un transporte
         </h4>
         <p class="text-body-1 mb-0">
-          Realizar edición de la compra de productos
+          Realizar un transporte entre almacenes
         </p>
       </div>
     </div>
@@ -367,54 +380,52 @@ onMounted( () => {
               <VCol cols="3">
                 <VSelect
                   :items="warehouses"
-                  v-model="warehouse_id"
-                  label="Almacenes"
+                  v-model="warehause_start_id"
+                  label="Almacenes de salida"
                   placeholder="-- Seleccione --"
                   item-title="name"
                   item-value="id"
                   eagerItem
-                  disabled
+                  :disabled="state >= 3"
                 />
               </VCol>
 
               <VCol cols="3">
                 <VSelect
-                  :items="providers"
-                  v-model="provider_id"
-                  label="Proveedor"
+                  :items="warehouses"
+                  v-model="warehause_end_id"
+                  label="Almacenes de entrega"
                   placeholder="-- Seleccione --"
                   item-title="name"
                   item-value="id"
                   eagerItem
+                  :disabled="state >= 3"
                 />
-              </VCol>
+              </VCol>              
+
             </VRow>
             <VRow>
               <VCol cols="3">
                 <AppDateTimePicker
                   label="Fecha de emición"
                   placeholder="Select date"
-                  v-model="date_emission"
+                  v-model="date_emision"
                   disabled
                 />
               </VCol>
+
               <VCol cols="3">
                 <VSelect
-                  :items="['Factura Electrónica', 'Nota de Credito', 'Nota de Debito', 'Recibo por Honorarios', 'Guia de Ramisión']"
-                  label="Tipo de comprobantes"
+                  :items="[{id: 1, name: 'Pendiente'}, {id: 2, name: 'Revisión salida'}, {id: 3, name: 'Salida'}, {id: 4, name: 'Llegada'}, {id: 5, name: 'Revisión llegada'}, {id: 6, name: 'Entrega'}]"
+                  label="Estado"
                   placeholder="-- Seleccione --"
-                  v-model="type_comprobant"
+                  v-model="state"
+                  item-title="name"
+                  item-value="id"
                   eagerItem
                 />
               </VCol>
-              <VCol cols="3">
-                <VTextField
-                  label="N° comprobante"
-                  placeholder=""
-                  type="Number"
-                  v-model="n_comprobant"
-                />
-              </VCol>
+
               <VCol cols="3">
                 <VTextarea
                   label="Descripción"
@@ -506,7 +517,7 @@ onMounted( () => {
       <VCol cols="12">
         <VCard
           class="mb-6"
-          title="Detalle de la Compra"
+          title="Detalle de la solicitud de transporte"
         >
           <VTable>
             <thead>
@@ -536,51 +547,62 @@ onMounted( () => {
             </thead>
 
             <tbody>
-              <tr v-for="(item, index) in pushase_details" :key="index">
+              <tr v-for="(item, index) in transport_details" :key="index">
                 <td>
                   <VChip color="error" v-if="item.state == 1">
-                    Pendiente
+                    Solicitud
                   </VChip>
-                  <VChip color="success" v-if="item.state == 2">
-                    Entregado
+                  <VChip color="primary" v-if="item.state == 2">
+                    Salida
+                  </VChip>
+                  <VChip color="success" v-if="item.state == 3">
+                    Entrada
                   </VChip>
                 </td>
                 <td>{{ item.product.title }}</td>
                 <td>{{ item.unit }}</td>
-                <td style="white-space: nowrap">$ {{ item.price_unit }}</td>
+                <td>$ {{ item.price_unit }}</td>
                 <td>{{ item.quantity }}</td>
-                <td style="white-space: nowrap">$ {{ item.total }}</td>
+                <td>$ {{ item.total }}</td>
                 <td>
-                  <div class="d-flex gap-1">
-                    <VBtn
-                      v-if="item.state == 1"
-                      color="primary"
-                      icon="ri-contract-line"
-                      variant="text"
-                      @click="purchaseDetailAttention(item)"
-                    />
+                  <!-- Dar salida a los productos -->
+                  <VBtn
+                    v-if="item.state == 1"
+                    color="primary"
+                    icon="ri-contract-line"
+                    variant="text"
+                    @click="transportDetailExit(item)"
+                  />
 
-                    <IconBtn size="small" @click="editItem(item)">
-                      <VIcon icon="ri-pencil-line" />
-                    </IconBtn>
-                    <IconBtn size="small" @click="deleteItem(item)" v-if="item.state != 2">
-                      <VIcon icon="ri-delete-bin-line" />
-                    </IconBtn>
-                  </div>
+                  <!-- Dar entrada a los productos -->
+                  <VBtn
+                    v-if="item.state >= 3"
+                    color="primary"
+                    icon="ri-file-list-3-line"
+                    variant="text"
+                    @click="transportDetailAdd(item)"
+                  />
+
+                  <IconBtn size="small" @click="editItem(item)">
+                    <VIcon icon="ri-pencil-line" />
+                  </IconBtn>
+                    
+                  <IconBtn size="small" @click="deleteItem(item)">
+                    <VIcon icon="ri-delete-bin-line" />
+                  </IconBtn>
                 </td>
               </tr>
 
               <tr>
                 <td></td>
                 <td></td>
+                <td></td>
                 <td>
                   <VTextField
-                    label="Importe"
+                    label="impote"
                     placeholder=""
                     type="number"
-                    v-model="importe"
-                    style="margin-top: 1rem;"
-                    disabled
+                    v-model="impote"
                   />
                 </td>
                 <td>
@@ -589,8 +611,6 @@ onMounted( () => {
                     placeholder=""
                     type="number"
                     v-model="iva"
-                    style="margin-top: 1rem;"
-                    disabled
                   />
                 </td>
                 <td>
@@ -599,8 +619,6 @@ onMounted( () => {
                     placeholder=""
                     type="number"
                     v-model="total"
-                    style="margin-top: 1rem;"
-                    disabled
                   />
                 </td>
               </tr>
@@ -609,40 +627,38 @@ onMounted( () => {
         </VCard>
       </VCol>
 
-      <VCol cols="12" v-if="warning_purchase">
+      <VCol cols="12" v-if="warning_transport">
         <VAlert border="start" border-color="warning">
-          {{ warning_purchase }}
+          {{ warning_transport }}
         </VAlert>
       </VCol>
-      <VCol cols="12" v-if="success_purchase">
+      <VCol cols="12" v-if="success_transport">
         <VAlert border="start" border-color="success">
-          {{ success_purchase }}
+          {{ success_transport }}
         </VAlert>
       </VCol>
 
       <VCol cols="12">
         <VBtn block class="mt-3" @click="update">
-          Editar una compra
+          Editar una solicitud
         </VBtn>
       </VCol>
     </VRow>
 
-
-    <EditPurchaseDetailDialog 
-      v-if="detailsSelected && isEditDetailDialog"
+    <EditTransportDetailDialog 
+      v-if="isEditDetailDialog && detailsSelected"
       v-model:isDialogVisible="isEditDetailDialog"
-      :purchaseDetailSelected="detailsSelected"
-      :units="units"
-      :puchase_id="route.params.id"
-      @editPurchaseDetail="purchaseDetailEdit"
+      :TransportDetailSelected="detailsSelected"
+      :transport_id="route.params.id"
+      :warehause_start_id="warehause_start_id"
+      @editTransportDetail="editTransportDetail"      
     />
 
-    <DeletePurchaseDetailDialog 
+    <DeleteTransportDetailDialog 
       v-if="detailsSelected && isDeleteDetailDialog"
       v-model:isDialogVisible="isDeleteDetailDialog"
       :detailSelected="detailsSelected"
-      @deleteDetail="purchaseDetailDelete"
+      @deleteDetail="transportDetailDelete"
     />
-
   </div>
 </template>

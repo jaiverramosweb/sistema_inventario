@@ -8,12 +8,12 @@ const warehouses = ref([])
 
 const quantity = ref(0)
 const price_unit = ref(0)
-const warehouse_start_id = ref(null)
-const warehouse_end_id = ref(null)
+const warehause_start_id = ref(null)
+const warehause_end_id = ref(null)
 const date_emision = ref(null)
 
 const description = ref(null)
-const importe = ref(0)
+const impote = ref(0)
 const iva = ref(0)
 const total = ref(0)
 
@@ -60,19 +60,19 @@ watch(search, query => {
 
   warning_warehouse.value = null
 
-  if(warehouse_start_id.value == null){
+  if(warehause_start_id.value == null){
     warning_warehouse.value = 'Por favor, seleccione un almacén de salida.'
     
     return
   }
 
-  if(warehouse_end_id.value == null){
+  if(warehause_end_id.value == null){
     warning_warehouse.value = 'Por favor, seleccione un almacén de entrega.'
 
     return
   }
 
-  if(warehouse_start_id.value == warehouse_end_id.value){
+  if(warehause_start_id.value == warehause_end_id.value){
     warning_warehouse.value = 'Por favor, seleccione almacenes diferentes.'
 
     return
@@ -87,7 +87,7 @@ watch(search, query => {
 
 watch(select_product, value => {
   if(value){
-    units.value = value.warehouses.filter(warehouse => warehouse.warehouse_id == warehouse_start_id.value).map(wh => {
+    units.value = value.warehouses.filter(warehouse => warehouse.warehouse_id == warehause_start_id.value).map(wh => {
       return {
         id: wh.unit_id,
         name: wh.unit,
@@ -96,7 +96,7 @@ watch(select_product, value => {
   }
 })
 
-watch(warehouse_start_id, value => {
+watch(warehause_start_id, value => {
 
   if(select_product.value){
     units.value = select_product.value.warehouses.filter(warehouse => warehouse.warehouse_id == value).map(wh => {
@@ -162,9 +162,9 @@ const addProduct = () => {
 }
 
 const calculateTransportTotal = () => {
-  importe.value = Number(transport_details.value.reduce((acc, item) => acc + item.total, 0).toFixed(2))
-  iva.value = Number((importe.value * 0.18).toFixed(2))
-  total.value = Number((importe.value + iva.value).toFixed(2))
+  impote.value = Number(transport_details.value.reduce((acc, item) => acc + item.total, 0).toFixed(2))
+  iva.value = Number((impote.value * 0.18).toFixed(2))
+  total.value = Number((impote.value + iva.value).toFixed(2))
 }
 
 const deleteItem = (index) => {
@@ -181,17 +181,17 @@ const store = async () => {
 
   try {
 
-    if(!warehouse_start_id.value){
+    if(!warehause_start_id.value){
       warning_transport.value = 'Es necesario seleccionar un almacén de salida'
       return
     }
 
-    if(!warehouse_end_id.value){
+    if(!warehause_end_id.value){
       warning_transport.value = 'Es necesario seleccionar un almacén de entrega'
       return
     }
 
-    if(warehouse_start_id.value == warehouse_end_id.value){
+    if(warehause_start_id.value == warehause_end_id.value){
       warning_transport.value = 'Es necesario seleccionar almacenes diferentes'
       return
     }
@@ -202,13 +202,13 @@ const store = async () => {
     }
 
     const data = {
-      warehouse_start_id: warehouse_start_id.value,
-      warehouse_end_id: warehouse_end_id.value,
+      warehause_start_id: warehause_start_id.value,
+      warehause_end_id: warehause_end_id.value,
       date_emision: date_emision.value,
       description: description.value,
       transport_details: transport_details.value,
       total: total.value,
-      importe: importe.value,
+      impote: impote.value,
       iva: iva.value,
     }
 
@@ -221,14 +221,14 @@ const store = async () => {
     })
 
     if(resp.status == 201){
-      success_transport.value = 'Compra registrada correctamente'
+      success_transport.value = 'Solicitud de transporte registrada correctamente'
 
       setTimeout(() => {
-        warehouse_start_id.value = null
-        warehouse_end_id.value = null
+        warehause_start_id.value = null
+        warehause_end_id.value = null
         description.value = null
         transport_details.value = []
-        importe.value = 0
+        impote.value = 0
         iva.value = 0
         total.value = 0
       }, 25);
@@ -304,7 +304,7 @@ onMounted( () => {
               <VCol cols="3">
                 <VSelect
                   :items="warehouses"
-                  v-model="warehouse_start_id"
+                  v-model="warehause_start_id"
                   label="Almacenes de salida"
                   placeholder="-- Seleccione --"
                   item-title="name"
@@ -316,7 +316,7 @@ onMounted( () => {
               <VCol cols="3">
                 <VSelect
                   :items="warehouses"
-                  v-model="warehouse_end_id"
+                  v-model="warehause_end_id"
                   label="Almacenes de entrega"
                   placeholder="-- Seleccione --"
                   item-title="name"
@@ -471,10 +471,10 @@ onMounted( () => {
                 <td></td>
                 <td>
                   <VTextField
-                    label="Importe"
+                    label="impote"
                     placeholder=""
                     type="number"
-                    v-model="importe"
+                    v-model="impote"
                   />
                 </td>
                 <td>

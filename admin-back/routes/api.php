@@ -105,3 +105,4 @@ Route::get("products-excel",    [ProductController::class, 'download_excel']);
 Route::get("sales-excel",       [SaleController::class, 'download_excel']);
 Route::get("sales-pdf/{id}",    [SaleController::class, 'sale_pdf']);
 Route::get("pushases-pdf/{id}", [PuchaseController::class, 'pushases_pdf']);
+Route::get("transport-pdf/{id}", [TransportController::class, 'transports_pdf']);

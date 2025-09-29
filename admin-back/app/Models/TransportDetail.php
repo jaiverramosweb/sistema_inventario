@@ -52,7 +52,7 @@ class TransportDetail extends Model
         return $this->belongsTo(Unit::class);
     }
 
-    public function userOut()
+    public function userIn()
     {
         return $this->belongsTo(User::class, 'user_delivery_id');
     }
@@ -62,7 +62,7 @@ class TransportDetail extends Model
         return Carbon::parse($this->date_delivery)->format("Y/m/d");
     }
 
-    public function userIn()
+    public function userOut()
     {
         return $this->belongsTo(User::class, 'user_exit_id');
     }

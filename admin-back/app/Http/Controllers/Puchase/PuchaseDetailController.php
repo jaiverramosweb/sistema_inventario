@@ -102,18 +102,7 @@ class PuchaseDetailController extends Controller
         $newIVA = round($newImport * 0.18, 2);
         $newTotal = round($newImport + $newIVA, 2);
 
-        // $state = 1;
-
-        // if($purchase->state == 3){
-        //     $state = 2;
-        // }
-
-        // if($purchase->state == 2){
-        //     $state = 2;
-        // }
-
         $purchase->update([
-            // 'state' => $state,
             'immporte' => $newImport,
             'iva' => $newIVA,
             'total' => $newTotal

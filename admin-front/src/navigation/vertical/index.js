@@ -134,7 +134,7 @@ export default [
       },
       {
         title: 'Listado',
-        to: 'second-page',
+        to: 'transport-list',
         permission: 'list_transport',
         icon: { icon: 'ri-radio-button-line' },
       },

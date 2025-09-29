@@ -26,6 +26,7 @@ return new class extends Migration
             $table->double('immporte');
             $table->double('iva');
             $table->timestamp('date_delivery')->nullable();
+            $table->timestamp('date_exit')->nullable();
             $table->text('description')->nullable();
             $table->timestamps();
             $table->softDeletes();

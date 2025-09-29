@@ -9,15 +9,25 @@ use App\Models\TransportDetail;
 use App\Models\Unit;
 use App\Models\Warehouse;
 use Illuminate\Http\Request;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class TransportController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-         $transports = Transport::orderBy('id', 'desc')
+        $search = $request->search;
+        $warehause_start_id = $request->warehause_start_id;
+        $warehause_end_id = $request->warehause_end_id;
+        $unit_id = $request->unit_id;
+        $start_date = $request->start_date;
+        $end_date = $request->end_date;
+        $search_product = $request->search_product;
+
+         $transports = Transport::filterAdvance($search, $warehause_start_id, $warehause_end_id, $unit_id, $start_date, $end_date, $search_product)
+            ->orderBy('id', 'desc')
             ->paginate(25);
 
         $transports_collection = TransportResource::collection($transports);
@@ -41,6 +51,14 @@ class TransportController extends Controller
             'units' => $units,
             'today' => now()->format("Y-m-d")
         ]);
+    }
+
+    public function transports_pdf($id)
+    {
+        $transport = Transport::findOrFail($id);
+
+        $pdf = Pdf::loadView('transport.transport_pdf', compact('transport'));
+        return $pdf->stream('compra_'.$id.'.pdf');
     }
 
     /**
@@ -94,6 +112,31 @@ class TransportController extends Controller
     public function update(Request $request, string $id)
     {
         $transport = Transport::findOrFail($id);
+
+        if($request->state >= 3 && $transport->state != 6){
+            $n_details = TransportDetail::where('transport_id', $id)->count();
+            $n_state_exit = TransportDetail::where('transport_id', $id)->where('state', 2)->count();
+
+            if($n_details != $n_state_exit){
+                return response()->json([
+                    'status' => 403,
+                    'message' => 'No puedes cambiar el estado de la solicitud por que aun los productos estan en pendiente'
+                ]);
+            }
+
+        }
+
+        if($request->state == 6){
+            $n_details = TransportDetail::where('transport_id', $id)->count();
+            $n_state_delivery = TransportDetail::where('transport_id', $id)->where('state', 3)->count();
+
+            if($n_details != $n_state_delivery){
+                return response()->json([
+                    'status' => 403,
+                    'message' => 'No puedes cambiar el estado de la solicitud por que aun los productos estan en salida'
+                ]);
+            }
+        }
         
         if($transport->state >= 3){
             if($transport->warehause_start_id != $request->warehause_start_id){
@@ -110,6 +153,21 @@ class TransportController extends Controller
                 ]);
             }
         }
+
+        if($transport->state < 3 && $request->state == 3){
+            date_default_timezone_set('America/Bogota');
+            $transport->update([
+                'date_exit' => now()
+            ]);
+        }
+
+        if($transport->state < 6 && $request->state == 6){
+            date_default_timezone_set('America/Bogota');
+            $transport->update([
+                'date_delivery' => now()
+            ]);
+        }
+
 
         $transport->update($request->all());
 
