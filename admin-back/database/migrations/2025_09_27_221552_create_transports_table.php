@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
@@ -25,6 +26,9 @@ return new class extends Migration
             $table->text('description')->nullable();
             $table->timestamps();
             $table->softDeletes();
+
+            // Ajustar secuencia de ID para que empiece en 1000
+            DB::statement("ALTER SEQUENCE transports_id_seq RESTART WITH 1000;");
         });
     }
 

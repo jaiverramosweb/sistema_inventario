@@ -8,6 +8,7 @@ import authV2LoginIllustrationDark from '@images/pages/auth-v2-login-illustratio
 import authV2LoginIllustrationLight from '@images/pages/auth-v2-login-illustration-light.png'
 import authV2LoginMaskDark from '@images/pages/auth-v2-login-mask-dark.png'
 import authV2LoginMaskLight from '@images/pages/auth-v2-login-mask-light.png'
+import authImge from '@images/pages/login.jpeg'
 import { VNodeRenderer } from '@layouts/components/VNodeRenderer'
 import { themeConfig } from '@themeConfig'
 
@@ -71,22 +72,22 @@ const authV2LoginIllustration = useGenerateImageVariant(authV2LoginIllustrationL
   </RouterLink>
 
   <VRow no-gutters class="auth-wrapper">
-    <VCol md="8" class="d-none d-md-flex align-center justify-center position-relative">
-      <div class="d-flex align-center justify-center pa-10">
-        <img :src="authV2LoginIllustration" class="auth-illustration w-100" alt="auth-illustration">
+    <VCol md="8" class="d-none d-md-flex align-center">
+      <div class=""  style="width: 50vw; height: 100vh;">
+        <img :src="authImge" class="" style="width: 66vw; height: 100vh;" alt="auth-illustration">
       </div>
-      <VImg :src="authV2LoginMask" class="d-none d-md-flex auth-footer-mask" alt="auth-mask" />
+      <!-- <VImg :src="authV2LoginMask" class="d-none d-md-flex auth-footer-mask" alt="auth-mask" /> -->
     </VCol>
     <VCol cols="12" md="4" class="auth-card-v2 d-flex align-center justify-center"
       style="background-color: rgb(var(--v-theme-surface));">
       <VCard flat :max-width="500" class="mt-12 mt-sm-0 pa-5 pa-lg-7">
         <VCardText>
           <h4 class="text-h4 mb-1">
-            Welcome to <span class="text-capitalize">{{ themeConfig.app.title }}! 👋🏻</span>
+            Bienvenido a <span class="text-capitalize">{{ themeConfig.app.title }}! 👋🏻</span>
           </h4>
 
           <p class="mb-0">
-            Please sign-in to your account and start the adventure
+            Un mundo de tecnología.
           </p>
         </VCardText>
 
@@ -100,7 +101,7 @@ const authV2LoginIllustration = useGenerateImageVariant(authV2LoginIllustrationL
 
               <!-- password -->
               <VCol cols="12">
-                <VTextField v-model="form.password" label="Password" placeholder="············"
+                <VTextField v-model="form.password" label="Contraseña" placeholder="············"
                   :type="isPasswordVisible ? 'text' : 'password'"
                   :append-inner-icon="isPasswordVisible ? 'ri-eye-off-line' : 'ri-eye-line'"
                   @click:append-inner="isPasswordVisible = !isPasswordVisible" />

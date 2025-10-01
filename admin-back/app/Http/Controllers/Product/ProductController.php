@@ -258,6 +258,13 @@ class ProductController extends Controller
                 return [
                     'id' => $unit->id,
                     'name' => $unit->name,
+                    'conversions'  => $unit->convertions->map(function ($conver){
+                        return [
+                            'id' => $conver->unit_to->id,
+                            'name' => $conver->unit_to->name,
+
+                        ];
+                    }),
                 ];
             }),
             'categories' => $caregories->map(function ($category){

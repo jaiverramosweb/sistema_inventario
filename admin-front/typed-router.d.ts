@@ -26,6 +26,7 @@ declare module 'vue-router/auto-routes' {
     'configuration-sucursales': RouteRecordInfo<'configuration-sucursales', '/configuration/sucursales', Record<never, never>, Record<never, never>>,
     'configuration-units': RouteRecordInfo<'configuration-units', '/configuration/units', Record<never, never>, Record<never, never>>,
     'configuration-warehouses': RouteRecordInfo<'configuration-warehouses', '/configuration/warehouses', Record<never, never>, Record<never, never>>,
+    'conversion-list': RouteRecordInfo<'conversion-list', '/conversion/list', Record<never, never>, Record<never, never>>,
     'dashboard': RouteRecordInfo<'dashboard', '/dashboard', Record<never, never>, Record<never, never>>,
     'login': RouteRecordInfo<'login', '/login', Record<never, never>, Record<never, never>>,
     'not-authorized': RouteRecordInfo<'not-authorized', '/not-authorized', Record<never, never>, Record<never, never>>,

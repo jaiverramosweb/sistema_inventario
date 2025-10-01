@@ -10,6 +10,7 @@ use App\Http\Controllers\Config\SucursalController;
 use App\Http\Controllers\Config\UnitController;
 use App\Http\Controllers\Config\UnitConversionController;
 use App\Http\Controllers\Config\WarehouseController;
+use App\Http\Controllers\Product\ConversionController;
 use App\Http\Controllers\Product\ProductController;
 use App\Http\Controllers\Product\ProductWalletController;
 use App\Http\Controllers\Product\ProductWarehouseController;
@@ -100,6 +101,9 @@ Route::group([
     Route::resource('transport-details', TransportDetailController::class);
     Route::post('transport-details/attention-exit', [TransportDetailController::class, 'attentionExit']);
     Route::post('transport-details/attention-delivery', [TransportDetailController::class, 'attentionDelivery']);
+
+    Route::post('conversions/index', [ConversionController::class, 'index']);
+    Route::resource('conversions', ConversionController::class);
 });
 
 

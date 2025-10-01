@@ -144,7 +144,7 @@ export default [
     title: 'Conversión',
     icon: { icon: 'ri-file-ppt-2-line' },
     permission: 'conversions',
-    to: 'second-page',
+    to: 'conversion-list',
   },
   {
     title: 'Kardex',
