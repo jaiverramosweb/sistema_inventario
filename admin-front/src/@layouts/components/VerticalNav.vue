@@ -10,6 +10,8 @@ import {
 import { useLayoutConfigStore } from '@layouts/stores/config'
 import { injectionKeyIsVerticalNavHovered } from '@layouts/symbols'
 
+import logoImge from '@images/logo.sitec.png'
+
 const props = defineProps({
   tag: {
     type: null,
@@ -87,13 +89,14 @@ const hideTitleAndIcon = configStore.isVerticalNavMini(isHovered)
           class="app-logo app-title-wrapper"
         >
           <VNodeRenderer :nodes="layoutConfig.app.logo" />
+          <img :src="logoImge" class="w-auto" style="height: 40px;" alt="logo">
 
           <Transition name="vertical-nav-app-title">
             <h1
               v-show="!hideTitleAndIcon"
               class="app-logo-title leading-normal"
             >
-              {{ layoutConfig.app.title }}
+              <!-- {{ layoutConfig.app.title }} -->
             </h1>
           </Transition>
         </RouterLink>

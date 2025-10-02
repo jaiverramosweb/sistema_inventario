@@ -9,6 +9,7 @@ import authV2LoginIllustrationLight from '@images/pages/auth-v2-login-illustrati
 import authV2LoginMaskDark from '@images/pages/auth-v2-login-mask-dark.png'
 import authV2LoginMaskLight from '@images/pages/auth-v2-login-mask-light.png'
 import authImge from '@images/pages/login.jpeg'
+import logoImge from '@images/logo.sitec.png'
 import { VNodeRenderer } from '@layouts/components/VNodeRenderer'
 import { themeConfig } from '@themeConfig'
 
@@ -64,9 +65,11 @@ const authV2LoginIllustration = useGenerateImageVariant(authV2LoginIllustrationL
 <template>
   <RouterLink to="/">
     <div class="app-logo auth-logo">
-      <VNodeRenderer :nodes="themeConfig.app.logo" />
+      <!-- <VNodeRenderer :nodes="logoImge" /> -->
+      <img :src="logoImge" class="w-auto" style="height: 40px;" alt="logo">
+
       <h1 class="app-logo-title">
-        {{ themeConfig.app.title }}
+        <!-- {{ themeConfig.app.title }} -->
       </h1>
     </div>
   </RouterLink>
@@ -87,7 +90,7 @@ const authV2LoginIllustration = useGenerateImageVariant(authV2LoginIllustrationL
           </h4>
 
           <p class="mb-0">
-            Un mundo de tecnología.
+            Un mundo de.
           </p>
         </VCardText>
 
