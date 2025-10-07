@@ -148,8 +148,11 @@ export default [
   },
   {
     title: 'Kardex',
-    to: { name: 'second-page' },
+    to: { name: 'kardex' },
     permission: 'kardex',
     icon: { icon: 'ri-draft-line' },
   },
 ]
+
+
+// second-page
