@@ -232,7 +232,7 @@ onMounted( () => {
         </VRow>
       </VCardText>
 
-      <VCardText>
+      <VCardText class="kardex">
 
         <table>
             <thead>
@@ -370,12 +370,12 @@ onMounted( () => {
 </template>
 
 <style scope>
-table {
+.kardex table {
     width: 100%;
     border-collapse: collapse;
 }
 
-th, td {
+.kardex th, td {
     border: 1px solid black;
     text-align: center;
     padding: 5px;
