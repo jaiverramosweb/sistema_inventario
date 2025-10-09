@@ -269,10 +269,10 @@ onMounted( () => {
     <div class="d-flex flex-wrap justify-space-between gap-4 mb-6">
       <div class="d-flex flex-column justify-center">
         <h4 class="text-h4 mb-1">
-          🚚 Agregar un transporte
+          🚚 Agregar un traslado
         </h4>
         <p class="text-body-1 mb-0">
-          Realizar un transporte entre almacenes
+          Realizar un traslado entre bodega
         </p>
       </div>
     </div>
@@ -295,7 +295,7 @@ onMounted( () => {
               </VCol>
               <VCol cols="3">
                 <VTextField
-                  label="Sucursal"
+                  label="CES"
                   placeholder=""
                   v-model="user.sucursale"
                   disabled
@@ -305,7 +305,7 @@ onMounted( () => {
                 <VSelect
                   :items="warehouses"
                   v-model="warehause_start_id"
-                  label="Almacenes de salida"
+                  label="Bodega de salida"
                   placeholder="-- Seleccione --"
                   item-title="name"
                   item-value="id"
@@ -317,7 +317,7 @@ onMounted( () => {
                 <VSelect
                   :items="warehouses"
                   v-model="warehause_end_id"
-                  label="Almacenes de entrega"
+                  label="Bodega de entrega"
                   placeholder="-- Seleccione --"
                   item-title="name"
                   item-value="id"

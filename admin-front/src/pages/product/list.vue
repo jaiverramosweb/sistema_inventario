@@ -194,7 +194,7 @@ watch(currentPage, (page) => {
                 <VSelect
                   :items="warehouses"
                   placeholder="-- seleccione --"
-                  label="Almacenes"
+                  label="Bodega"
                   item-title="name"
                   item-value="id"
                   v-model="warehouse_id"
@@ -214,7 +214,7 @@ watch(currentPage, (page) => {
                 <VSelect
                   :items="sucursales"
                   placeholder="-- seleccione --"
-                  label="Sucursales"
+                  label="CES"
                   item-title="name"
                   item-value="id"
                   v-model="sucursale_id"
@@ -230,7 +230,7 @@ watch(currentPage, (page) => {
                   v-model="available"
                 />
               </VCol>
-              <VCol cols="2">
+              <!-- <VCol cols="2">
                 <VSelect
                   placeholder="-- Seleccione --"
                   label="¿Regalo?"
@@ -239,7 +239,7 @@ watch(currentPage, (page) => {
                   item-value="id"
                   v-model="is_gift"
                 />
-              </VCol>
+              </VCol> -->
               <VCol cols="4">
                 <VBtn
                   color="info"
@@ -315,14 +315,14 @@ watch(currentPage, (page) => {
               Producto
             </th>
             <th class="text-uppercase">
-              SKU
+              Código
             </th>
             <th class="text-uppercase">
               Categoria
             </th>
-            <th class="text-uppercase">
+            <!-- <th class="text-uppercase">
               ¿Es un regalo?
-            </th>
+            </th> -->
             <th class="text-uppercase">
               ¿Tiene descuento?
             </th>
@@ -371,9 +371,9 @@ watch(currentPage, (page) => {
             <td>
               {{ item.category }}
             </td>
-            <td>
+            <!-- <td>
               {{ item.is_gift == 1 ? 'No' : 'Si' }}
-            </td>
+            </td> -->
             <td>
               {{ item.is_discount == 1 ? 'No' : 'Si' }} <br>
               <span v-if="item.is_discount != 1" style="text-wrap-mode: nowrap;">Descunto: {{ item.max_descount }} %</span>

@@ -164,7 +164,7 @@ onMounted( () => {
                 <VSelect
                   :items="warehouses"
                   placeholder="-- seleccione --"
-                  label="Almacenes"
+                  label="Bodega"
                   item-title="name"
                   item-value="id"
                   v-model="warehouse_id"

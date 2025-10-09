@@ -15,7 +15,7 @@ const saletSelectedDelete = ref(null)
 const data = ref([])
 
 const search = ref('')
-const type_client = ref(null)
+const type_client = ref(1)
 const search_client = ref(null)
 const range_date = ref(null)
 const type = ref(null)
@@ -176,7 +176,7 @@ watch(currentPage, (page) => {
                 />
               </VCol>
 
-              <VCol cols="3">
+              <!-- <VCol cols="3">
                 <VSelect
                   placeholder="-- Seleccione --"
                   label="Tipo de cliente"
@@ -185,7 +185,7 @@ watch(currentPage, (page) => {
                   item-value="id"
                   v-model="type_client"
                 />
-              </VCol>
+              </VCol> -->
 
                <VCol cols="3">
                 <AppDateTimePicker
@@ -302,9 +302,9 @@ watch(currentPage, (page) => {
             <th class="text-uppercase">
               Cliente
             </th>
-            <th class="text-uppercase">
+            <!-- <th class="text-uppercase">
               Tipo CLiente
-            </th>
+            </th> -->
             <th class="text-uppercase">
               Asesor
             </th>
@@ -343,9 +343,9 @@ watch(currentPage, (page) => {
             <td>
               {{ item.client.name }}
             </td>
-            <td>
+            <!-- <td>
               {{ item.type_client == 1 ? 'Cliente' : 'Cliente Empresa' }}
-            </td>
+            </td> -->
             <td>
               {{ item.user }}
             </td>

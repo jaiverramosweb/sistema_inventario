@@ -5,7 +5,7 @@
       <th width="25">Cliente</th>
       <th width="25">Tipo CLiente</th>
       <th width="25">Asesor</th>
-      <th width="25">Sucursal</th>
+      <th width="25">CES</th>
       <th width="25">Descuento</th>
       <th width="25">Subtotal</th>
       <th width="25">IVA</th>

@@ -116,7 +116,7 @@ watch(currentPage, (page) => {
 
 <template>
   <div>
-    <VCard title="🚚 transporte">
+    <VCard title="🚚 traslado">
 
       <VCardText>
         <VRow>
@@ -135,7 +135,7 @@ watch(currentPage, (page) => {
                 <VSelect
                   :items="warehouses"
                   v-model="warehause_start_id"
-                  label="Almacenes de salida"
+                  label="Bodega de salida"
                   placeholder="-- Seleccione --"
                   item-title="name"
                   item-value="id"
@@ -147,7 +147,7 @@ watch(currentPage, (page) => {
                 <VSelect
                   :items="warehouses"
                   v-model="warehause_end_id"
-                  label="Almacenes de entrega"
+                  label="Bodega de entrega"
                   placeholder="-- Seleccione --"
                   item-title="name"
                   item-value="id"
@@ -233,10 +233,10 @@ watch(currentPage, (page) => {
               Solicitante
             </th>
             <th class="text-uppercase">
-              Almacen salida
+              Bodega salida
             </th>
             <th class="text-uppercase">
-              Almacen entrega
+              Bodega entrega
             </th>
             <th class="text-uppercase">
               Fecha de emisión

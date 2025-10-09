@@ -586,7 +586,7 @@ table tr td:last-child {
     <tr>
         <td>DIRECCIÓN: {{ $purchase->warehouse->address }}</td>
         <td>
-          ALMACEN: <b>{{ $purchase->warehouse->name }}</b>
+          Bodega: <b>{{ $purchase->warehouse->name }}</b>
         </td>
     </tr>
 

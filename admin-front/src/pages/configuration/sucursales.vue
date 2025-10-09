@@ -17,7 +17,7 @@ const selectedDelete = ref(null)
 
 const headers = [
   { title: 'ID', key: 'id' },
-  { title: 'Sucursal', key: 'name' },
+  { title: 'CES', key: 'name' },
   { title: 'Dirección', key: 'address' },
   { title: 'Fecha de registro', key: 'created_at' },
   { title: 'Acciones', key: 'actions' },
@@ -86,7 +86,7 @@ const deleteNew = (item) => {
 
 <template>
   <div>
-    <VCard title="🏪 Sucursales">
+    <VCard title="🏪 CES">
 
       <VCardText>
         <VRow class="justify-space-between">

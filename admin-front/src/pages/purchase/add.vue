@@ -276,7 +276,7 @@ onMounted( () => {
               </VCol>
               <VCol cols="3">
                 <VTextField
-                  label="Sucursal"
+                  label="CES"
                   placeholder=""
                   v-model="user.sucursale"
                   disabled
@@ -286,7 +286,7 @@ onMounted( () => {
                 <VSelect
                   :items="warehouses"
                   v-model="warehouse_id"
-                  label="Almacenes"
+                  label="Bodega"
                   placeholder="-- Seleccione --"
                   item-title="name"
                   item-value="id"

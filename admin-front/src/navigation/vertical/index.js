@@ -23,13 +23,13 @@ export default [
     icon: { icon: 'ri-tools-line' },
     children: [
       {
-        title: 'Sucursales',
+        title: 'CES',
         to: 'configuration-sucursales',
         permission: 'settings',
         icon: { icon: 'ri-radio-button-line' },
       },
       {
-        title: 'Almacenes',
+        title: 'Bodegas',
         to: 'configuration-warehouses',
         permission: 'settings',
         icon: { icon: 'ri-radio-button-line' },
@@ -123,7 +123,7 @@ export default [
     ],
   },
   {
-    title: 'Transporte',
+    title: 'Traslados',
     icon: { icon: 'ri-translate' },
     children: [
       {

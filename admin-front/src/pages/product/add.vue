@@ -381,7 +381,7 @@ definePage({ meta: { permission: 'register_product' } })
               >
                 <VTextField
                   v-model="product.sku"
-                  label="SKU"
+                  label="Código"
                   placeholder="FXSK123U"
                 />
               </VCol>
@@ -391,11 +391,11 @@ definePage({ meta: { permission: 'register_product' } })
               >
                 <VTextField
                   v-model="product.price_general"
-                  label="Precio (Cliente final):"
+                  label="Precio:"
                   placeholder="1000"
                 />
               </VCol>
-              <VCol
+              <!-- <VCol
                 cols="12"
                 md="4"
               >
@@ -404,8 +404,8 @@ definePage({ meta: { permission: 'register_product' } })
                   label="Precio (Cliente empresa):"
                   placeholder="1000"
                 />
-              </VCol>
-              <VCol>
+              </VCol> -->
+              <VCol cols="12">
                 <VLabel class="mb-1">
                   Descripción
                 </VLabel>
@@ -541,7 +541,7 @@ definePage({ meta: { permission: 'register_product' } })
                 <VSelect
                   :items="warehouses"
                   placeholder="-- seleccione --"
-                  label="Almacenes"
+                  label="Bodega"
                   item-title="name"
                   item-value="id"
                   v-model="warehouse_stock_id"
@@ -610,7 +610,7 @@ definePage({ meta: { permission: 'register_product' } })
               <thead>
                 <tr>
                   <th class="text-uppercase">
-                    Almacen
+                    Bodega
                   </th>
                   <th class="text-uppercase">
                     Unidad
@@ -650,7 +650,7 @@ definePage({ meta: { permission: 'register_product' } })
         </VCard>
 
         <!-- Multipes precios  -->
-        <VCard
+        <!-- <VCard
           title="Multiples precios"
           class="mb-6"
         >
@@ -663,7 +663,7 @@ definePage({ meta: { permission: 'register_product' } })
                 <VSelect
                   :items="sucursales"
                   placeholder="-- seleccione --"
-                  label="Sucursales"
+                  label="CES"
                   item-title="name"
                   item-value="id"
                   v-model="sucursale_price_id"
@@ -735,7 +735,7 @@ definePage({ meta: { permission: 'register_product' } })
               <thead>
                 <tr>
                   <th class="text-uppercase">
-                    Sucurdal
+                    CES
                   </th>
                   <th class="text-uppercase">
                     Unidad
@@ -760,9 +760,9 @@ definePage({ meta: { permission: 'register_product' } })
                   <td>{{ item.price }}</td>
                   <td>
                     <div class="d-flex gap-1">
-                      <!-- <IconBtn size="small" @click="editItem(item)">
+                      <IconBtn size="small" @click="editItem(item)">
                         <VIcon icon="ri-pencil-line" />
-                      </IconBtn> -->
+                      </IconBtn>
                       <IconBtn size="small" @click="deleteItemPrice(item)">
                         <VIcon icon="ri-delete-bin-line" />
                       </IconBtn>
@@ -772,7 +772,7 @@ definePage({ meta: { permission: 'register_product' } })
               </tbody>
             </VTable>
           </VCardText>
-        </VCard>
+        </VCard> -->
       </VCol>
 
       <VCol
@@ -791,14 +791,14 @@ definePage({ meta: { permission: 'register_product' } })
                 v-model="product.category"
               />
 
-              <div>
+              <!-- <div>
                 <p class="my-0">¿Regalo?</p>
                 <VCheckbox 
                   label="Si"  
                   value="2"
                   v-model="product.is_gift"
                 />
-              </div>
+              </div> -->
 
               <div class="d-flex">
                 <div>

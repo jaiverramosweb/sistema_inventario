@@ -541,7 +541,7 @@
     </tr>
     <tr>
         <td>
-          ALMACEN: <b>{{ $transport->warehouseStart->name }}</b>
+          Bodega: <b>{{ $transport->warehouseStart->name }}</b>
         </td>
         <td>DIRECCIÓN: {{ $transport->warehouseStart->address }}</td>
     </tr>
@@ -576,7 +576,7 @@
     </tr>
     <tr>
         <td>
-          ALMACEN: <b>{{ $transport->warehouseEnd->name }}</b>
+          Bodega: <b>{{ $transport->warehouseEnd->name }}</b>
         </td>
         <td>DIRECCIÓN: {{ $transport->warehouseEnd->address }}</td>
     </tr>

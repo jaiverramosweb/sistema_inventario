@@ -86,11 +86,11 @@ const authV2LoginIllustration = useGenerateImageVariant(authV2LoginIllustrationL
       <VCard flat :max-width="500" class="mt-12 mt-sm-0 pa-5 pa-lg-7">
         <VCardText>
           <h4 class="text-h4 mb-1">
-            Bienvenido a <span class="text-capitalize">{{ themeConfig.app.title }}! 👋🏻</span>
+            Bienvenido a <span class="text-capitalize">SITEC! 👋🏻</span>
           </h4>
 
           <p class="mb-0">
-            Un mundo de.
+            Un mundo de tecnología.
           </p>
         </VCardText>
 
@@ -115,7 +115,7 @@ const authV2LoginIllustration = useGenerateImageVariant(authV2LoginIllustrationL
 
                 <!-- login button -->
                 <VBtn class="my-2" block type="submit">
-                  Login
+                  Iniciar sesión
                 </VBtn>
               </VCol>
 

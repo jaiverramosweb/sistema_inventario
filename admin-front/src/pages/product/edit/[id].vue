@@ -464,7 +464,7 @@ const update = async () => {
               >
                 <VTextField
                   v-model="product.sku"
-                  label="SKU"
+                  label="Código"
                   placeholder="FXSK123U"
                 />
               </VCol>
@@ -623,7 +623,7 @@ const update = async () => {
                 <VSelect
                   :items="warehouses"
                   placeholder="-- seleccione --"
-                  label="Almacenes"
+                  label="Bodega"
                   item-title="name"
                   item-value="id"
                   v-model="warehouse_stock_id"
@@ -694,7 +694,7 @@ const update = async () => {
               <thead>
                 <tr>
                   <th class="text-uppercase">
-                    Almacen
+                    Bodega
                   </th>
                   <th class="text-uppercase">
                     Unidad
@@ -747,7 +747,7 @@ const update = async () => {
                 <VSelect
                   :items="sucursales"
                   placeholder="-- seleccione --"
-                  label="Sucursales"
+                  label="CES"
                   item-title="name"
                   item-value="id"
                   v-model="sucursale_price_id"
@@ -822,7 +822,7 @@ const update = async () => {
               <thead>
                 <tr>
                   <th class="text-uppercase">
-                    Sucurdal
+                    CES
                   </th>
                   <th class="text-uppercase">
                     Unidad
@@ -878,14 +878,14 @@ const update = async () => {
                 v-model="product.category"
               />
 
-              <div>
+              <!-- <div>
                 <p class="my-0">¿Regalo?</p>
                 <VCheckbox 
                   label="Si"  
                   value="2"
                   v-model="product.is_gift"
                 />
-              </div>
+              </div> -->
 
               <div class="d-flex">
                 <div>

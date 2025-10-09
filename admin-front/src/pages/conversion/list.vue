@@ -141,7 +141,7 @@ watch(currentPage, (page) => {
                 <VSelect
                   :items="warehouses"
                   placeholder="-- seleccione --"
-                  label="Almacenes"
+                  label="Bodega"
                   item-title="name"
                   item-value="id"
                   v-model="warehouse_id"
@@ -228,7 +228,7 @@ watch(currentPage, (page) => {
               Producto
             </th>
             <th class="text-uppercase">
-              Almacen
+              Bodega
             </th>
             <th class="text-uppercase">
               Unidad inicial

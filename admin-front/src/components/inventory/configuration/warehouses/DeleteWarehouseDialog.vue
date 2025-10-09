@@ -59,7 +59,7 @@ const dialogVisibleUpdate = val => {
       <VCardText class="pt-5">
         <div class="text-center pb-6">
           <h4 class="text-h4 mb-2">
-            Eliminar Almacen
+            Eliminar Bodega
           </h4>
 
         </div>

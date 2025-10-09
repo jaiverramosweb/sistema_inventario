@@ -9,39 +9,39 @@ const userProfileList = [
   {
     type: 'navItem',
     icon: 'ri-user-line',
-    title: 'Profile',
+    title: 'Perfil',
     href: '#',
   },
-  {
-    type: 'navItem',
-    icon: 'ri-settings-4-line',
-    title: 'Settings',
-    href: '#',
-  },
-  {
-    type: 'navItem',
-    icon: 'ri-file-text-line',
-    title: 'Billing Plan',
-    href: '#',
-    chipsProps: {
-      color: 'error',
-      text: '4',
-      size: 'small',
-    },
-  },
-  { type: 'divider' },
-  {
-    type: 'navItem',
-    icon: 'ri-money-dollar-circle-line',
-    title: 'Pricing',
-    href: '#',
-  },
-  {
-    type: 'navItem',
-    icon: 'ri-question-line',
-    title: 'FAQ',
-    href: '#',
-  },
+  // {
+  //   type: 'navItem',
+  //   icon: 'ri-settings-4-line',
+  //   title: 'Settings',
+  //   href: '#',
+  // },
+  // {
+  //   type: 'navItem',
+  //   icon: 'ri-file-text-line',
+  //   title: 'Billing Plan',
+  //   href: '#',
+  //   chipsProps: {
+  //     color: 'error',
+  //     text: '4',
+  //     size: 'small',
+  //   },
+  // },
+  // { type: 'divider' },
+  // {
+  //   type: 'navItem',
+  //   icon: 'ri-money-dollar-circle-line',
+  //   title: 'Pricing',
+  //   href: '#',
+  // },
+  // {
+  //   type: 'navItem',
+  //   icon: 'ri-question-line',
+  //   title: 'FAQ',
+  //   href: '#',
+  // },
 ]
 
 const user = localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')) : null
@@ -101,7 +101,7 @@ const logout = async () => {
 
             <VListItem class="px-4">
               <VBtn block color="error" size="small" append-icon="ri-logout-box-r-line" @click="logout">
-                Logout
+                Cerrar Sesión
               </VBtn>
             </VListItem>
           </PerfectScrollbar>

@@ -574,7 +574,7 @@ watch(is_gift, value => {
             <VSelect
               :items="warehouses"
               placeholder="-- seleccione --"
-              label="Almacenes"
+              label="Bodega"
               item-title="name"
               item-value="id"
               v-model="warehouse_id"
@@ -714,7 +714,7 @@ watch(is_gift, value => {
               <thead>
                 <tr>
                   <th class="text-uppercase">
-                    Prodicto
+                    Producto
                   </th>
                   <th class="text-uppercase">
                     Unidad
