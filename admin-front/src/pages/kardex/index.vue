@@ -1,6 +1,7 @@
 <script setup>
 definePage({ meta: { permission: 'kardex' } })
 
+const kardex = ref([])
 const warehouses = ref([])
 
 const warehouse_id = ref(null)
@@ -76,6 +77,7 @@ const config = async () => {
   }
 }
 
+
 // Busqueda de productos
 const loading = ref(false)
 const search = ref()
@@ -125,6 +127,42 @@ watch(select_product, value => {
 
 // Fin busqueda de productos
 
+const info = async () => {
+  try {
+
+    const data = {
+      year: year_selected.value,
+      month: month_selected.value,
+      warehouse_id: warehouse_id.value,
+      product_id: select_product.value ? select_product.value.id : null
+    }
+
+    const resp = await $api('kardex-product', { 
+      method: 'POST',
+      body: data,
+      onResponseError({ response }) {
+        console.log(response)
+      },
+    })
+
+    kardex.value = resp.data
+
+  } catch (error) {
+    console.log(error)
+  }
+}
+
+const reset = () => {
+  warehouse_id.value = null
+  select_product.value = null
+  search.value = ''
+}
+
+const getNameUnit = (movimients_for_unit, units) => {
+  let unit = units.find(unit => unit.id == movimients_for_unit.unit_id)
+  return unit ? unit.name : ''
+
+}
 
 onMounted( () => {
   config()
@@ -202,7 +240,7 @@ onMounted( () => {
                   color="info"
                   class="mx-1"
                   prepend-icon="ri-search-2-line"
-                  @click="list"
+                  @click="info"
                 >
                   <VTooltip
                     activator="parent"
@@ -234,135 +272,142 @@ onMounted( () => {
 
       <VCardText class="kardex">
 
-        <table>
-            <thead>
-                <tr>
-                    <th rowspan="1" colspan="2"></th>
-                    <th colspan="3" class="entrada">Entrada</th>
-                    <th colspan="3" class="salida">Salida</th>
-                    <th colspan="3" class="existencias">Existencias</th>
-                </tr>
-                <tr>
-                    <th rowspan="2">Fecha</th>
-                    <th rowspan="2">Detalle</th>
-                    <th colspan="9" class="subheader">UNIDAD</th>
-                    <!-- <th colspan="3" class="subheader">UNIDAD</th>
-                    <th colspan="3" class="subheader">UNIDAD</th> -->
-                </tr>
-                <tr>
-                    <th>Cantidad</th>
-                    <th>V/Unitario</th>
-                    <th>V/Total</th>
-                    <th>Cantidad</th>
-                    <th>V/Unitario</th>
-                    <th>V/Total</th>
-                    <th>Cantidad</th>
-                    <th>V/Unitario</th>
-                    <th>V/Total</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>1/10/2012</td>
-                    <td>INICIAL</td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                </tr>
-                <tr>
-                    <td>15/10/2012</td>
-                    <td>COMPRAS</td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                </tr>
-                <tr>
-                    <td>16/10/2012</td>
-                    <td>TRANSPORTE</td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                </tr>
-                <tr class="new-row">
-                    <td colspan="2"></td>
-                    <td colspan="9"><b>CAJA</b></td>
-                    <!-- <td colspan="3"><b>CAJA</b></td>
-                    <td colspan="3"><b>CAJA</b></td> -->
-                </tr>
-                <tr class="new-row">
-                    <td><b>Fecha</b></td>
-                    <td><b>Detalle</b></td>
-                    <td><b>Cantidad</b></td>
-                    <td><b>V/Unitario</b></td>
-                    <td><b>V/Total</b></td>
-                    <td><b>Cantidad</b></td>
-                    <td><b>V/Unitario</b></td>
-                    <td><b>V/Total</b></td>
-                    <td><b>Cantidad</b></td>
-                    <td><b>V/Unitario</b></td>
-                    <td><b>V/Total</b></td>
-                </tr>
-    
-                <tr>
-                    <td>1/10/2012</td>
-                    <td>INICIAL</td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                </tr>
-                <tr>
-                    <td>16/10/2012</td>
-                    <td>CONVERSION</td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                </tr>
-                <tr>
-                    <td>17/10/2012</td>
-                    <td>DESPACHO</td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                </tr>
-            </tbody>
-        </table>
+        <template v-for="(item, index) in kardex" :key="index">          
+          <VRow>
+            <VCol cols="12">
+              Producto: {{ item.title }}
+              <br>
+              Código: {{ item.sku }}
+              <br>
+              Categoria: {{ item.categoria }}
+            </VCol>
+  
+            <VCol cols="12">
+              <table>
+                  <thead>
+                      <tr>
+                          <th rowspan="1" colspan="2"></th>
+                          <th colspan="3" class="entrada">Entrada</th>
+                          <th colspan="3" class="salida">Salida</th>
+                          <th colspan="3" class="existencias">Existencias</th>
+                      </tr>
+                      <tr>
+                          <th rowspan="2">Fecha</th>
+                          <th rowspan="2">Detalle</th>
+                          <th colspan="9" class="subheader">{{ item.unit_first.name }}</th>
+                          <!-- <th colspan="3" class="subheader">UNIDAD</th>
+                          <th colspan="3" class="subheader">UNIDAD</th> -->
+                      </tr>
+                      <tr>
+                          <th>Cantidad</th>
+                          <th>V/Unitario</th>
+                          <th>V/Total</th>
+                          <th>Cantidad</th>
+                          <th>V/Unitario</th>
+                          <th>V/Total</th>
+                          <th>Cantidad</th>
+                          <th>V/Unitario</th>
+                          <th>V/Total</th>
+                      </tr>
+                  </thead>
+                  <tbody>
+                      <template v-for="(movimients_for_unit, index2) in item.movimients_for_units" :key="index2">
+                        <template v-if="movimients_for_unit.unit_id == item.unit_first.id">
+                          <tr v-for="(movimient, index3) in movimients_for_unit.movimients" :key="index3">
+                              <td>{{ movimient.fecha }}</td>
+                              <td>{{ movimient.detalle }}</td>
 
+                              <template v-if="movimient.entrada">                                
+                                <td>{{ movimient.entrada.quiantity }}</td>
+                                <td>{{ movimient.entrada.price_unit }}</td>
+                                <td>${{ movimient.entrada.total }}</td>
+                              </template>
+                              <template v-if="!movimient.entrada">                                
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                              </template>
+
+                              <template v-if="movimient.salida">                                
+                                <td>{{ movimient.salida.quiantity }}</td>
+                                <td>{{ movimient.salida.price_unit }}</td>
+                                <td>${{ movimient.salida.total }}</td>
+                              </template>
+                              <template v-if="!movimient.salida">                                
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                              </template>
+
+                              <td>{{ movimient.existencia.quiantity }}</td>
+                              <td>{{ movimient.existencia.price_unit }}</td>
+                              <td>${{ movimient.existencia.total }}</td>
+
+                          </tr>
+                        </template>
+                      </template>
+
+                      <template v-for="(movimients_for_unit2, index4) in item.movimients_for_units" :key="index4">
+                        <template v-if="movimients_for_unit2.unit_id != item.unit_first.id">
+                          <tr class="new-row">
+                              <td colspan="2"></td>
+                              <td colspan="9"><b>{{ getNameUnit(movimients_for_unit2, item.units) }}</b></td>
+                              <!-- <td colspan="3"><b>CAJA</b></td>
+                              <td colspan="3"><b>CAJA</b></td> -->
+                          </tr>
+                          <tr class="new-row">
+                              <td><b>Fecha</b></td>
+                              <td><b>Detalle</b></td>
+                              <td><b>Cantidad</b></td>
+                              <td><b>V/Unitario</b></td>
+                              <td><b>V/Total</b></td>
+                              <td><b>Cantidad</b></td>
+                              <td><b>V/Unitario</b></td>
+                              <td><b>V/Total</b></td>
+                              <td><b>Cantidad</b></td>
+                              <td><b>V/Unitario</b></td>
+                              <td><b>V/Total</b></td>
+                          </tr>
+  
+                          <tr v-for="(movimient2, index5) in movimient2s_for_unit2.movimient2s" :key="index5">
+                              <td>{{ movimient2.fecha }}</td>
+                              <td>{{ movimient2.detalle }}</td>
+
+                              <template v-if="movimient2.entrada">                                
+                                <td>{{ movimient2.entrada.quiantity }}</td>
+                                <td>{{ movimient2.entrada.price_unit }}</td>
+                                <td>${{ movimient2.entrada.total }}</td>
+                              </template>
+                              <template v-if="!movimient2.entrada">                                
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                              </template>
+
+                              <template v-if="movimient2.salida">                                
+                                <td>{{ movimient2.salida.quiantity }}</td>
+                                <td>{{ movimient2.salida.price_unit }}</td>
+                                <td>${{ movimient2.salida.total }}</td>
+                              </template>
+                              <template v-if="!movimient2.salida">                                
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                              </template>
+
+                              <td>{{ movimient2.existencia.quiantity }}</td>
+                              <td>{{ movimient2.existencia.price_unit }}</td>
+                              <td>${{ movimient2.existencia.total }}</td>
+                          </tr>
+                        </template>
+                      </template>
+
+                  </tbody>
+              </table>
+            </VCol>
+
+          </VRow>
+        </template>
       </VCardText>
 
     </VCard>
