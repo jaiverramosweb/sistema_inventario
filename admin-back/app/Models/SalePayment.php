@@ -15,7 +15,9 @@ class SalePayment extends Model
         'payment_method',
         'n_trasaction',
         'banco',
-        'amount'
+        'amount',
+        // 'created_at',
+        // 'updated_at'
     ];
 
     public function setCreatedAtAttribute($value)
@@ -28,7 +30,7 @@ class SalePayment extends Model
     {
         date_default_timezone_set("America/Bogota");
         $this->attributes["updated_at"] = Carbon::now();
-    }
+    }    
 
     public function sale()
     {

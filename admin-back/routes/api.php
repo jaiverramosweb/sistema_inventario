@@ -11,6 +11,7 @@ use App\Http\Controllers\Config\UnitController;
 use App\Http\Controllers\Config\UnitConversionController;
 use App\Http\Controllers\Config\WarehouseController;
 use App\Http\Controllers\Kardex\KardexProductController;
+use App\Http\Controllers\Kpi\KpiController;
 use App\Http\Controllers\Product\ConversionController;
 use App\Http\Controllers\Product\ProductController;
 use App\Http\Controllers\Product\ProductWalletController;
@@ -44,7 +45,7 @@ Route::group([
 
 
 Route::group([
-    'middleware' => ['auth:api'],
+    // 'middleware' => ['auth:api'],
 ], function ($router) {
     Route::resource('role', RoleController::class);
 
@@ -107,6 +108,16 @@ Route::group([
     Route::resource('conversions', ConversionController::class);
 
     Route::post('kardex-product', [KardexProductController::class, 'kardexProduct']);
+
+    Route::group(['prefix' => 'kpi'], function(){
+        Route::post('information-general',  [KpiController::class, 'information_general']);
+        Route::post('asesor-most-sale',     [KpiController::class, 'asesorMostSale']);
+        Route::post('sales-total-payment',  [KpiController::class, 'salesTotalPayment']);
+        Route::post('sucursales-report-sales', [KpiController::class, 'sucursalesReportSales']);
+        Route::post('client-most-sale',     [KpiController::class, 'clientMostSale']);
+        Route::post('sales-x-month-year',  [KpiController::class, 'salesXMonthYear']);
+    });
+
 });
 
 

@@ -3,13 +3,17 @@
 namespace App\Models;
 
 use Carbon\Carbon;
+use Database\Factories\factory\Sale\SaleFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\DB;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+
 class Sale extends Model
 {
     use SoftDeletes;
+    use HasFactory;
 
     protected $fillable = [
         'user_id',
@@ -27,7 +31,9 @@ class Sale extends Model
         'date_completed',
         'description',
         'discount',
-        'state_delivery'
+        'state_delivery',
+        // 'created_at',
+        // 'updated_at'
     ];
 
     public function setCreatedAtAttribute($value)
@@ -40,6 +46,11 @@ class Sale extends Model
     {
         date_default_timezone_set("America/Bogota");
         $this->attributes["updated_at"] = Carbon::now();
+    }
+
+    protected static function newFactory()
+    {
+        return SaleFactory::new();
     }
 
     public function user()

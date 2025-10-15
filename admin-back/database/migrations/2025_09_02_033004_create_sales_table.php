@@ -21,7 +21,7 @@ return new class extends Migration
             $table->double('subtotal')->default(0);
             $table->double('total')->default(0);
             $table->double('iva')->default(0);
-            $table->smallInteger('state')->default(1)->comment('1: activo, 2: inactivo');
+            $table->smallInteger('state')->default(1)->comment('1: Venta, 2: contización');
             $table->smallInteger('state_mayment')->default(1)->comment('1: pago pendiente, 2: pago parcial, 3: pago total');
             $table->double('debt')->default(0)->comment('deuda');
             $table->double('paid_out')->default(0)->comment('pagado');

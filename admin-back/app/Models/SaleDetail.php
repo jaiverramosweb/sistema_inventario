@@ -25,6 +25,8 @@ class SaleDetail extends Model
         'state_attention',
         'description',
         'quantity_pending',
+        // 'created_at',
+        // 'updated_at'
     ];
 
     public function setCreatedAtAttribute($value)

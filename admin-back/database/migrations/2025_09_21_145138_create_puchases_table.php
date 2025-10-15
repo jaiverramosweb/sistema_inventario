@@ -18,7 +18,7 @@ return new class extends Migration
             $table->bigInteger('user_id');
             $table->bigInteger('sucuarsal_id');
             $table->timestamp('date_emition')->nullable();
-            $table->smallInteger('state')->default(1)->nullable()->comment('1: SOlicitud 2: Revision 3: Parcial 4: Entregado');
+            $table->smallInteger('state')->default(1)->nullable()->comment('1: Solicitud 2: Parcial 3: Entregado');
             $table->string('type_comprobant', 100)->nullable();
             $table->string('n_comprobant', 100)->nullable();
             $table->bigInteger('provider_id');
