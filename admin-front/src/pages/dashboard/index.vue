@@ -1,55 +1,89 @@
 <script setup>
-    const statisticsWithImages = [
-        {
-            title: 'Ratings',
-            subtitle: 'Year of 2021',
-            stats: '8.14k',
-            change: 15.6,
-            image: 'https://cdn-icons-png.flaticon.com/512/3271/3271504.png',
-            imgWidth: 99,
+    const statisticsWithImages = ref([])
+
+    const statisticsVertical = ref([])
+
+
+    const information = async () => {
+       try {
+        const resp = await $api('kpi/information-general', { 
+          method: 'POST',
+          body: {},
+          onResponseError({ response }) {
+            console.log(response)
+          },
+        })
+
+        statisticsVertical.value = [
+          {
+            title: 'Total Ventas',
             color: 'primary',
-        },
-        {
-            title: 'Sessions',
-            subtitle: 'Last Month',
-            stats: '12.2k',
-            change: -25.5,
-            image: 'https://cdn-icons-png.flaticon.com/512/3271/3271502.png',
-            imgWidth: 85,
+            icon: 'ri-shopping-cart-line',
+            stats: '$' + resp.total_sale_month_current,
+            change: resp.variation_porcentage_total_sale,
+          },
+          {
+            title: resp.sucursales_most_sales_month_current ? resp.sucursales_most_sales_month_current.name_sucursale : 'No hay CES registrado',
             color: 'success',
-        },
-    ]
-    const statisticsVertical = [
-      {
-        title: 'Total Orders',
-        color: 'primary',
-        icon: 'ri-shopping-cart-line',
-        stats: '155k',
-        change: 22,
-        subtitle: 'Last 4 months',
-      },
-      {
-        title: 'Total Sales',
-        color: 'success',
-        icon: 'ri-handbag-line',
-        stats: '13.4k',
-        change: -38,
-        subtitle: 'Last Six months',
-      },
-      {
-        title: 'Total Purchase',
-        color: 'secondary',
-        icon: 'ri-truck-line',
-        stats: '5.4k',
-        change: 38,
-        subtitle: 'Last Six months',
-      },
-    ]
+            icon: 'ri-handbag-line',
+            stats: resp.sucursales_most_sales_month_current ? '$' + resp.sucursales_most_sales_month_current.total_sales : 0,
+            change: resp.variation_porcentage_sucursale_most_sale,
+          },
+          {
+            title: 'Total Compras',
+            color: 'secondary',
+            icon: 'ri-truck-line',
+            stats: '$' + resp.total_purchase_month_current,
+            change: resp.variation_porcentage_purchase,
+          },
+        ]
+
+
+      } catch (error) {
+        console.log(error)
+      }
+    }
+
+    const asesorMostSale = async () => {
+       try {
+        const resp = await $api('kpi/asesor-most-sale', { 
+          method: 'POST',
+          body: {},
+          onResponseError({ response }) {
+            console.log(response)
+          },
+        })
+
+        statisticsWithImages.value = [
+            {
+                title: 'Asesor con más ventas',
+                subtitle: resp.asesores_most_sales_month_current ? resp.asesores_most_sales_month_current.name_asesor : 'No hay Asesor registrado',
+                stats: resp.asesores_most_sales_month_current ? '$' + resp.asesores_most_sales_month_current.total_sales : 0,
+                change: resp.variation_porcentage,
+                // image: 'https://cdn-icons-png.flaticon.com/512/3271/3271504.png',
+                imgWidth: 99,
+                color: 'primary',
+            },
+        ]
+
+
+      } catch (error) {
+        console.log(error)
+      }
+    }
+
+
+    onMounted( () => {
+      information()
+      asesorMostSale()
+    })
+
     definePage({
         meta: {
           permission: 'all'
         },
     })
+
 </script>
 <template>
     <div>
@@ -59,7 +93,7 @@
               :key="statistics.title"
               cols="12"
               sm="6"
-              md="2"
+              md="3"
             >
               <CardStatisticsVertical2 v-bind="statistics" />
             </VCol>
@@ -80,7 +114,7 @@
             <!-- 👉 Total Visits -->
             <VCol
                 cols="12"
-                md="3"
+                md="6"
                 sm="6"
             >
                 <EcommerceTotalVisits />
@@ -92,13 +126,13 @@
               <EcommerceMarketingSales />
             </VCol>
 
-            <VCol
+            <!-- <VCol
                 cols="12"
                 md="3"
                 sm="6"
             >
                 <CrmCongratulationsNorris />
-            </VCol>
+            </VCol> -->
 
             <!-- 👉 Weekly Sales -->
             <VCol

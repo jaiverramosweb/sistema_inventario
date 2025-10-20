@@ -72,12 +72,13 @@ class KpiController extends Controller
         $variation_porcentage_purchase = $totalPurchaseMonthBefore > 0 ? (($totalPurchaseMonthCurrent - $totalPurchaseMonthBefore) / $totalPurchaseMonthBefore) * 100 : 0;
 
         return response()->json([
-            'total-sale-month-before'   => round($totalSaleMountBefore, 2),
-            'total-sale-month-current'  => round($totalSaleMountCurrent, 2),
-            'variation-porcentage-total-sale' => round($variation_porcentage_total_sale, 2),
-            'sucursales-most-sales-month-current' => $sucursales_most_sales_month_current,
-            'variation-porcentage-sucursale-most-sale' => round($variation_porcentage_sucursale_most_sale, 2),
-            'variation-porcentage-purchase' => round($variation_porcentage_purchase, 2)
+            'total_sale_month_before'   => round($totalSaleMountBefore, 2),
+            'total_sale_month_current'  => round($totalSaleMountCurrent, 2),
+            'variation_porcentage_total_sale' => round($variation_porcentage_total_sale, 2),
+            'sucursales_most_sales_month_current' => $sucursales_most_sales_month_current,
+            'variation_porcentage_sucursale_most_sale' => round($variation_porcentage_sucursale_most_sale, 2),
+            'total_purchase_month_current' => round($totalPurchaseMonthCurrent, 2),
+            'variation_porcentage_purchase' => round($variation_porcentage_purchase, 2)
         ]);
     }
 
@@ -119,8 +120,8 @@ class KpiController extends Controller
 
 
         return response()->json([
-            'asesores-most-sales-month-current' => $asesores_most_sales_month_current,
-            'variation-porcentage' => round($variation_porcentage, 2)
+            'asesores_most_sales_month_current' => $asesores_most_sales_month_current,
+            'variation_porcentage' => round($variation_porcentage, 2)
         ]);
     }
 
@@ -174,13 +175,13 @@ class KpiController extends Controller
 
 
         return response()->json([
-            'sales-total-payment-complete' => round($sales_total_payment_complete, 2) ?? 0,
-            'variation-porcentage-payment' => round($variation_porcentage_payment, 2) ?? 0,
-            'num-sales-month-current-complete' => $num_sales_month_current_complete ?? 0,
-            'num-sales-month-current-pending' => $num_sales_month_current_pending ?? 0,
-            'num-sales-month-current' => $num_sales_month_current ?? 0,
-            'porcentage-sale-payment' => round($porcentage_sale_payment, 2) ?? 0,
-            'porcentage-sale-payment-pending' => round($porcentage_sale_payment_pending, 2) ?? 0,
+            'sales_total_payment_complete' => round($sales_total_payment_complete, 2) ?? 0,
+            'variation_porcentage_payment' => round($variation_porcentage_payment, 2) ?? 0,
+            'num_sales_month_current_complete' => $num_sales_month_current_complete ?? 0,
+            'num_sales_month_current_pending' => $num_sales_month_current_pending ?? 0,
+            'num_sales_month_current' => $num_sales_month_current ?? 0,
+            'porcentage_sale_payment' => round($porcentage_sale_payment, 2) ?? 0,
+            'porcentage_sale_payment_pending' => round($porcentage_sale_payment_pending, 2) ?? 0,
         ]);
     }
 
@@ -297,9 +298,9 @@ class KpiController extends Controller
     {
         $year = $request->year;
 
-        $sales_year_current = DB::table('sales')->whereNull('deleted_at')
-            ->where('state', 1)
-            ->whereYear('state.created_at', $year)
+        $sales_year_current = DB::table('sales')->whereNull('sales.deleted_at')
+            ->where('sales.state', 1)
+            ->whereYear('sales.created_at', $year)
             ->selectRaw("
                 TO_CHAR(sales.created_at, 'YYYY-MM') AS created_format,
                 SUM(sales.total) AS total_sales
@@ -307,9 +308,9 @@ class KpiController extends Controller
             ->groupBy('created_format')
             ->get();
 
-        $sales_year_before = DB::table('sales')->whereNull('deleted_at')
-            ->where('state', 1)
-            ->whereYear('state.created_at', $year - 1)
+        $sales_year_before = DB::table('sales')->whereNull('sales.deleted_at')
+            ->where('sales.state', 1)
+            ->whereYear('sales.created_at', $year - 1)
             ->selectRaw("
                 TO_CHAR(sales.created_at, 'YYYY-MM') AS created_format,
                 SUM(sales.total) AS total_sales
@@ -322,6 +323,84 @@ class KpiController extends Controller
             'total_sales_year_before' => round($sales_year_before->sum('total_sales'), 2),
             'sales_year_current' => $sales_year_current,
             'total_sales_year_current' =>  round($sales_year_current->sum('total_sales'), 2)
+        ]);
+    }
+
+    public function categoryMostSales(Request $request)
+    {
+        $year = $request->year;
+        $month = $request->month;
+
+        $categories_most_sales = DB::table('sale_details')->whereNull('sale_details.deleted_at')
+            ->join('sales', 'sale_details.sale_id', '=', 'sales.id')
+            ->join('categories', 'sale_details.product_categoryid', '=', 'categories.id')
+            ->where('sales.state', 1)
+            ->whereNull('sales.deleted_at')
+            ->whereYear('sale_details.created_at', $year)
+            ->whereMonth('sale_details.created_at', $month)
+            ->selectRaw("
+                sale_details.product_categoryid as category_id,
+                categories.title as category,
+                categories.imagen as imagen,
+                SUM(sale_details.total) as total_sales,
+                count(*) as count_sales
+            ")
+            ->groupBy('category_id', 'category', 'imagen')
+            ->orderBy('total_sales', 'desc')
+            ->take(4)
+            ->get();
+
+
+        $categories_products = collect([]);
+
+        foreach ($categories_most_sales as $categories_most) {
+            $proucts_most_sales_category = DB::table('sale_details')->whereNull('sale_details.deleted_at')
+                ->join('sales', 'sale_details.sale_id', '=', 'sales.id')
+                ->join('products', 'sale_details.product_id', '=', 'products.id')
+                ->where('sale_details.product_categoryid', $categories_most->category_id)
+                ->where('sales.state', 1)
+                ->whereNull('sales.deleted_at')
+                ->whereYear('sale_details.created_at', $year)
+                ->whereMonth('sale_details.created_at', $month)
+                ->selectRaw("
+                    sale_details.product_id as product_id,
+                    products.title as product,
+                    products.sku as sku,
+                    products.imagen as imagen,
+                    SUM(sale_details.total) as total_sales,
+                    count(*) as count_sales
+                ")
+                ->groupBy('product_id', 'product', 'sku', 'imagen')
+                ->orderBy('total_sales', 'desc')
+                ->take(4)
+                ->get();
+
+            $categories_products->push([
+                'id' => $categories_most->category_id,
+                'category' => $categories_most->category,
+                'imagen_category' => env("APP_URL") . "storage/" . $categories_most->imagen,
+                'products' => $proucts_most_sales_category->map(function ($product) {
+                    $link = "";
+
+                    if($product->imagen){
+                        if(str_contains($product->imagen,"https://") || str_contains($product->imagen,"http://")){
+                            $link = $product->imagen;
+                        }else{
+                            $link =  env('APP_URL').'storage/'.$product->imagen;
+                        }
+                    }
+
+                    $product->imagen = $link;
+                    $product->total_sales = round($product->total_sales, 2);
+                    
+                    return $product;
+                })
+            ]);
+        }
+
+        return response()->json([
+            'categories_most_sales' => $categories_most_sales,
+            'categories_products' => $categories_products
         ]);
     }
 }

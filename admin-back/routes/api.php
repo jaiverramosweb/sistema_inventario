@@ -45,7 +45,7 @@ Route::group([
 
 
 Route::group([
-    // 'middleware' => ['auth:api'],
+    'middleware' => ['auth:api'],
 ], function ($router) {
     Route::resource('role', RoleController::class);
 
@@ -116,6 +116,7 @@ Route::group([
         Route::post('sucursales-report-sales', [KpiController::class, 'sucursalesReportSales']);
         Route::post('client-most-sale',     [KpiController::class, 'clientMostSale']);
         Route::post('sales-x-month-year',  [KpiController::class, 'salesXMonthYear']);
+        Route::post('category-most-sales', [KpiController::class, 'categoryMostSales']);
     });
 
 });

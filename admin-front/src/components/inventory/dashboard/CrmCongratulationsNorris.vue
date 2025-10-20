@@ -1,5 +1,25 @@
 <script setup>
-import trophy from '@images/cards/trophy.png'
+const infoCongratulations = async () => {
+    try {
+    const resp = await $api('kpi/client-most-sale', { 
+      method: 'POST',
+      body: {},
+      onResponseError({ response }) {
+        console.log(response)
+      },
+    })
+
+    // console.log(resp)
+    
+
+  } catch (error) {
+    console.log(error)
+  }
+}
+
+onMounted( () => {
+  infoCongratulations()
+})
 </script>
 
 <template>
