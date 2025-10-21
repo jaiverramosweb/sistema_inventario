@@ -13,120 +13,18 @@ import catImg2 from '@images/cards/tabs-desktop.png'
 import catImg1 from '@images/cards/tabs-mobile.png'
 import console2 from '@images/cards/xbox-series-x.png'
 
-const currentTab = ref('mobile')
+const currentTab = ref('')
 
-const categories = [
-  {
-    title: 'mobile',
-    img: {
-      src: catImg1,
-      width: 30,
-      height: 58,
-    },
-  },
-  {
-    title: 'desktop',
-    img: {
-      src: catImg2,
-      width: 52,
-      height: 42,
-    },
-  },
-  {
-    title: 'console',
-    img: {
-      src: catImg3,
-      width: 60,
-      height: 42,
-    },
-  },
-]
+const categories = ref([])
 
-const productData = {
-  mobile: [
-    {
-      status: 'Out of Stock',
-      revenue: '12.5k',
-      conversion: 24,
-      product: 'Samsung s22',
-      image: mobile1,
-    },
-    {
-      status: 'In Stock',
-      revenue: '45k',
-      conversion: -18,
-      product: 'Apple iPhone 13 Pro',
-      image: mobile2,
-    },
-    {
-      status: 'Comming Soon',
-      revenue: '98.2k',
-      conversion: 55,
-      product: 'Oneplus 9 Pro',
-      image: mobile3,
-    },
-    {
-      status: 'In Stock',
-      revenue: '210k',
-      conversion: 8,
-      product: 'Google Pixel 6',
-      image: mobile4,
-    },
-  ],
-  desktop: [
-    {
-      status: 'In Stock',
-      revenue: '94.6k',
-      conversion: 16,
-      product: 'Apple Mac Mini',
-      image: desktop1,
-    },
-    {
-      status: 'Comming Soon',
-      revenue: '76.5k',
-      conversion: 27,
-      product: 'Newest HP Envy x360',
-      image: desktop2,
-    },
-    {
-      status: 'Out of Stock',
-      revenue: '69.3k',
-      conversion: -9,
-      product: 'Dell Inspiron 3000',
-      image: desktop3,
-    },
-  ],
-  console: [
-    {
-      status: 'Comming Soon',
-      revenue: '18.6k',
-      conversion: 34,
-      product: 'Sony Play Station 5',
-      image: console1,
-    },
-    {
-      status: 'Out of Stock',
-      revenue: '29.7k',
-      conversion: -21,
-      product: 'XBOX Series X',
-      image: console2,
-    },
-    {
-      status: 'In Stock',
-      revenue: '10.4k',
-      conversion: 38,
-      product: 'Nintendo Switch',
-      image: console3,
-    },
-  ],
-}
+const productData = ref([])
 
 const resolveChipColor = status => {
-  if (status === 'In Stock')
+  if (status === 1)
     return 'success'
-  if (status === 'Out of Stock')
+  if (status === 2)
     return 'primary'
-  if (status === 'Comming Soon')
+  if (status === 3)
     return 'warning'
 }
 
@@ -144,17 +42,141 @@ const moreList = [
     value: 'Last Year',
   },
 ]
+
+
+const month_list = ref([
+    {
+        id: '01',
+        name: 'Enero',
+    },
+    {
+        id: '02',
+        name: 'Febrero',
+    },
+    {
+        id: '03',
+        name: 'Marzo'
+    },
+    {
+        id: '04',
+        name: 'Abril',
+    },
+    {
+        id: '05',
+        name: 'Mayo',
+    },
+    {
+        id: '06',
+        name: 'Junio'
+    },
+    {
+        id: '07',
+        name: 'Julio',
+    },
+    {
+        id: '08',
+        name: 'Agosto',
+    },
+    {
+        id: '09',
+        name: 'Septiembre'
+    },
+    {
+        id: '10',
+        name: 'Octubre',
+    },
+    {
+        id: '11',
+        name: 'Noviembre',
+    },
+    {
+        id: '12',
+        name: 'Diciembre'
+    }
+]);
+
+const year_list = ref(['2023','2024','2025','2026','2027','2028']);
+
+const year_selected = ref(new Date().getFullYear() + '');
+const month_selected = ref(((new Date().getMonth() + 1) <= 9 ? "0"+(new Date().getMonth() + 1) : (new Date().getMonth() + 1) + ''));
+
+
+
+
+const infoSalesCategory = async () => {
+    try {
+    const resp = await $api('kpi/category-most-sales', { 
+      method: 'POST',
+      body: {
+        year: year_selected.value,
+        month: month_selected.value,
+      },
+      onResponseError({ response }) {
+        console.log(response)
+      },
+    })
+
+    // console.log(resp)
+    categories.value = resp.categories_products
+
+    currentTab.value = resp.categories_products.length > 0 ? resp.categories_products[0].category : ''
+    productData.value = resp.categories_products.length > 0 ? resp.categories_products[0].products : []
+
+  } catch (error) {
+    console.log(error)
+  }
+}
+
+const categorieSelected = (category) => {
+  currentTab.value = category.category
+  productData.value = category.products
+}
+
+watch(year_selected, () => {
+  infoSalesCategory()
+})
+
+watch(month_selected, () => {
+  infoSalesCategory()
+})
+
+onMounted( () => {
+  infoSalesCategory()
+})
+
+
 </script>
 
 <template>
   <VCard
-    title="Top Referral Sources"
-    subtitle="Number of Sales"
+    title="Categorias con mas ventas"
+    subtitle="Numero de categorias"
   >
     <template #append>
-      <div class="me-n3 mt-n8">
+      <VRow style="width: 350px;">
+        <VCol cols="6">
+           <VSelect
+              :items="year_list"
+              placeholder="-- seleccione --"
+              label="Año"
+              v-model="year_selected"
+            />
+
+        </VCol>
+        <VCol cols="6">
+            <VSelect
+              :items="month_list"
+              placeholder="-- seleccione --"
+              item-title="name"
+              item-value="id"
+              label="Mes"
+              v-model="month_selected"
+            />
+        </VCol>
+      </VRow>
+      <!-- <div class="me-n3 mt-n8">
         <MoreBtn :menu-list="moreList" />
-      </div>
+      </div> -->
     </template>
 
     <VCardText class="pb-6">
@@ -162,27 +184,32 @@ const moreList = [
         v-model="currentTab"
         show-arrows
         mandatory
+
       >
         <VSlideGroupItem
           v-for="category in categories"
-          :key="category.title"
+          :key="category.id"
           v-slot="{ isSelected, toggle }"
-          :value="category.title"
+          :value="category.category"
         >
           <div
             :class="isSelected ? 'selected-category' : 'not-selected-category'"
             class="d-flex flex-column justify-center align-center cursor-pointer rounded-xl px-5 py-2 me-4"
             style="block-size: 5.375rem;inline-size: 5.75rem;"
-            @click="toggle"
+            @click="categorieSelected(category)"
           >
             <VImg
-              v-bind="category.img"
+              v-bind="{
+                src: category.imagen_category,
+                width: 58,
+                height: 58
+              }"
               alt="slide-img"
             />
           </div>
         </VSlideGroupItem>
 
-        <VSlideGroupItem>
+        <!-- <VSlideGroupItem>
           <div
             class="d-flex flex-column justify-center align-center rounded-xl me-4 cursor-pointer not-selected-category"
             style="block-size: 5.375rem;inline-size: 5.75rem;"
@@ -199,7 +226,7 @@ const moreList = [
               />
             </VAvatar>
           </div>
-        </VSlideGroupItem>
+        </VSlideGroupItem> -->
       </VSlideGroup>
     </VCardText>
 
@@ -207,66 +234,67 @@ const moreList = [
       <thead>
         <tr>
           <th scope="col">
-            IMAGE
+            IMAGEN
           </th>
           <th scope="col">
-            NAME
+            NOMBRE
           </th>
           <th
             scope="col"
             class="text-end"
           >
-            STATUS
+            ESTADO
           </th>
           <th
             scope="col"
             class="text-end"
           >
-            REVENUE
+            TOTAL VENTAS
           </th>
           <th
             scope="col"
             class="text-end"
           >
-            CONVERSION
+            N° VENTAS
           </th>
         </tr>
       </thead>
 
       <tbody>
         <tr
-          v-for="currentProduct in productData[currentTab]"
-          :key="currentProduct.product"
+          v-for="product in productData"
+          :key="product.product_id"
         >
           <td>
             <VAvatar
               rounded
-              :image="currentProduct.image"
+              :image="product.imagen"
               size="34"
             />
           </td>
 
-          <td style="inline-size: 20vw;">
-            {{ currentProduct.product }}
+          <td style="text-wrap: initial;">
+            {{ product.product }}
           </td>
 
           <td class="text-end">
-            <VChip
-              :text="currentProduct.status"
-              :color="resolveChipColor(currentProduct.status)"
-              size="small"
-            />
+            <VChip color="success" v-if="product.status_stok == 1">
+              Disponible
+            </VChip>
+            <VChip color="warning" v-if="product.status_stok == 2">
+              Por agotar
+            </VChip>
+            <VChip color="error" v-if="product.status_stok == 3">
+              Agotado
+            </VChip>
           </td>
 
           <td class="text-end font-weight-medium">
-            ${{ currentProduct.revenue }}
+            ${{ product.total_sales }}
           </td>
 
           <td class="font-weight-medium text-end">
-            <span :class="currentProduct.conversion > 0 ? 'text-success' : 'text-error'">
-
-              {{ currentProduct.conversion > 0 ? `+${currentProduct.conversion}%` : `${currentProduct.conversion}%` }}
-            </span>
+            {{ product.count_sales }}
           </td>
         </tr>
       </tbody>

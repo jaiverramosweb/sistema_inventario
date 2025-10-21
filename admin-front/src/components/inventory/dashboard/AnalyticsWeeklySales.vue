@@ -41,8 +41,6 @@ const infoSalesForMonth = async () => {
       },
     })
 
-    console.log(resp)
-
     let categories_labels = []
     let sales_of_year_current = []
     let sales_of_year_before = []

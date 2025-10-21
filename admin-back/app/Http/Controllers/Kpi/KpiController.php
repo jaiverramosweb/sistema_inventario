@@ -366,11 +366,12 @@ class KpiController extends Controller
                     sale_details.product_id as product_id,
                     products.title as product,
                     products.sku as sku,
+                    products.status_stok as status_stok,
                     products.imagen as imagen,
                     SUM(sale_details.total) as total_sales,
                     count(*) as count_sales
                 ")
-                ->groupBy('product_id', 'product', 'sku', 'imagen')
+                ->groupBy('product_id', 'product', 'sku', 'status_stok', 'imagen')
                 ->orderBy('total_sales', 'desc')
                 ->take(4)
                 ->get();
@@ -399,7 +400,7 @@ class KpiController extends Controller
         }
 
         return response()->json([
-            'categories_most_sales' => $categories_most_sales,
+            // 'categories_most_sales' => $categories_most_sales,
             'categories_products' => $categories_products
         ]);
     }
