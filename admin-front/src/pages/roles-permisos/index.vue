@@ -95,7 +95,7 @@ const deleteNewRole = (item) => {
           </VCol>
 
           <VCol cols="2" class="text-end">
-            <VBtn @click="isShowDialogRole = !isShowDialogRole">
+            <VBtn v-if="isPermission('register_role')" @click="isShowDialogRole = !isShowDialogRole">
               Agregar Rol
               <VIcon end icon="ri-add-line" />
             </VBtn>
@@ -118,10 +118,10 @@ const deleteNewRole = (item) => {
         </template>
         <template #item.actions="{ item }">
           <div class="d-flex gap-1">
-            <IconBtn size="small" @click="editItem(item)">
+            <IconBtn v-if="isPermission('edit_role')" size="small" @click="editItem(item)">
               <VIcon icon="ri-pencil-line" />
             </IconBtn>
-            <IconBtn size="small" @click="deleteItem(item)">
+            <IconBtn v-if="isPermission('delete_role')" size="small" @click="deleteItem(item)">
               <VIcon icon="ri-delete-bin-line" />
             </IconBtn>
           </div>

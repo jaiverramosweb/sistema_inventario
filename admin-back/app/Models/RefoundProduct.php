@@ -68,7 +68,7 @@ class RefoundProduct extends Model
         return $this->belongsTo(SaleDetail::class);
     }
 
-    public function scopeFilterAdvance($query, $search_product, $warehouse_id, $unit_id, $type, $state, $sale_id, $search_client, $start_date, $end_date)
+    public function scopeFilterAdvance($query, $search_product, $warehouse_id, $unit_id, $type, $state, $sale_id, $search_client, $start_date, $end_date, $user)
     {
         if($search_product){
             $query->whereHas('product', function($q) use ($search_product) {
@@ -106,6 +106,28 @@ class RefoundProduct extends Model
 
         if($start_date && $end_date){
             $query->whereBetween('created_at', [Carbon::parse($start_date)->format("Y-m-d 00:00:00"), Carbon::parse($end_date)->format("Y-m-d 23:59:59")]);   
+        }
+
+        if($user){
+            if($user->role_id != 1){
+                if($user->role_id == 2){
+                    $query->whereHas('saleDetail', function($q) use ($user) {
+                        $q->whereHas("sale", function($subq) use ($user) {
+                            if($user){
+                                if($user->role_id != 1){
+                                    if($user->role_id == 2){
+                                        $subq->where("sucursal_id", $user->sucuarsal_id);
+                                    } else {
+                                        $subq->where("user_id", $user->id);
+                                    }
+                                }
+                            }
+                        });
+                    });
+                } else {
+                    $query->where("user_id", $user->id);
+                }
+            }
         }
 
         return $query;

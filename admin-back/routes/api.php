@@ -53,19 +53,16 @@ Route::group([
     Route::post('users/{id}', [UserController::class, 'update']);
     Route::resource('users', UserController::class);
 
-    Route::resource('sucursales', SucursalController::class);
-
-    Route::resource('warehouses', WarehouseController::class);
-
-    Route::post('categories/{id}', [CategoryController::class, 'update']);
-    Route::resource('categories', CategoryController::class);
-
-    Route::post('providers/{id}', [ProviderController::class, 'update']);
-    Route::resource('providers', ProviderController::class);
-
-    Route::resource('units', UnitController::class);
-
-    Route::resource('unit-conversions', UnitConversionController::class);
+    Route::group(['middleware' => ['permission:settings']], function(){
+        Route::resource('sucursales', SucursalController::class);
+        Route::resource('warehouses', WarehouseController::class);
+        Route::post('categories/{id}', [CategoryController::class, 'update']);
+        Route::resource('categories', CategoryController::class);
+        Route::post('providers/{id}', [ProviderController::class, 'update']);
+        Route::resource('providers', ProviderController::class);
+        Route::resource('units', UnitController::class);
+        Route::resource('unit-conversions', UnitConversionController::class);
+    });
 
     Route::get('products/config', [ProductController::class, 'config']);
     Route::get('products/search_product', [ProductController::class, 'searchProduct']);
@@ -74,8 +71,13 @@ Route::group([
     Route::post('products/{id}', [ProductController::class, 'update']);
     Route::resource('products', ProductController::class);
 
-    Route::resource('product-warehouse', ProductWarehouseController::class);
-    Route::resource('product-wallet', ProductWalletController::class);
+    Route::group(['middleware' => ['permission:show_inventory_product']], function(){
+        Route::resource('product-warehouse', ProductWarehouseController::class);
+    });
+
+    Route::group(['middleware' => ['permission:show_wallet_price_product']], function(){
+        Route::resource('product-wallet', ProductWalletController::class);
+    });
 
     Route::resource('clients', ClientController::class);
 
@@ -87,9 +89,11 @@ Route::group([
     Route::resource('sale-details', SaleDetailController::class);
     Route::resource('sale-payments', SalePaimentController::class);
     
-    Route::post('refound-products/index', [RefoundProductController::class, 'index']);
-    Route::get('refound-products/search-sale/{id}', [RefoundProductController::class, 'searchSale']);
-    Route::resource('refound-products', RefoundProductController::class);
+    Route::group(['middleware' => ['permission:return']], function(){
+        Route::post('refound-products/index', [RefoundProductController::class, 'index']);
+        Route::get('refound-products/search-sale/{id}', [RefoundProductController::class, 'searchSale']);
+        Route::resource('refound-products', RefoundProductController::class);
+    });
 
     Route::get('pushases/config', [PuchaseController::class, 'config']);
     Route::post('pushases/index', [PuchaseController::class, 'index']);
@@ -104,12 +108,16 @@ Route::group([
     Route::post('transport-details/attention-exit', [TransportDetailController::class, 'attentionExit']);
     Route::post('transport-details/attention-delivery', [TransportDetailController::class, 'attentionDelivery']);
 
-    Route::post('conversions/index', [ConversionController::class, 'index']);
-    Route::resource('conversions', ConversionController::class);
+    Route::group(['middleware' => ['permission:conversions']], function(){
+        Route::post('conversions/index', [ConversionController::class, 'index']);
+        Route::resource('conversions', ConversionController::class);
+    });
 
-    Route::post('kardex-product', [KardexProductController::class, 'kardexProduct']);
+    Route::group(['middleware' => ['permission:kardex']], function(){
+        Route::post('kardex-product', [KardexProductController::class, 'kardexProduct']);
+    });
 
-    Route::group(['prefix' => 'kpi'], function(){
+    Route::group(['prefix' => 'kpi', 'middleware' => ['permission:dashboard']], function(){
         Route::post('information-general',  [KpiController::class, 'information_general']);
         Route::post('asesor-most-sale',     [KpiController::class, 'asesorMostSale']);
         Route::post('sales-total-payment',  [KpiController::class, 'salesTotalPayment']);

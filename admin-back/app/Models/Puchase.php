@@ -70,7 +70,7 @@ class Puchase extends Model
     }
 
 
-    public function scopeFilterAdvance($query, $search, $warehouse_id, $unit_id, $provider_id, $type_comprobant, $start_date, $end_date, $search_product)
+    public function scopeFilterAdvance($query, $search, $warehouse_id, $unit_id, $provider_id, $type_comprobant, $start_date, $end_date, $search_product, $user)
     {
         if($search){
             $query->where("id", $search);
@@ -104,6 +104,16 @@ class Puchase extends Model
                     $subq->where(DB::raw("products.title || ' ' || products.sku"), 'ilike', '%' . $search_product . '%');
                 });
             });     
+        }
+
+        if($user){
+            if($user->role_id != 1){
+                if($user->role_id == 2){
+                    $query->where("sucursal_id", $user->sucuarsal_id);
+                } else {
+                    $query->where("user_id", $user->id);
+                }
+            }
         }
 
         return $query;

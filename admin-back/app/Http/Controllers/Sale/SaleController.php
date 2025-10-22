@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Maatwebsite\Excel\Facades\Excel;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Gate;
 
 class SaleController extends Controller
 {
@@ -27,6 +28,8 @@ class SaleController extends Controller
      */
     public function index(Request $request)
     {
+        Gate::authorize('viewAny', Sale::class);
+
         $search = $request->search;
         $type_client = $request->type_client;
         $search_client = $request->search_client;
@@ -37,7 +40,9 @@ class SaleController extends Controller
         $state_payment = $request->state_payment;
         $search_product = $request->search_product;
 
-        $sales = Sale::filterAdvance($search, $type_client, $search_client, $start_date, $end_date, $type, $state_delivery, $state_payment, $search_product)
+        $user = auth('api')->user();
+
+        $sales = Sale::filterAdvance($search, $type_client, $search_client, $start_date, $end_date, $type, $state_delivery, $state_payment, $search_product, $user)
             ->orderBy('id', 'desc')
             ->paginate(25);
 
@@ -173,6 +178,8 @@ class SaleController extends Controller
      */
     public function store(SaleRequest $request)
     {
+        Gate::authorize('create', Sale::class);
+
         $sale_details = $request->sale_details;
         $payments = $request->payments;
 
@@ -316,7 +323,9 @@ class SaleController extends Controller
      * Update the specified resource in storage.
      */
     public function update(SaleRequest $request, string $id)
-    {        
+    {
+        Gate::authorize('update', Sale::class);
+
         $sale = Sale::findOrFail($id);
         if($sale->state == 2 && $request->state == 1){
             date_default_timezone_set('America/Bogota');
@@ -334,6 +343,8 @@ class SaleController extends Controller
      */
     public function destroy(string $id)
     {
+        Gate::authorize('delete', Sale::class);
+
         $sale = Sale::findOrFail($id);
         $sale->delete();
 

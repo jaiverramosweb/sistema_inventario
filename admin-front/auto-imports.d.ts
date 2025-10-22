@@ -63,6 +63,7 @@ declare global {
   const isEmptyArray: typeof import('./src/@core/utils/helpers.js')['isEmptyArray']
   const isNullOrUndefined: typeof import('./src/@core/utils/helpers.js')['isNullOrUndefined']
   const isObject: typeof import('./src/@core/utils/helpers.js')['isObject']
+  const isPermission: typeof import('./src/utils/constants.js')['isPermission']
   const isProxy: typeof import('vue')['isProxy']
   const isReactive: typeof import('vue')['isReactive']
   const isReadonly: typeof import('vue')['isReadonly']
@@ -416,6 +417,7 @@ declare module 'vue' {
     readonly isEmptyArray: UnwrapRef<typeof import('./src/@core/utils/helpers.js')['isEmptyArray']>
     readonly isNullOrUndefined: UnwrapRef<typeof import('./src/@core/utils/helpers.js')['isNullOrUndefined']>
     readonly isObject: UnwrapRef<typeof import('./src/@core/utils/helpers.js')['isObject']>
+    readonly isPermission: UnwrapRef<typeof import('./src/utils/constants.js')['isPermission']>
     readonly isProxy: UnwrapRef<typeof import('vue')['isProxy']>
     readonly isReactive: UnwrapRef<typeof import('vue')['isReactive']>
     readonly isReadonly: UnwrapRef<typeof import('vue')['isReadonly']>
@@ -762,6 +764,7 @@ declare module '@vue/runtime-core' {
     readonly isEmptyArray: UnwrapRef<typeof import('./src/@core/utils/helpers.js')['isEmptyArray']>
     readonly isNullOrUndefined: UnwrapRef<typeof import('./src/@core/utils/helpers.js')['isNullOrUndefined']>
     readonly isObject: UnwrapRef<typeof import('./src/@core/utils/helpers.js')['isObject']>
+    readonly isPermission: UnwrapRef<typeof import('./src/utils/constants.js')['isPermission']>
     readonly isProxy: UnwrapRef<typeof import('vue')['isProxy']>
     readonly isReactive: UnwrapRef<typeof import('vue')['isReactive']>
     readonly isReadonly: UnwrapRef<typeof import('vue')['isReadonly']>

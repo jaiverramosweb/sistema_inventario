@@ -15,6 +15,7 @@ use App\Models\Unit;
 use App\Models\Warehouse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
 
@@ -25,6 +26,8 @@ class ProductController extends Controller
      */
     public function index(Request $request)
     {
+        Gate::authorize('viewAny', Product::class);
+
         $search         = $request->search;
         $category_id    = $request->category_id;
         $warehouse_id   = $request->warehouse_id;
@@ -65,6 +68,8 @@ class ProductController extends Controller
      */
     public function store(Request $request)
     {
+        Gate::authorize('create', Product::class);
+
         $exists = Product::where('title', $request->title)->first();
         $exists_sku = Product::where('sku', $request->sku)->first();
 
@@ -175,6 +180,8 @@ class ProductController extends Controller
      */
     public function update(Request $request, string $id)
     {
+        Gate::authorize('update', Product::class);
+
         $exists = Product::where('title', $request->title)->where('id', '<>', $id)->first();
         $exists_sku = Product::where('sku', $request->sku)->where('id', '<>', $id)->first();
 
@@ -227,6 +234,8 @@ class ProductController extends Controller
      */
     public function destroy(string $id)
     {
+        Gate::authorize('delete', Product::class);
+
         $product = Product::findOrFail($id);
         $product->delete();
         return response()->json([

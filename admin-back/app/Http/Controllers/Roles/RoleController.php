@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\RoleRequest;
 use App\Http\Resources\RoleResource;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Spatie\Permission\Models\Role;
 
 class RoleController extends Controller
@@ -15,6 +16,8 @@ class RoleController extends Controller
      */
     public function index(Request $request)
     {
+        Gate::authorize('viewAny', Role::class);
+
         $search = $request->get('search');
         $roles = Role::where('id', '<>', 1)
             ->where('name', 'ilike', '%' . $search . '%')
@@ -33,6 +36,7 @@ class RoleController extends Controller
      */
     public function store(RoleRequest $request)
     {
+        Gate::authorize('create', Role::class);
 
         $exists = Role::where('name', $request->name)->first();
 
@@ -75,6 +79,8 @@ class RoleController extends Controller
      */
     public function update(RoleRequest $request, string $id)
     {
+        Gate::authorize('update', Role::class);
+
         $exists = Role::where('name', $request->name)->where('id', '<>', $id)->first();
 
         if ($exists) {
@@ -106,6 +112,8 @@ class RoleController extends Controller
      */
     public function destroy(string $id)
     {
+        Gate::authorize('delete', Role::class);
+
         $role = Role::findOrFail($id);
         $role->delete();
         return response()->json([

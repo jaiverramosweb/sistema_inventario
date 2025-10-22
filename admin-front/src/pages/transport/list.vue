@@ -215,7 +215,7 @@ watch(currentPage, (page) => {
           </VCol>
 
           <VCol cols="2" class="text-end">
-            <VBtn @click="router.push({ name: 'transport-add' })">
+            <VBtn v-if="isPermission('register_transport')" @click="router.push({ name: 'transport-add' })">
               Agregar
               <VIcon end icon="ri-add-line" />
             </VBtn>
@@ -295,10 +295,10 @@ watch(currentPage, (page) => {
                 <IconBtn size="small" @click="downloadPdf(item)">
                   <VIcon icon="ri-file-pdf-2-line" />
                 </IconBtn>
-                <IconBtn size="small" @click="editItem(item)">
+                <IconBtn v-if="isPermission('edit_transport')" size="small" @click="editItem(item)">
                   <VIcon icon="ri-pencil-line" />
                 </IconBtn>
-                <IconBtn size="small" @click="deleteItem(item)" v-if="item.state < 3">
+                <IconBtn size="small" @click="deleteItem(item)" v-if="item.state < 3 && isPermission('delete_transport')">
                   <VIcon icon="ri-delete-bin-line" />
                 </IconBtn>
               </div>

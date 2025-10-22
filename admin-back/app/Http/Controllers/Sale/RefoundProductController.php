@@ -32,7 +32,9 @@ class RefoundProductController extends Controller
         $start_date = $request->start_date;
         $end_date = $request->end_date;
 
-        $refound = RefoundProduct::filterAdvance($search_product, $warehouse_id, $unit_id, $type, $state, $sale_id, $search_client, $start_date, $end_date)
+        $user = auth('api')->user();
+
+        $refound = RefoundProduct::filterAdvance($search_product, $warehouse_id, $unit_id, $type, $state, $sale_id, $search_client, $start_date, $end_date, $user)
             ->orderBy('id', 'desc')
             ->paginate(25);
 

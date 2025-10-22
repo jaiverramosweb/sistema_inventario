@@ -64,8 +64,7 @@ class PermissionsDemoSeeder extends Seeder
     Permission::create(['guard_name' => 'api', 'name' => 'kardex']);
 
     // create roles and assign existing permissions
-    $role1 = Role::create(['guard_name' => 'api', 'name' => 'Super-Admin']);
-
+    $role = Role::create(['guard_name' => 'api', 'name' => 'Super-Admin']);
 
     // gets all permissions via Gate::before rule; see AuthServiceProvider
 
@@ -77,6 +76,8 @@ class PermissionsDemoSeeder extends Seeder
       'role_id' => 1,
       'password' => bcrypt('admin123')
     ]);
-    $user->assignRole($role1);
+    $user->assignRole($role);
   }
 }
+
+// php artisan migrate:fresh --seed --seeder=PermissionsDemoSeeder

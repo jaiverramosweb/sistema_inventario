@@ -10,6 +10,7 @@ use App\Http\Requests\UserRequest;
 use App\Http\Resources\UserResource;
 use App\Models\Sucursale;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 
 class UserController extends Controller
@@ -19,6 +20,8 @@ class UserController extends Controller
      */
     public function index(Request $request)
     {
+        Gate::authorize('viewAny', User::class);
+        
         $search = $request->get('search');
 
         $users = User::where(DB::raw("users.name || ' ' || users.email || ' ' || COALESCE(users.phone,'')"), 'ilike', '%' . $search . '%')->orderBy('id', 'desc')->get();
@@ -55,6 +58,8 @@ class UserController extends Controller
      */
     public function store(UserRequest $request)
     {
+        Gate::authorize('create', User::class);
+
         $is_user_exists = User::where('email', $request->email)->first();
         if ($is_user_exists) {
             return response()->json([
@@ -95,6 +100,8 @@ class UserController extends Controller
      */
     public function update(Request $request, string $id)
     {
+        Gate::authorize('update', User::class);
+
         $is_user_exists = User::where('email', $request->email)->where('id', '<>', $id)->first();
         if ($is_user_exists) {
             return response()->json([

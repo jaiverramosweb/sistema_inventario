@@ -113,7 +113,7 @@ watch(currentPage, (page) => {
           </VCol>
 
           <VCol cols="2" class="text-end">
-            <VBtn @click="isShowDialog = !isShowDialog">
+            <VBtn v-if="isPermission('register_client')" @click="isShowDialog = !isShowDialog">
               Agregar
               <VIcon end icon="ri-add-line" />
             </VBtn>
@@ -158,10 +158,10 @@ watch(currentPage, (page) => {
             <td>{{ new Date(item.created_at).toLocaleDateString() }}</td>
             <td>
               <div class="d-flex gap-1">
-                <IconBtn size="small" @click="editItem(item)">
+                <IconBtn v-if="isPermission('edit_client')" size="small" @click="editItem(item)">
                   <VIcon icon="ri-pencil-line" />
                 </IconBtn>
-                <IconBtn size="small" @click="deleteItem(item)">
+                <IconBtn v-if="isPermission('delete_client')" size="small" @click="deleteItem(item)">
                   <VIcon icon="ri-delete-bin-line" />
                 </IconBtn>
               </div>

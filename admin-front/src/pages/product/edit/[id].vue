@@ -613,6 +613,7 @@ const update = async () => {
         <VCard
           title="Exisitencias"
           class="mb-6"
+          v-if="isPermission('show_inventory_product')"
         >
           <VCardText>
             <VRow>
@@ -737,6 +738,7 @@ const update = async () => {
         <VCard
           title="Multiples precios"
           class="mb-6"
+          v-if="isPermission('show_wallet_price_product')"
         >
           <VCardText>
             <VRow>

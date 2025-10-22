@@ -2,18 +2,18 @@
 
 namespace App\Policies;
 
+use App\Models\Sale;
 use App\Models\User;
 use Illuminate\Auth\Access\Response;
 
-class UserPolicy
+class SalePolicy
 {
     /**
      * Determine whether the user can view any models.
      */
     public function viewAny(User $user): bool
     {
-        if($user->can("list_user"))
-        {
+        if ($user->can("list_sale")) {
             return true;
         }
 
@@ -23,7 +23,7 @@ class UserPolicy
     /**
      * Determine whether the user can view the model.
      */
-    public function view(User $user, User $model): bool
+    public function view(User $user, Sale $sale): bool
     {
         return false;
     }
@@ -33,38 +33,41 @@ class UserPolicy
      */
     public function create(User $user): bool
     {
-        if ($user->can("register_user")) {
+        if ($user->can("register_sale")) {
             return true;
         }
+
         return false;
     }
 
     /**
      * Determine whether the user can update the model.
      */
-    public function update(User $user, User $model = null): bool
+    public function update(User $user, Sale $sale = null): bool
     {
-        if ($user->can("edit_user")) {
+        if ($user->can("edit_sale")) {
             return true;
         }
+
         return false;
     }
 
     /**
      * Determine whether the user can delete the model.
      */
-    public function delete(User $user, User $model = null): bool
+    public function delete(User $user, Sale $sale = null): bool
     {
-        if ($user->can("delete_user")) {
+        if ($user->can("delete_sale")) {
             return true;
         }
+
         return false;
     }
 
     /**
      * Determine whether the user can restore the model.
      */
-    public function restore(User $user, User $model): bool
+    public function restore(User $user, Sale $sale): bool
     {
         return false;
     }
@@ -72,7 +75,7 @@ class UserPolicy
     /**
      * Determine whether the user can permanently delete the model.
      */
-    public function forceDelete(User $user, User $model): bool
+    public function forceDelete(User $user, Sale $sale): bool
     {
         return false;
     }

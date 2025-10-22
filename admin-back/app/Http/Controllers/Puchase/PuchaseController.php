@@ -11,6 +11,7 @@ use App\Models\Unit;
 use App\Models\Warehouse;
 use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Gate;
 
 class PuchaseController extends Controller
 {
@@ -19,6 +20,8 @@ class PuchaseController extends Controller
      */
     public function index(Request $request)
     {
+        Gate::authorize('viewAny', Puchase::class);
+
         $search = $request->search;
         $warehouse_id = $request->warehouse_id;
         $unit_id = $request->unit_id;
@@ -28,7 +31,9 @@ class PuchaseController extends Controller
         $end_date = $request->end_date;
         $search_product = $request->search_product;
 
-        $purchases = Puchase::filterAdvance($search, $warehouse_id, $unit_id, $provider_id, $type_comprobant, $start_date, $end_date, $search_product)
+        $user = auth('api')->user();
+
+        $purchases = Puchase::filterAdvance($search, $warehouse_id, $unit_id, $provider_id, $type_comprobant, $start_date, $end_date, $search_product, $user)
             ->orderBy('id', 'desc')
             ->paginate(25);
 
@@ -70,6 +75,8 @@ class PuchaseController extends Controller
      */
     public function store(Request $request)
     {
+        Gate::authorize('create', Puchase::class);
+
         $puchase = Puchase::create([
             'warehouse_id' => $request->warehouse_id,
             'user_id' => auth('api')->user()->id,
@@ -118,6 +125,8 @@ class PuchaseController extends Controller
      */
     public function update(Request $request, string $id)
     {
+        Gate::authorize('update', Puchase::class);
+
         $purchase = Puchase::findOrFail($id);
         $purchase->update($request->all());
 
@@ -131,6 +140,8 @@ class PuchaseController extends Controller
      */
     public function destroy(string $id)
     {
+        Gate::authorize('delete', Puchase::class);
+
         $purchase = Puchase::findOrFail($id);
         if($purchase->state != 1){
             return response()->json([

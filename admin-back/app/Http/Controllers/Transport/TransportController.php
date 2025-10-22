@@ -10,6 +10,7 @@ use App\Models\Unit;
 use App\Models\Warehouse;
 use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Gate;
 
 class TransportController extends Controller
 {
@@ -18,6 +19,8 @@ class TransportController extends Controller
      */
     public function index(Request $request)
     {
+        Gate::authorize('viewAny', Transport::class);
+
         $search = $request->search;
         $warehause_start_id = $request->warehause_start_id;
         $warehause_end_id = $request->warehause_end_id;
@@ -66,6 +69,8 @@ class TransportController extends Controller
      */
     public function store(Request $request)
     {
+        Gate::authorize('create', Transport::class);
+
         $transport = Transport::create([
             'user_id' => auth('api')->user()->id,
             'warehause_start_id' => $request->warehause_start_id,
@@ -111,6 +116,8 @@ class TransportController extends Controller
      */
     public function update(Request $request, string $id)
     {
+        Gate::authorize('update', Transport::class);
+
         $transport = Transport::findOrFail($id);
 
         if($request->state >= 3 && $transport->state < 3){
@@ -181,6 +188,8 @@ class TransportController extends Controller
      */
     public function destroy(string $id)
     {
+        Gate::authorize('delete', Transport::class);
+
         $transport = Transport::findOrFail($id);
         if($transport->state >= 3){
             return response()->json([

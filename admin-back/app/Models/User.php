@@ -18,6 +18,8 @@ class User extends Authenticatable implements JWTSubject
     use HasRoles;
     use SoftDeletes;
 
+    protected $guard_name = 'api';
+
     /**
      * The attributes that are mass assignable.
      *

@@ -285,7 +285,7 @@ watch(currentPage, (page) => {
           </VCol>
 
           <VCol cols="2" class="text-end">
-            <VBtn @click="router.push({ name: 'sales-add' })">
+            <VBtn v-if="isPermission('register_sale')" @click="router.push({ name: 'sales-add' })">
               Agregar
               <VIcon end icon="ri-add-line" />
             </VBtn>
@@ -403,10 +403,10 @@ watch(currentPage, (page) => {
                 <IconBtn size="small" @click="showItem(item)">
                   <VIcon icon="ri-file-list-2-line" />
                 </IconBtn>
-                <IconBtn size="small" @click="editItem(item)">
+                <IconBtn v-if="isPermission('edit_sale')" size="small" @click="editItem(item)">
                   <VIcon icon="ri-pencil-line" />
                 </IconBtn>
-                <IconBtn size="small" @click="deleteItem(item)">
+                <IconBtn v-if="isPermission('delete_sale')" size="small" @click="deleteItem(item)">
                   <VIcon icon="ri-delete-bin-line" />
                 </IconBtn>
               </div>

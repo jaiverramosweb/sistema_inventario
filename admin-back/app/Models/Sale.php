@@ -82,7 +82,7 @@ class Sale extends Model
         return $this->payments->first();
     }
 
-    public function scopeFilterAdvance($query, $search, $type_client, $search_client, $start_date, $end_date, $type, $state_delivery, $state_payment, $search_product)
+    public function scopeFilterAdvance($query, $search, $type_client, $search_client, $start_date, $end_date, $type, $state_delivery, $state_payment, $search_product, $user)
     {
         if($search){
             $query->where("id", $search);
@@ -120,6 +120,16 @@ class Sale extends Model
                     $subq->where(DB::raw("products.title || ' ' || products.sku"), 'ilike', '%' . $search_product . '%');
                 });
             });
+        }
+
+        if($user){
+            if($user->role_id != 1){
+                if($user->role_id == 2){
+                    $query->where("sucursal_id", $user->sucuarsal_id);
+                } else {
+                    $query->where("user_id", $user->id);
+                }
+            }
         }
 
         return $query;

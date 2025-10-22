@@ -8,6 +8,7 @@ use App\Http\Resources\ClientResource;
 use App\Models\Client;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 
 class ClientController extends Controller
 {
@@ -16,9 +17,22 @@ class ClientController extends Controller
      */
     public function index(Request $request)
     {
+        Gate::authorize('viewAny', Client::class);
+
         $search         = $request->search;
 
+        $user = auth('api')->user();
+
         $clients = Client::where(DB::raw("clients.name || ' ' || clients.n_document || ' ' || clients.phone || ' ' || COALESCE(clients.email,'')"), 'ilike', '%' . $search . '%')
+                    ->where(function($query) use($user){
+                        if($user->role_id != 1){
+                            if($user->role_id == 2){
+                                $query->where("sucursal_id", $user->sucuarsal_id);
+                            } else {
+                                $query->where("user_id", $user->id);
+                            }
+                        }
+                    })
                     ->orderBy('id', 'desc')
                     ->paginate(15);
 
@@ -36,6 +50,8 @@ class ClientController extends Controller
      */
     public function store(ClientRequest $request)
     {
+        Gate::authorize('create', Client::class);
+
         $exists = Client::where('n_document', $request->n_document)->first();
         if ($exists) {
             return response()->json([
@@ -83,6 +99,8 @@ class ClientController extends Controller
      */
     public function update(ClientRequest $request, string $id)
     {
+        Gate::authorize('update', Client::class);
+
         $exists = Client::where('n_document', $request->n_document)->where('id', '<>', $id)->first();
         if ($exists) {
             return response()->json([
@@ -115,6 +133,8 @@ class ClientController extends Controller
      */
     public function destroy(string $id)
     {
+        Gate::authorize('delete', Client::class);
+
         $client = Client::findOrFail($id);
 
         if (!$client) {

@@ -87,7 +87,7 @@
 </script>
 <template>
     <div>
-        <VRow class="match-height">
+        <VRow class="match-height" v-if="isPermission('dashboard')">
             <VCol
               v-for="statistics in statisticsVertical"
               :key="statistics.title"
