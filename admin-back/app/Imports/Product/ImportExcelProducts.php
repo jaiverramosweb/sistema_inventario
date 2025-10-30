@@ -24,15 +24,15 @@ class ImportExcelProducts implements ToModel, WithHeadingRow, WithValidation
     {
         // Crear el producto
         $category = Category::where('title','ilike', Str::lower($row['categoria']))->first();
-        $warehouse = Warehouse::where('name', 'ilike', Str::lower($row['almacen']))->first();
-        $unit = Unit::where('name', 'ilike', Str::lower($row['unidad_almacen']))->first();
-        $sucursal = Sucursale::where('name', 'ilike', Str::lower($row['sucursal']))->first();
-        $unit_price = Unit::where('name', 'ilike', Str::lower($row['unidad_precio']))->first();
+        $warehouse = Warehouse::where('name', 'ilike', Str::lower($row['bodega']))->first();
+        $unit = Unit::where('name', 'ilike', Str::lower($row['unidad_bodega']))->first();
+        $ces = Sucursale::where('name', 'ilike', Str::lower($row['ces']))->first();
+        // $unit_price = Unit::where('name', 'ilike', Str::lower($row['unidad_precio']))->first();
 
         $product_title = Product::where('title',$row['nombre_producto'])->first();
-        $product_sku = Product::where('sku', $row['sku'])->first();
+        $product_sku = Product::where('sku', $row['codigo'])->first();
 
-        if (!$category || !$warehouse || !$unit || !$sucursal || !$unit_price || $product_title || $product_sku) {
+        if (!$category || !$warehouse || !$unit || !$ces || $product_title || $product_sku) {
             return Product::first();
         }
 
@@ -68,15 +68,13 @@ class ImportExcelProducts implements ToModel, WithHeadingRow, WithValidation
 
         $PRODUCT = Product::create([
             'title'         => $row['nombre_producto'],
-            'sku'           => $row['sku'],
+            'sku'           => $row['codigo'],
+            'price_general' => $row['precio'],
             'imagen'        => $row['imagen'],
             'category_id'   => $category->id,
-            'price_general' => $row['precio_general'],
-            'price_company' => $row['precio_empresa'],
             'description'   => $row['descripcion'],
             'is_discount'   => $row['descuento']  ? 2 : 1,
             'max_descount'  => $row['descuento']  ? $row['descuento'] : 0,
-            'is_gift'       => $row['en_regalo'] == 'SI'  ? 2 : 1,
             'available'     => $disponibilidad,
             'status'        => $row['estado'],
             'warranty_day'  => $row['dias_garantia'],
@@ -90,18 +88,18 @@ class ImportExcelProducts implements ToModel, WithHeadingRow, WithValidation
             'product_id'    => $PRODUCT->id,
             'warehouse_id'  => $warehouse->id,
             'unit_id'       => $unit->id,
-            'stock'         => $row['stock_almacen'],
+            'stock'         => $row['stock'],
             'umbral'        => $row['umbral'],
         ]);
 
         // Crear precio multiple
-        $PRODUCT_WALLET = ProductWallet::create([
-            'product_id'    => $PRODUCT->id,
-            'type_client'   => Str::upper($row['tipo_cliente']) == 'CLIENTE FINAL' ? 1 : 2,
-            'unit_id'       => $unit_price->id,
-            'sucursal_id'   => $sucursal->id,
-            'price'         => $row['precio'],
-        ]);
+        // $PRODUCT_WALLET = ProductWallet::create([
+        //     'product_id'    => $PRODUCT->id,
+        //     'type_client'   => 1,
+        //     'unit_id'       => $unit_price->id,
+        //     'sucursal_id'   => $ces->id,
+        //     'price'         => $row['precio'],
+        // ]);
 
 
         return $PRODUCT;
@@ -111,25 +109,20 @@ class ImportExcelProducts implements ToModel, WithHeadingRow, WithValidation
     {
         return [
             '*.nombre_producto' => ['required'],
-            '*.sku'             => ['required'],
+            '*.codigo'          => ['required'],
             '*.categoria'       => ['required'],
-            '*.precio_general'  => ['required'],
-            '*.precio_empresa'  => ['required'],
             '*.descripcion'     => ['required'],
             '*.tipo_impuesto'   => ['required'],
             '*.importe_iva'     => ['required'],
             '*.estado'          => ['required'],
             '*.dias_garantia'   => ['required'],
             '*.disponibilidad'  => ['required'],
-            '*.unidad_almacen'  => ['required'],
-            '*.almacen'         => ['required'],
-            '*.stock_almacen'   => ['required'],
+            '*.unidad_bodega'  => ['required'],
+            '*.bodega'         => ['required'],
+            '*.stock'          => ['required'],
             '*.umbral'          => ['required'],
-            '*.sucursal'        => ['required'],
-            '*.unidad_precio'   => ['required'],
-            '*.tipo_cliente'    => ['required'],
+            '*.ces'             => ['required'],
             '*.precio'          => ['required'],
-            // Add other validation rules as needed
         ];
     }
 }

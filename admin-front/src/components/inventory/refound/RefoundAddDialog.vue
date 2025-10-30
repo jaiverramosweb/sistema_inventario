@@ -138,7 +138,7 @@ const dialogVisibleUpdate = val => {
       <VCardText class="pt-5">
         <div class="text-center pb-6">
           <h4 class="text-h4 mb-2">
-            Crear Incidencia
+            Crear Contingencias
           </h4>
 
         </div>

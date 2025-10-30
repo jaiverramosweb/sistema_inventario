@@ -38,6 +38,8 @@ const upload = async () => {
       },
     })
 
+    console.log('respuesta: ', resp)
+
     success.value = 'La importación se a realizado con exito'
 
     FILE_EXCEL.value = null
@@ -53,14 +55,17 @@ const upload = async () => {
 }
 
 const loadFile = ($event) => {
-  if ($event.target.files[0].type.indexOf("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet") < 0) {
+  const tipo = $event.target.files[0].type;
+
+  if (!tipo.includes("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")) {
+    console.log('entre')
     error_exists.value = "Solamente puedes subir archivos Excel"
 
     return
   }
   error_exists.value = ''
-  FILE_EXCEL.value = null
-  // FILE_EXCEL.value = $event.target.files[0]
+  // FILE_EXCEL.value = null
+  FILE_EXCEL.value = $event.target.files[0]
 }
 
 const onFormReset = () => {

@@ -98,7 +98,7 @@ export default [
     ],
   },
   {
-    title: 'Incidencias',
+    title: 'Contingencias',
     icon: { icon: 'ri-loop-right-line' },
     permission: 'return',
     to: 'refound-list',

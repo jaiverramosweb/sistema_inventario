@@ -308,7 +308,11 @@ class ProductController extends Controller
             "excel" => 'required|file|mimes:xls,xlsx,csv'
         ]);
 
+        error_log('entre');
+
         $data = Excel::import(new ImportExcelProducts, $request->file('excel'));
+
+        error_log(json_encode($data));
 
         return response()->json([
             'status' => 200,

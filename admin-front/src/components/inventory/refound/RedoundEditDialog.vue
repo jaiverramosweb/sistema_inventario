@@ -86,7 +86,7 @@ const dialogVisibleUpdate = val => {
       <VCardText class="pt-5">
         <div class="text-center pb-6">
           <h4 class="text-h4 mb-2">
-            Editar Incidencia: {{ props.refoundSelected.product.title }}
+            Editar Contingencias: {{ props.refoundSelected.product.title }}
           </h4>
 
         </div>

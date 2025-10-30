@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('title', 250);
             $table->string('imagen', 250)->nullable();
             $table->double('price_general')->comment('Precio de venta general');
-            $table->double('price_company')->comment('Precio de venta por empresa');
+            $table->double('price_company')->comment('Precio de venta por empresa')->nullable();
             $table->text('description')->nullable();
             $table->smallInteger('is_discount')->default(1)->comment('1: Si, 2: No');
             $table->double('max_descount')->default(1)->comment('Descuento máximo permitido');
