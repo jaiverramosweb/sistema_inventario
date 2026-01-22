@@ -27,8 +27,21 @@ class Product extends Model
         'warranty_day',
         'tax_selected',
         'importe_iva',
-        'sku'
+        'sku',
+        'brand', 
+        'model', 
+        'serial', 
+        'part_number', 
+        'internal_code', 
+        'equipment_type', 
+        'condition_status', 
+        'refurbish_state', 
+        'base_cost', 
+        'refurbished_value', 
+        'technical_comments'
     ];
+
+    protected $appends = ['total_cost'];
 
     public function setCreatedAtAttribute($value)
     {
@@ -106,5 +119,26 @@ class Product extends Model
         }
 
         return $query;
+    }
+
+    // Accesor: Costo Base + Piezas agregadas
+    public function getTotalCostAttribute() {
+        return $this->base_cost + $this->refurbished_value;
+    }
+
+    // Relación: Piezas instaladas en este equipo
+    public function installedComponents() {
+        return $this->hasMany(ProductItems::class, 'parent_product_id')
+                    ->with('childProduct');
+    }
+
+    // Relación: Si este producto es una pieza instalada en otro
+    public function parentEquipment() {
+        return $this->hasOne(ProductItems::class, 'child_product_id');
+    }
+
+    // Historial de reacondicionamiento
+    public function refurbishHistory() {
+        return $this->hasMany(RefurbishHistory::class, 'product_id')->orderBy('created_at', 'desc')->with('user');
     }
 }

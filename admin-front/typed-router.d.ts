@@ -39,6 +39,8 @@ declare module 'vue-router/auto-routes' {
     'purchase-edit-id': RouteRecordInfo<'purchase-edit-id', '/purchase/edit/:id', { id: ParamValue<true> }, { id: ParamValue<false> }>,
     'purchase-list': RouteRecordInfo<'purchase-list', '/purchase/list', Record<never, never>, Record<never, never>>,
     'refound-list': RouteRecordInfo<'refound-list', '/refound/list', Record<never, never>, Record<never, never>>,
+    'refurbish-list': RouteRecordInfo<'refurbish-list', '/refurbish/list', Record<never, never>, Record<never, never>>,
+    'refurbish-workbench-id': RouteRecordInfo<'refurbish-workbench-id', '/refurbish/workbench-:id', { id: ParamValue<true> }, { id: ParamValue<false> }>,
     'roles-permisos': RouteRecordInfo<'roles-permisos', '/roles-permisos', Record<never, never>, Record<never, never>>,
     'sales-add': RouteRecordInfo<'sales-add', '/sales/add', Record<never, never>, Record<never, never>>,
     'sales-edit-id': RouteRecordInfo<'sales-edit-id', '/sales/edit/:id', { id: ParamValue<true> }, { id: ParamValue<false> }>,

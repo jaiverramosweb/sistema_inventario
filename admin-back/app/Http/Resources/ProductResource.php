@@ -33,6 +33,15 @@ class ProductResource extends JsonResource
             'sku'           => $this->sku,
             'category'      => $this->category->title,
             'imagen'        => $this->product_imagen,
+            // Precios y Costos
+            'price_general' => $this->price_general,
+            'base_cost' => $this->base_cost,
+            'refurbished_value' => $this->refurbished_value,
+            'refurbish_state' => $this->refurbish_state,
+            'total_cost' => $this->base_cost + $this->refurbished_value, // Costo real acumulado
+            // Si el equipo tiene componentes instalados (opcional para el index)
+            'components_count' => $this->installedComponents()->count(),
+
             "warehouses"    => $this->warehouses->sortByDesc("id")->map(function ($warehouse){
                 return [
                     'id'            => $warehouse->id,

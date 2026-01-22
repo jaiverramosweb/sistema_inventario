@@ -18,6 +18,7 @@ use App\Http\Controllers\Product\ProductWalletController;
 use App\Http\Controllers\Product\ProductWarehouseController;
 use App\Http\Controllers\Puchase\PuchaseController;
 use App\Http\Controllers\Puchase\PuchaseDetailController;
+use App\Http\Controllers\Refurbish\RefurbishController;
 use App\Http\Controllers\Roles\RoleController;
 use App\Http\Controllers\Sale\RefoundProductController;
 use App\Http\Controllers\Sale\SaleController;
@@ -125,6 +126,16 @@ Route::group([
         Route::post('client-most-sale',     [KpiController::class, 'clientMostSale']);
         Route::post('sales-x-month-year',  [KpiController::class, 'salesXMonthYear']);
         Route::post('category-most-sales', [KpiController::class, 'categoryMostSales']);
+    });
+
+    // Módulo de Reacondicionamiento
+    Route::prefix('refurbish')->group(function () {
+        Route::get('/equipment/{id}', [RefurbishController::class, 'show']); // Datos del equipo y sus piezas
+        Route::post('/start/{id}', [RefurbishController::class, 'start']);   // Iniciar proceso
+        Route::post('/add-component', [RefurbishController::class, 'addComponent']);
+        Route::post('/remove-component', [RefurbishController::class, 'removeComponent']);
+        Route::post('/remove-unregistered', [RefurbishController::class, 'removeUnregistered']);
+        Route::post('/finish/{id}', [RefurbishController::class, 'finish']); // Finalizar y tasar
     });
 
 });

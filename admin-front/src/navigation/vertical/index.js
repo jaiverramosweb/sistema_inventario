@@ -5,7 +5,7 @@ export default [
     permission: "all",
     icon: { icon: 'ri-pie-chart-box-line' },
   },
-  { heading: 'Accesos',permissions: ['list_role','list_user','settings'] },
+  { heading: 'Accesos', permissions: ['list_role', 'list_user', 'settings'] },
   {
     title: 'Roles y Permisos',
     to: { name: 'roles-permisos' },
@@ -54,7 +54,7 @@ export default [
       },
     ],
   },
-  { heading: 'Comercial',permissions: ['list_product','register_product','list_client','register_sale','list_sale','return'] },
+  { heading: 'Comercial', permissions: ['list_product', 'register_product', 'list_client', 'register_sale', 'list_sale', 'return'] },
   {
     title: 'Productos',
     icon: { icon: 'ri-product-hunt-line' },
@@ -103,7 +103,7 @@ export default [
     permission: 'return',
     to: 'refound-list',
   },
-  { heading: 'Almacen',permissions: ['register_purchase','list_purchase','register_transport','list_transport','conversions','kardex'] },
+  { heading: 'Almacen', permissions: ['register_purchase', 'list_purchase', 'register_transport', 'list_transport', 'conversions', 'kardex'] },
   {
     title: 'Compras',
     icon: { icon: 'ri-box-3-line' },
@@ -136,6 +136,18 @@ export default [
         title: 'Listado',
         to: 'transport-list',
         permission: 'list_transport',
+        icon: { icon: 'ri-radio-button-line' },
+      },
+    ],
+  },
+  {
+    title: 'Reacondicionamiento',
+    icon: { icon: 'ri-tools-fill' },
+    children: [
+      {
+        title: 'Banco de Trabajo',
+        to: 'refurbish-list',
+        permission: 'all',
         icon: { icon: 'ri-radio-button-line' },
       },
     ],

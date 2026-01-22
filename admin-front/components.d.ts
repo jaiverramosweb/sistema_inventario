@@ -103,6 +103,7 @@ declare module 'vue' {
     ReferAndEarnDialog: typeof import('./src/components/dialogs/ReferAndEarnDialog.vue')['default']
     RefoundAddDialog: typeof import('./src/components/inventory/refound/RefoundAddDialog.vue')['default']
     RefoundDeleteDialog: typeof import('./src/components/inventory/refound/RefoundDeleteDialog.vue')['default']
+    RefurbishWorkbench: typeof import('./src/components/RefurbishWorkbench.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     SaleDeleteDialog: typeof import('./src/components/inventory/sale/SaleDeleteDialog.vue')['default']
