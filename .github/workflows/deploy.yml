@@ -1,0 +1,59 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring, xml, ctype, iconv, pgsql, pdo_pgsql, zip
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      # En el workflow de GitHub solo validamos que compile antes de subir
+      - name: Install Backend Backend Deps
+        run: |
+          cd admin-back
+          composer install --no-interaction --prefer-dist
+
+      - name: Install Frontend Deps and Build
+        run: |
+          cd admin-front
+          pnpm install
+          pnpm build
+
+      - name: Deploy to VPS via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.REMOTE_HOST }}
+          username: ${{ secrets.REMOTE_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 5922
+          script: |
+            cd /var/www/sistema_inventario/temp_deploy || mkdir -p /var/www/sistema_inventario/temp_deploy
+            rm -rf /var/www/sistema_inventario/temp_deploy/*
+            # Usamos rsync o simplemente movemos el código. 
+            # Nota: En un entorno real, es mejor usar rsync para subir solo cambios.
+            # Para este ejemplo, clonaremos o copiaremos el código directamente en el servidor.
+            git clone -b main https://github.com/jaiverramosweb/sistema_inventario.git /var/www/sistema_inventario/temp_deploy
+            cd /var/www/sistema_inventario/temp_deploy
+            chmod +x deploy.sh
+            ./deploy.sh
