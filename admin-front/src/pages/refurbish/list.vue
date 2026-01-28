@@ -65,7 +65,7 @@ const list = async () => {
     // Filtrar solo productos que estén en reacondicionamiento (excluir 'Ninguno')
     data.value = resp.data.filter(product => product.refurbish_state && product.refurbish_state !== 'Ninguno')
 
-    console.log('✅ Productos filtrados:', data.value)
+    // console.log('✅ Productos filtrados:', data.value)
     totalPage.value = resp.last_page
 
   } catch (error) {
