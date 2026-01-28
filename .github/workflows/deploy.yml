@@ -46,7 +46,7 @@ jobs:
           host: ${{ secrets.REMOTE_HOST }}
           username: ${{ secrets.REMOTE_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: 5922
+          port: ${{ secrets.REMOTE_PORT || 22 }}
           script: |
             cd /var/www/sistema_inventario/temp_deploy || mkdir -p /var/www/sistema_inventario/temp_deploy
             rm -rf /var/www/sistema_inventario/temp_deploy/*
