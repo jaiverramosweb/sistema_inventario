@@ -26,10 +26,10 @@ return new class extends Migration
             $table->text('description')->nullable();
             $table->timestamps();
             $table->softDeletes();
-
-            // Ajustar secuencia de ID para que empiece en 1000
-            DB::statement("ALTER SEQUENCE transports_id_seq RESTART WITH 1000;");
         });
+
+        // Ajustar secuencia de ID para que empiece en 1000
+        DB::statement("ALTER SEQUENCE transports_id_seq RESTART WITH 1000;");
     }
 
     /**
