@@ -16,6 +16,14 @@ cp -R . "$RELEASE_DIR"
 
 # 3. Enlace simbólico de archivos compartidos
 ln -nfs "$SHARED_DIR/.env" "$RELEASE_DIR/admin-back/.env"
+
+# Asegurar que existan los directorios de storage en el directorio compartido
+mkdir -p "$SHARED_DIR/storage/framework/cache"
+mkdir -p "$SHARED_DIR/storage/framework/sessions"
+mkdir -p "$SHARED_DIR/storage/framework/views"
+mkdir -p "$SHARED_DIR/storage/app/public"
+mkdir -p "$SHARED_DIR/storage/logs"
+
 rm -rf "$RELEASE_DIR/admin-back/storage"
 ln -nfs "$SHARED_DIR/storage" "$RELEASE_DIR/admin-back/storage"
 
