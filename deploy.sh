@@ -49,4 +49,8 @@ sudo systemctl restart php8.2-fpm
 # 8. Limpiar releases antiguos (mantener últimos 3)
 ls -dt $APP_DIR/releases/* | tail -n +4 | xargs rm -rf
 
+# 9. Ajustar permisos finales para el servidor web
+sudo chown -R www-data:www-data "$APP_DIR"
+sudo chmod -R 775 "$APP_DIR"
+
 echo "✅ Despliegue completado con éxito."
