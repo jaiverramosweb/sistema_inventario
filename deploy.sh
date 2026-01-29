@@ -41,10 +41,12 @@ pnpm install
 pnpm run build
 
 # 6. Cambiar enlace simbólico 'current'
-ln -nfs "$RELEASE_DIR" "$APP_DIR/current"
+rm -rf "$APP_DIR/current"
+ln -s "$RELEASE_DIR" "$APP_DIR/current"
 
 # 7. Reiniciar PHP-FPM para limpiar OPcache
 sudo systemctl restart php8.2-fpm
+sudo systemctl reload nginx
 
 # 8. Limpiar releases antiguos (mantener últimos 3)
 ls -dt $APP_DIR/releases/* | tail -n +4 | xargs rm -rf
