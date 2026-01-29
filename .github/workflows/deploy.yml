@@ -48,6 +48,7 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.REMOTE_PORT || 22 }}
           script: |
+            git config --global --add safe.directory /var/www/sistema_inventario/temp_deploy
             if [ -d "/var/www/sistema_inventario/temp_deploy/.git" ]; then
                 echo "♻️ Updating existing repository..."
                 cd /var/www/sistema_inventario/temp_deploy && git fetch origin main && git reset --hard origin/main
