@@ -48,12 +48,15 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.REMOTE_PORT || 22 }}
           script: |
-            cd /var/www/sistema_inventario/temp_deploy || mkdir -p /var/www/sistema_inventario/temp_deploy
-            rm -rf /var/www/sistema_inventario/temp_deploy/*
-            # Usamos rsync o simplemente movemos el código. 
-            # Nota: En un entorno real, es mejor usar rsync para subir solo cambios.
-            # Para este ejemplo, clonaremos o copiaremos el código directamente en el servidor.
-            git clone -b main https://github.com/jaiverramosweb/sistema_inventario.git /var/www/sistema_inventario/temp_deploy
+            if [ -d "/var/www/sistema_inventario/temp_deploy/.git" ]; then
+                echo "♻️ Updating existing repository..."
+                cd /var/www/sistema_inventario/temp_deploy && git fetch origin main && git reset --hard origin/main
+            else
+                echo "📥 Cloning fresh repository..."
+                rm -rf /var/www/sistema_inventario/temp_deploy
+                mkdir -p /var/www/sistema_inventario/temp_deploy
+                git clone -b main https://github.com/jaiverramosweb/sistema_inventario.git /var/www/sistema_inventario/temp_deploy
+            fi
             cd /var/www/sistema_inventario/temp_deploy
             chmod +x deploy.sh
             ./deploy.sh
