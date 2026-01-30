@@ -79,7 +79,7 @@
     "@videojs-player/vue": "1.0.0",
     "@vitejs/plugin-vue": "5.0.4",
     "@vitejs/plugin-vue-jsx": "3.1.0",
-    "eslint": "8.57.0",
+    "eslint": "9.26.0",
     "eslint-config-airbnb-base": "15.0.0",
     "eslint-import-resolver-typescript": "3.6.1",
     "eslint-plugin-case-police": "0.6.1",
