@@ -74,6 +74,7 @@ class PermissionsDemoSeeder extends Seeder
       'name' => 'Example Super-Admin User',
       'email' => 'superadmin@example.com',
       'role_id' => 1,
+      'sucuarsal_id' => 1,
       'password' => bcrypt('admin123')
     ]);
     $user->assignRole($role);
