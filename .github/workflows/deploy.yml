@@ -46,7 +46,7 @@ jobs:
           host: ${{ secrets.REMOTE_HOST }}
           username: ${{ secrets.REMOTE_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: ${{ secrets.REMOTE_PORT || 22 }}
+          port: ${{ secrets.REMOTE_PORT || 5922 }}
           script: |
             git config --global --add safe.directory /var/www/sistema_inventario/temp_deploy
             if [ -d "/var/www/sistema_inventario/temp_deploy/.git" ]; then
