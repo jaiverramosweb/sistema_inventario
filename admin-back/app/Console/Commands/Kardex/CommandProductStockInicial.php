@@ -30,9 +30,9 @@ class CommandProductStockInicial extends Command
     {
         date_default_timezone_set('America/Bogota');
 
-        $product = ProductWarehouse::all();
+        $products = ProductWarehouse::all();
 
-        foreach ($product as $value) {
+        foreach ($products as $value) {
 
             $date_before = now()->subMonth(1);
 
@@ -61,10 +61,10 @@ class CommandProductStockInicial extends Command
             }
             
             ProductStockInitial::create([
-                'product_id' => $product->product_id,
-                'unit_id' => $product->unit_id,
-                'warehouse_id' => $product->warehouse_id,
-                'stock' => $product->stock,
+                'product_id' => $value->product_id,
+                'unit_id' => $value->unit_id,
+                'warehouse_id' => $value->warehouse_id,
+                'stock' => $value->stock,
                 'price_unit_avg' => $price_unit_avg ?? 0,
             ]);
         }

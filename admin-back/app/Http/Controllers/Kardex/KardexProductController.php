@@ -271,7 +271,7 @@ class KardexProductController extends Controller
 
         foreach ($query_refound_products_exit as $refound_products) {
             $movimients_product->push($refound_products);
-        }
+        }        
 
         // 2. Agrupar los productos
         $kardex_product = collect([]);
@@ -280,7 +280,7 @@ class KardexProductController extends Controller
             // Lista de movimiento de un producto en especifico
             // 3. Agrupar por unidad de los productos
             $movimients_for_units = collect([]);
-            $units = collect([]); 
+            $units = collect([]);             
 
             foreach ($movimient_product->groupBy('unit_id') as $movimient_unit) {
                 // Lista de movimiento por unidad del producto
@@ -313,7 +313,7 @@ class KardexProductController extends Controller
                         'price_unit' => $price_unit_avg,
                         'total' => $total
                     ]
-                ]);
+                ]);                
                 
                 // 4. Ordenar los movimientos segun la fecha
         
@@ -349,7 +349,7 @@ class KardexProductController extends Controller
                             'price_unit' => $quantity_existencia > 0 ? round($total_existencia / $quantity_existencia, 2) : 0,
                             'total' => round($total_existencia, 2)
                         ]
-                    ]);
+                    ]);                    
 
                     $quantity_old = $quantity_existencia;
                     $total_old = round($total_existencia, 2);
@@ -361,8 +361,12 @@ class KardexProductController extends Controller
                     'movimients' => $movimients
                 ]);
 
-                $units->push(Unit::first($movimient_unit[0]->unit_id));
+                $unidad = Unit::where('id', $movimient_unit[0]->unit_id)->first();
+                
+                $units->push($unidad);
+                
             }
+
 
             $kardex_product->push([
                 'product_id' => $movimient_product[0]->product_id,
@@ -370,7 +374,6 @@ class KardexProductController extends Controller
                 'sku' => $movimient_product[0]->sku,
                 'categoria' => $movimient_product[0]->categoria,              
                 'movimients_for_units' => $movimients_for_units,
-                //
                 'unit_first' => $units->first(),
                 'units' => $units
             ]);

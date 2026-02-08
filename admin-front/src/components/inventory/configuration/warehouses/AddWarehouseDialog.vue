@@ -114,8 +114,8 @@ const dialogVisibleUpdate = val => {
             </VCol>
 
             <VCol cols="12">
-              <VSelect :items="props.sucursales" item-title="name" item-value="id" v-model="sucursal_id"
-                label="Sucursal" placeholder="Select Item" eager />
+              <VSelect :items="props.sucursales" item-title="name" item-value="id" v-model="sucursal_id" label="CES"
+                placeholder="Select Item" eager />
             </VCol>
 
             <VAlert border="start" border-color="warning" v-if="warning">

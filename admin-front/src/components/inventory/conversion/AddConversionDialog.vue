@@ -52,10 +52,10 @@ const querySelections = query => {
   loading.value = true
 
   // Simulated ajax query
-  setTimeout( async () => {
+  setTimeout(async () => {
     // items.value = states.filter(state => (state || '').toLowerCase().includes((query || '').toLowerCase()))
     try {
-      const resp = await $api(`products/search_product?search=${search.value ? search.value : ''}`, { 
+      const resp = await $api(`products/search_product?search=${search.value ? search.value : ''}`, {
         method: 'get',
         onResponseError({ response }) {
           console.log(response)
@@ -75,21 +75,21 @@ watch(search, query => {
 
   warning_warehouse.value = null
 
-  if(warehouse_id.value == null){
+  if (warehouse_id.value == null) {
     warning_warehouse.value = 'Por favor, seleccione un almacén.'
-    
+
     return
   }
 
-  if(query.length > 3){
+  if (query.length > 3) {
     querySelections(query)
-  }else{
+  } else {
     items.value = []
   }
 })
 
 watch(select_product, value => {
-  if(value){
+  if (value) {
     units.value = value.warehouses.filter(warehouse => warehouse.warehouse_id == warehouse_id.value).map(wh => {
       return {
         id: wh.unit_id,
@@ -101,7 +101,7 @@ watch(select_product, value => {
 
 watch(warehouse_id, value => {
 
-  if(select_product.value){
+  if (select_product.value) {
     units.value = select_product.value.warehouses.filter(warehouse => warehouse.warehouse_id == value).map(wh => {
       return {
         id: wh.unit_id,
@@ -117,11 +117,11 @@ watch(warehouse_id, value => {
 })
 
 watch(unit_start_id, value => {
- const unit_selected = units_start.value.find((unit) => unit.id == value)
+  const unit_selected = units_start.value.find((unit) => unit.id == value)
 
- if(unit_selected){
+  if (unit_selected) {
     units_conversion.value = unit_selected.conversions
- } 
+  }
 })
 // Fin busqueda de productos
 
@@ -199,14 +199,8 @@ const dialogVisibleUpdate = val => {
         <VForm class="mt-4" @submit.prevent="store">
           <VRow>
             <VCol cols="6">
-              <VSelect
-                :items="warehouses"
-                placeholder="-- seleccione --"
-                label="Bodega"
-                item-title="name"
-                item-value="id"
-                v-model="warehouse_id"
-              />
+              <VSelect :items="warehouses" placeholder="-- seleccione --" label="Bodega" item-title="name"
+                item-value="id" v-model="warehouse_id" />
             </VCol>
 
             <VCol cols="12">
@@ -214,19 +208,9 @@ const dialogVisibleUpdate = val => {
                 <VCol cols="12">
                   <VRow>
                     <VCol cols="12">
-                      <VAutocomplete
-                        v-model="select_product"
-                        v-model:search="search"
-                        :loading="loading"
-                        :items="items"
-                        item-title="title"
-                        item-value="id"
-                        return-object
-                        placeholder="Busqueda por un producto"
-                        label="Que agregamos?"
-                        variant="underlined"
-                        :menu-props="{ maxHeight: '200px' }"
-                      />
+                      <VAutocomplete v-model="select_product" v-model:search="search" :loading="loading" :items="items"
+                        item-title="title" item-value="id" return-object placeholder="Busqueda por un producto"
+                        label="Que agregamos?" variant="underlined" :menu-props="{ maxHeight: '200px' }" />
                     </VCol>
                     <VCol cols="12" v-if="warning_warehouse">
                       <VAlert border="start" border-color="warning">
@@ -234,50 +218,28 @@ const dialogVisibleUpdate = val => {
                       </VAlert>
                     </VCol>
                   </VRow>
-                  
+
                 </VCol>
                 <VCol cols="12">
-                  <VRow>                  
+                  <VRow>
                     <VCol cols="6">
-                      <VSelect
-                        :items="units"
-                        placeholder="-- seleccione --"
-                        label="unidad inicio"
-                        item-title="name"
-                        item-value="id"
-                        v-model="unit_start_id"
-                      />
+                      <VSelect :items="units" placeholder="-- seleccione --" label="unidad inicio" item-title="name"
+                        item-value="id" v-model="unit_start_id" />
                     </VCol>
                     <VCol cols="6">
-                      <VTextField
-                        label="Cantidad"
-                        type="number"
-                        placeholder=""
-                        v-model="quantity_start"
-                      />
-                    </VCol>   
+                      <VTextField label="Cantidad" type="number" placeholder="" v-model="quantity_start" />
+                    </VCol>
                   </VRow>
                 </VCol>
                 <VCol cols="12">
-                  <VRow>                  
+                  <VRow>
                     <VCol cols="6">
-                      <VSelect
-                        :items="units_conversion"
-                        placeholder="-- seleccione --"
-                        label="unidad convertir"
-                        item-title="name"
-                        item-value="id"
-                        v-model="unit_end_id"
-                      />
+                      <VSelect :items="units_conversion" placeholder="-- seleccione --" label="unidad convertir"
+                        item-title="name" item-value="id" v-model="unit_end_id" />
                     </VCol>
                     <VCol cols="6">
-                      <VTextField
-                        label="Cantidad"
-                        type="number"
-                        placeholder=""
-                        v-model="quantity_end"
-                      />
-                    </VCol>   
+                      <VTextField label="Cantidad" type="number" placeholder="" v-model="quantity_end" />
+                    </VCol>
                   </VRow>
                 </VCol>
               </VRow>
