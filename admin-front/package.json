@@ -13,7 +13,7 @@
     "postinstall": "npm run build:icons && npm run msw:init"
   },
   "dependencies": {
-    "@casl/ability": "6.7.1",
+    "@casl/ability": "6.7.5",
     "@casl/vue": "2.2.2",
     "@floating-ui/dom": "1.6.3",
     "@formkit/drag-and-drop": "0.0.38",
