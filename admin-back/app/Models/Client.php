@@ -53,4 +53,9 @@ class Client extends Model
     {
         return $this->belongsTo(Sucursale::class, 'sucursal_id');
     }
+
+    public function opportunities()
+    {
+        return $this->hasMany(Opportunity::class);
+    }
 }

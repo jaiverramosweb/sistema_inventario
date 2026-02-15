@@ -27,6 +27,8 @@ declare module 'vue-router/auto-routes' {
     'configuration-units': RouteRecordInfo<'configuration-units', '/configuration/units', Record<never, never>, Record<never, never>>,
     'configuration-warehouses': RouteRecordInfo<'configuration-warehouses', '/configuration/warehouses', Record<never, never>, Record<never, never>>,
     'conversion-list': RouteRecordInfo<'conversion-list', '/conversion/list', Record<never, never>, Record<never, never>>,
+    'crm-leads': RouteRecordInfo<'crm-leads', '/crm/leads', Record<never, never>, Record<never, never>>,
+    'crm-pipeline': RouteRecordInfo<'crm-pipeline', '/crm/pipeline', Record<never, never>, Record<never, never>>,
     'dashboard': RouteRecordInfo<'dashboard', '/dashboard', Record<never, never>, Record<never, never>>,
     'kardex': RouteRecordInfo<'kardex', '/kardex', Record<never, never>, Record<never, never>>,
     'login': RouteRecordInfo<'login', '/login', Record<never, never>, Record<never, never>>,

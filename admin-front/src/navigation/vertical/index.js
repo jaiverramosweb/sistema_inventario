@@ -56,6 +56,24 @@ export default [
   },
   { heading: 'Comercial', permissions: ['list_product', 'register_product', 'list_client', 'register_sale', 'list_sale', 'return'] },
   {
+    title: 'CRM',
+    icon: { icon: 'ri-customer-service-2-line' },
+    children: [
+      {
+        title: 'Leads (Prospectos)',
+        to: 'crm-leads',
+        permission: 'all',
+        icon: { icon: 'ri-radio-button-line' },
+      },
+      {
+        title: 'Pipeline de Ventas',
+        to: 'crm-pipeline',
+        permission: 'all',
+        icon: { icon: 'ri-radio-button-line' },
+      },
+    ],
+  },
+  {
     title: 'Productos',
     icon: { icon: 'ri-product-hunt-line' },
     children: [

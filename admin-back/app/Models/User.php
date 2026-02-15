@@ -90,4 +90,19 @@ class User extends Authenticatable implements JWTSubject
     {
         return $this->belongsTo(Sucursale::class, 'sucuarsal_id');
     }
+
+    public function leads()
+    {
+        return $this->hasMany(Lead::class);
+    }
+
+    public function opportunities()
+    {
+        return $this->hasMany(Opportunity::class);
+    }
+
+    public function crmActivities()
+    {
+        return $this->hasMany(CrmActivity::class);
+    }
 }

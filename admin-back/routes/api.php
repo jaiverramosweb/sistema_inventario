@@ -27,6 +27,11 @@ use App\Http\Controllers\Sale\SalePaimentController;
 use App\Http\Controllers\Transport\TransportController;
 use App\Http\Controllers\Transport\TransportDetailController;
 use App\Http\Controllers\User\UserController;
+use App\Http\Controllers\CRM\LeadController;
+use App\Http\Controllers\CRM\OpportunityController;
+use App\Http\Controllers\CRM\PipelineStageController;
+use App\Http\Controllers\CRM\CrmActivityController;
+use App\Http\Controllers\CRM\LeadConversionController;
 
 // Route::get('/user', function (Request $request) {
 //     return $request->user();
@@ -136,6 +141,23 @@ Route::group([
         Route::post('/remove-component', [RefurbishController::class, 'removeComponent']);
         Route::post('/remove-unregistered', [RefurbishController::class, 'removeUnregistered']);
         Route::post('/finish/{id}', [RefurbishController::class, 'finish']); // Finalizar y tasar
+    });
+
+    // Módulo CRM
+    Route::prefix('crm')->group(function () {
+        Route::resource('leads', LeadController::class);
+        Route::post('leads/{lead}/convert', [LeadConversionController::class, 'convert']);
+        
+        Route::resource('opportunities', OpportunityController::class);
+        Route::post('opportunities/{opportunity}/change-stage', [OpportunityController::class, 'changeStage']);
+        
+        Route::get('pipeline-stages', [PipelineStageController::class, 'index']);
+        Route::post('pipeline-stages', [PipelineStageController::class, 'store']);
+        Route::put('pipeline-stages/{stage}', [PipelineStageController::class, 'update']);
+        Route::delete('pipeline-stages/{stage}', [PipelineStageController::class, 'destroy']);
+        Route::post('pipeline-stages/reorder', [PipelineStageController::class, 'reorder']);
+        
+        Route::resource('activities', CrmActivityController::class);
     });
 
 });
