@@ -44,6 +44,7 @@ declare module 'vue' {
     CardStatisticsWithImages2: typeof import('./src/components/inventory/dashboard/CardStatisticsWithImages2.vue')['default']
     ClientSearchDialog: typeof import('./src/components/inventory/sale/ClientSearchDialog.vue')['default']
     ConfirmDialog: typeof import('./src/components/dialogs/ConfirmDialog.vue')['default']
+    ConvertLeadDialog: typeof import('./src/components/inventory/crm/ConvertLeadDialog.vue')['default']
     CreateAppDialog: typeof import('./src/components/dialogs/CreateAppDialog.vue')['default']
     CrmCongratulationsNorris: typeof import('./src/components/inventory/dashboard/CrmCongratulationsNorris.vue')['default']
     CustomCheckboxes: typeof import('./src/@core/components/app-form-elements/CustomCheckboxes.vue')['default']

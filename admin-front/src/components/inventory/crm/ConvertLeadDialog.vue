@@ -16,7 +16,13 @@ const create_opportunity = ref(true)
 const opportunity_name = ref(`Venta para ${props.leadSelected.name}`)
 const pipeline_stage_id = ref(null)
 const estimated_amount = ref(0)
-const priority = ref('MEDIUM')
+const priority = ref('Media')
+
+// Client mandatory fields
+const type_client = ref(1) // 1=Cliente final
+const type_document = ref('Cedula')
+const n_document = ref(null)
+const address = ref(null)
 
 const stages = ref([])
 const warning = ref(null)
@@ -27,7 +33,7 @@ const getStages = async () => {
     const resp = await $api('crm/pipeline-stages', { method: 'GET' })
     stages.value = resp.stages
     if (stages.value.length > 0) {
-        pipeline_stage_id.value = stages.value[0].id
+      pipeline_stage_id.value = stages.value[0].id
     }
   } catch (error) {
     console.log(error)
@@ -42,6 +48,11 @@ const convert = async () => {
   warning.value = null
   success.value = null
 
+  if (!type_document.value || !n_document.value || !address.value) {
+    warning.value = 'Todos los datos del cliente (Tipo, Documento, N° y Dirección) son obligatorios'
+    return
+  }
+
   if (create_opportunity.value && !pipeline_stage_id.value) {
     warning.value = 'Debes seleccionar una etapa para la oportunidad'
     return
@@ -51,6 +62,10 @@ const convert = async () => {
     const resp = await $api(`crm/leads/${props.leadSelected.id}/convert`, {
       method: 'POST',
       body: {
+        type_client: 1,
+        type_document: type_document.value,
+        n_document: n_document.value,
+        address: address.value,
         create_opportunity: create_opportunity.value,
         opportunity_name: opportunity_name.value,
         pipeline_stage_id: pipeline_stage_id.value,
@@ -92,11 +107,34 @@ const dialogVisibleUpdate = val => {
           <h4 class="text-h4 mb-2">
             Convertir Lead a Cliente
           </h4>
-          <p class="text-body-1">Se creará un registro de cliente permanente para <strong>{{ props.leadSelected.name }}</strong></p>
+          <p class="text-body-1">Se creará un registro de cliente permanente para <strong>{{ props.leadSelected.name
+              }}</strong></p>
         </div>
 
         <VForm @submit.prevent="convert">
           <VRow>
+            <VCol cols="12" class="mb-4">
+              <h6 class="text-h6">Información del Cliente</h6>
+            </VCol>
+
+            <!-- <VCol cols="6">
+              <VSelect :items="[{ id: 1, name: 'Cliente final' }, { id: 2, name: 'Cliente empresa' }]"
+                label="Tipo de Cliente" item-title="name" item-value="id" v-model="type_client" />
+            </VCol> -->
+
+            <VCol cols="6">
+              <VSelect :items="['Cedula', 'Pasaporte', 'Cedula de extranjeria']" label="Tipo de Documento"
+                v-model="type_document" />
+            </VCol>
+
+            <VCol cols="6">
+              <VTextField v-model="n_document" label="N° de Documento" />
+            </VCol>
+
+            <VCol cols="12">
+              <VTextField v-model="address" label="Dirección" />
+            </VCol>
+
             <VCol cols="12">
               <VSwitch v-model="create_opportunity" label="Crear oportunidad de venta inmediatamente" />
             </VCol>
@@ -107,13 +145,8 @@ const dialogVisibleUpdate = val => {
               </VCol>
 
               <VCol cols="6">
-                <VSelect
-                  :items="stages"
-                  label="Etapa Inicial"
-                  item-title="name"
-                  item-value="id"
-                  v-model="pipeline_stage_id"
-                />
+                <VSelect :items="stages" label="Etapa Inicial" item-title="name" item-value="id"
+                  v-model="pipeline_stage_id" />
               </VCol>
 
               <VCol cols="6">
@@ -121,11 +154,7 @@ const dialogVisibleUpdate = val => {
               </VCol>
 
               <VCol cols="6">
-                <VSelect
-                  :items="['LOW', 'MEDIUM', 'HIGH']"
-                  label="Prioridad"
-                  v-model="priority"
-                />
+                <VSelect :items="['Baja', 'Media', 'Alta']" label="Prioridad" v-model="priority" />
               </VCol>
             </template>
 

@@ -18,6 +18,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             SucursalSeeder::class,
             PermissionsDemoSeeder::class,
+            PipelineStageSeeder::class,
         ]);
     }
 }

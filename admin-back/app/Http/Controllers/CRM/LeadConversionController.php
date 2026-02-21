@@ -18,7 +18,12 @@ class LeadConversionController extends Controller
         $request->validate([
             'create_opportunity' => 'boolean',
             'opportunity_name' => 'required_if:create_opportunity,true|string|max:255',
-            'pipeline_stage_id' => 'required_if:create_opportunity,true|exists:pipeline_stages,id'
+            'pipeline_stage_id' => 'required_if:create_opportunity,true|exists:pipeline_stages,id',
+            // Client mandatory fields
+            'type_client' => 'required|integer|in:1,2',
+            'type_document' => 'required|string|max:30',
+            'n_document' => 'required|string|max:100',
+            'address' => 'required|string'
         ]);
 
         try {
@@ -29,7 +34,10 @@ class LeadConversionController extends Controller
                     'surname' => $lead->surname,
                     'email' => $lead->email,
                     'phone' => $lead->phone,
-                    'type_client' => 1, // Default to Person
+                    'type_client' => $request->type_client,
+                    'type_document' => $request->type_document,
+                    'n_document' => $request->n_document,
+                    'address' => $request->address,
                     'user_id' => Auth::id(),
                     'sucursal_id' => $lead->sucursal_id,
                     'status' => 1 // Active

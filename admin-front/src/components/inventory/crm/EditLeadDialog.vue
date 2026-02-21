@@ -16,7 +16,7 @@ const lead = ref(JSON.parse(JSON.stringify(props.leadSelected)))
 const sucursales = ref([])
 const warning = ref(null)
 const error_exists = ref(null)
-const success = ref(null)
+// const success = ref(null)
 
 const getSucursales = async () => {
   try {
@@ -107,7 +107,7 @@ const dialogVisibleUpdate = val => {
               <VTextField v-model="lead.source" label="Origen / Fuente" />
             </VCol>
 
-            <VCol cols="6">
+            <!-- <VCol cols="6">
               <VSelect
                 :items="sucursales"
                 label="Sucursal"
@@ -115,14 +115,11 @@ const dialogVisibleUpdate = val => {
                 item-value="id"
                 v-model="lead.sucursal_id"
               />
-            </VCol>
+            </VCol> -->
 
             <VCol cols="6">
-                <VSelect
-                    :items="['NEW', 'CONTACTED', 'QUALIFIED', 'LOST', 'CONVERTED']"
-                    label="Estado"
-                    v-model="lead.status"
-                />
+              <VSelect :items="['NUEVO', 'CONTACTADO', 'CALIFICADO', 'NO CERRADO', 'CLIENTE']" label="Estado"
+                v-model="lead.status" />
             </VCol>
 
             <VAlert border="start" border-color="warning" v-if="warning" class="mt-4">

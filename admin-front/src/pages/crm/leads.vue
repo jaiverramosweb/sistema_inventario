@@ -55,7 +55,12 @@ const list = async () => {
 
 
 const addNew = (New) => {
-  data.value.unshift(New)
+  let backup = data.value
+  data.value = []
+  backup.unshift(New)
+  setTimeout(() => {
+    data.value = backup
+  }, 50)
 }
 
 const editItem = (item) => {
@@ -83,13 +88,13 @@ const removeListItem = (deletedItem) => {
 }
 
 const convertItem = (item) => {
-    selectedConvert.value = item
-    isShowDialogConvert.value = true
+  selectedConvert.value = item
+  isShowDialogConvert.value = true
 }
 
 const onConverted = (convertedLead) => {
-    // Refresh list to show CONVERTED status or remove if desired
-    list()
+  // Refresh list to show CONVERTED status or remove if desired
+  list()
 }
 
 watch([currentPage, statusFilter], () => {
@@ -104,23 +109,13 @@ watch([currentPage, statusFilter], () => {
       <VCardText>
         <VRow class="justify-space-between align-center">
           <VCol cols="12" sm="4">
-            <VTextField 
-                label="Buscar por nombre, email o teléfono" 
-                v-model="search" 
-                density="compact" 
-                prepend-inner-icon="ri-search-line"
-                @keyup.enter="list" 
-            />
+            <VTextField label="Buscar por nombre, email o teléfono" v-model="search" density="compact"
+              prepend-inner-icon="ri-search-line" @keyup.enter="list" />
           </VCol>
 
           <VCol cols="12" sm="3">
-            <VSelect
-              :items="['NEW', 'CONTACTED', 'QUALIFIED', 'LOST', 'CONVERTED']"
-              v-model="statusFilter"
-              label="Filtrar por estado"
-              density="compact"
-              clearable
-            />
+            <VSelect :items="['NEW', 'CONTACTED', 'QUALIFIED', 'LOST', 'CONVERTED']" v-model="statusFilter"
+              label="Filtrar por estado" density="compact" clearable />
           </VCol>
 
           <VCol cols="12" sm="3" class="text-end">
@@ -144,15 +139,16 @@ watch([currentPage, statusFilter], () => {
           <tr v-for="item in data" :key="item.id">
             <td>{{ item.id }}</td>
             <td>
-                <div class="d-flex flex-column">
-                    <span class="font-weight-medium">{{ item.name }} {{ item.surname }}</span>
-                </div>
+              <div class="d-flex flex-column">
+                <span class="font-weight-medium">{{ item.name }} {{ item.surname }}</span>
+              </div>
             </td>
             <td>{{ item.email || '-' }}</td>
             <td>{{ item.phone || '-' }}</td>
             <td>{{ item.source || '-' }}</td>
             <td>
-              <VChip size="small" :color="item.status === 'NEW' ? 'primary' : (item.status === 'CONVERTED' ? 'success' : 'warning')">
+              <VChip size="small"
+                :color="item.status === 'NUEVO' ? 'primary' : (item.status === 'CONTACTADO' ? 'success' : 'warning')">
                 {{ item.status }}
               </VChip>
             </td>
@@ -160,12 +156,12 @@ watch([currentPage, statusFilter], () => {
             <td>{{ new Date(item.created_at).toLocaleDateString() }}</td>
             <td>
               <div class="d-flex gap-1">
-                <IconBtn size="small" color="primary" @click="editItem(item)" v-if="item.status !== 'CONVERTED'">
+                <IconBtn size="small" color="primary" @click="editItem(item)" v-if="item.status !== 'CONTACTADO'">
                   <VIcon icon="ri-pencil-line" />
                   <VTooltip activator="parent">Editar</VTooltip>
                 </IconBtn>
 
-                <IconBtn size="small" color="success" @click="convertItem(item)" v-if="item.status !== 'CONVERTED'">
+                <IconBtn size="small" color="success" @click="convertItem(item)" v-if="item.status !== 'CONTACTADO'">
                   <VIcon icon="ri-user-follow-line" />
                   <VTooltip activator="parent">Convertir a Cliente</VTooltip>
                 </IconBtn>
@@ -184,37 +180,21 @@ watch([currentPage, statusFilter], () => {
 
       <VCardText>
         <div class="d-flex justify-center mt-2">
-            <VPagination
-                v-model="currentPage"
-                :length="totalPages"
-                :total-visible="5"
-            />
+          <VPagination v-model="currentPage" :length="totalPages" :total-visible="5" />
         </div>
       </VCardText>
     </VCard>
 
     <!-- Dialogs -->
     <AddLeadDialog v-model:isDialogVisible="isShowDialog" @add="addNew" />
-    
-    <EditLeadDialog 
-        v-if="selectedEdit && isShowDialogEdit" 
-        v-model:isDialogVisible="isShowDialogEdit" 
-        :leadSelected="selectedEdit" 
-        @edit="updateListItem" 
-    />
-    
-    <DeleteLeadDialog 
-        v-if="selectedDelete && isShowDialogDelete"
-        v-model:isDialogVisible="isShowDialogDelete" 
-        :leadSelected="selectedDelete" 
-        @delete="removeListItem" 
-    />
 
-    <ConvertLeadDialog
-        v-if="selectedConvert && isShowDialogConvert"
-        v-model:isDialogVisible="isShowDialogConvert"
-        :leadSelected="selectedConvert"
-        @converted="onConverted"
-    />
+    <EditLeadDialog v-if="selectedEdit && isShowDialogEdit" v-model:isDialogVisible="isShowDialogEdit"
+      :leadSelected="selectedEdit" @edit="updateListItem" />
+
+    <DeleteLeadDialog v-if="selectedDelete && isShowDialogDelete" v-model:isDialogVisible="isShowDialogDelete"
+      :leadSelected="selectedDelete" @delete="removeListItem" />
+
+    <ConvertLeadDialog v-if="selectedConvert && isShowDialogConvert" v-model:isDialogVisible="isShowDialogConvert"
+      :leadSelected="selectedConvert" @converted="onConverted" />
   </div>
 </template>

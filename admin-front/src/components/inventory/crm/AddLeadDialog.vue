@@ -8,13 +8,17 @@ const props = defineProps({
 
 const emit = defineEmits(['update:isDialogVisible', 'add'])
 
+const user = localStorage.getItem("user") ? JSON.parse(localStorage.getItem("user")) : null
+
+// console.log('user', user)
+
 const name = ref(null)
 const surname = ref(null)
 const email = ref(null)
 const phone = ref(null)
 const source = ref(null)
-const status = ref('NEW')
-const sucursal_id = ref(null)
+const status = ref('NUEVO')
+// const sucursal_id = ref(null)
 
 const sucursales = ref([])
 const warning = ref(null)
@@ -51,7 +55,7 @@ const store = async () => {
     phone: phone.value,
     source: source.value,
     status: status.value,
-    sucursal_id: sucursal_id.value,
+    sucursal_id: user.sucursale_id,
   }
 
   try {
@@ -64,6 +68,7 @@ const store = async () => {
     })
 
     if (resp.lead) {
+      // console.log('resp.lead', resp.lead)
       success.value = 'Lead guardado con éxito'
 
       name.value = null
@@ -72,7 +77,6 @@ const store = async () => {
       phone.value = null
       source.value = null
       status.value = 'NEW'
-      sucursal_id.value = null
 
       emit('add', resp.lead)
       setTimeout(() => {
@@ -130,16 +134,10 @@ const dialogVisibleUpdate = val => {
               <VTextField v-model="source" label="Origen / Fuente" placeholder="Ej: Facebook, Referido..." />
             </VCol>
 
-            <VCol cols="6">
-              <VSelect
-                :items="sucursales"
-                label="Sucursal"
-                item-title="name"
-                item-value="id"
-                v-model="sucursal_id"
-                placeholder="Seleccione sucursal"
-              />
-            </VCol>
+            <!-- <VCol cols="6">
+              <VSelect :items="sucursales" label="CES" item-title="name" item-value="id" v-model="sucursal_id"
+                placeholder="Seleccione sucursal" />
+            </VCol> -->
 
             <VAlert border="start" border-color="warning" v-if="warning" class="mt-4">
               {{ warning }}
