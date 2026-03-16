@@ -22,11 +22,11 @@ const form = ref({
 const route = useRoute()
 const router = useRouter()
 
-const error_exists = ref(false)
+const errorMessage = ref('')
 
 const login = async () => {
   try {
-    error_exists.value = false
+    errorMessage.value = ''
 
     const response = await $api('auth/login', {
       method: 'POST',
@@ -35,12 +35,31 @@ const login = async () => {
         password: form.value.password,
       },
       onResponseError({ response }) {
-        console.log(response)
-        error_exists.value = true
+        if (response?.status === 429) {
+          errorMessage.value = 'Demasiados intentos de inicio de sesion. Espera 1 minuto y vuelve a intentar.'
+          return
+        }
+
+        errorMessage.value = 'No se puede iniciar sesion, credenciales incorrectas.'
       },
     })
 
-    // console.log('Login response:', response)
+    if (response.requires_2fa) {
+      sessionStorage.setItem('mfa_token', response.mfa_token)
+      sessionStorage.setItem('mfa_email', form.value.email)
+
+      await nextTick(() => {
+        router.replace({
+          path: '/login-2fa',
+          query: {
+            to: route.query.to ? String(route.query.to) : undefined,
+          },
+        })
+      })
+
+      return
+    }
+
     const { access_token, user } = response
 
     localStorage.setItem('token', access_token)
@@ -109,8 +128,8 @@ const authV2LoginIllustration = useGenerateImageVariant(authV2LoginIllustrationL
                   :append-inner-icon="isPasswordVisible ? 'ri-eye-off-line' : 'ri-eye-line'"
                   @click:append-inner="isPasswordVisible = !isPasswordVisible" />
 
-                <VAlert class="my-2" type="error" closable v-if="error_exists">
-                  No se puede iniciar sesión, credenciasles incorrectas
+                <VAlert class="my-2" type="error" closable v-if="errorMessage">
+                  {{ errorMessage }}
                 </VAlert>
 
                 <!-- login button -->

@@ -10,7 +10,7 @@ const userProfileList = [
     type: 'navItem',
     icon: 'ri-user-line',
     title: 'Perfil',
-    href: '#',
+    to: { name: 'perfil' },
   },
   // {
   //   type: 'navItem',
@@ -44,7 +44,11 @@ const userProfileList = [
   // },
 ]
 
-const user = localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')) : null
+const user = ref(null)
+
+const loadUserFromStorage = () => {
+  user.value = localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')) : null
+}
 
 const logout = async () => {
   console.log('Logout')
@@ -55,6 +59,32 @@ const logout = async () => {
   // await router.push("/login")
   window.location.reload()
 }
+
+const goToProfileItem = item => {
+  if (item.to) {
+    router.push(item.to)
+    return
+  }
+
+  if (item.href) {
+    window.location.href = item.href
+  }
+}
+
+const onStorageUpdate = () => {
+  loadUserFromStorage()
+}
+
+onMounted(() => {
+  loadUserFromStorage()
+  window.addEventListener('storage', onStorageUpdate)
+  window.addEventListener('user-updated', onStorageUpdate)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('storage', onStorageUpdate)
+  window.removeEventListener('user-updated', onStorageUpdate)
+})
 </script>
 
 <template>
@@ -84,7 +114,12 @@ const logout = async () => {
 
           <PerfectScrollbar :options="{ wheelPropagation: false }">
             <template v-for="item in userProfileList" :key="item.title">
-              <VListItem v-if="item.type === 'navItem'" :href="item.href" class="px-4">
+              <VListItem
+                v-if="item.type === 'navItem'"
+                class="px-4"
+                link
+                @click="goToProfileItem(item)"
+              >
                 <template #prepend>
                   <VIcon :icon="item.icon" size="22" />
                 </template>
