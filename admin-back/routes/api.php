@@ -3,6 +3,7 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\Auth\TwoFactorController;
 use App\Http\Controllers\Client\ClientController;
 use App\Http\Controllers\Config\CategoryController;
 use App\Http\Controllers\Config\ProviderController;
@@ -43,16 +44,27 @@ Route::group([
     // 'middleware' => ['auth:api', 'permission:publish articles'],
 ], function ($router) {
     Route::post('/register', [AuthController::class, 'register'])->name('register');
-    Route::post('/login', [AuthController::class, 'login'])->name('login');
+    Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:login')->name('login');
+    Route::post('/2fa/verify', [AuthController::class, 'verifyTwoFactor'])->middleware('throttle:mfa_challenge')->name('2fa.verify');
+    Route::post('/2fa/recovery', [AuthController::class, 'verifyTwoFactorRecoveryCode'])->middleware('throttle:mfa_challenge')->name('2fa.recovery');
     Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:api')->name('logout');
     Route::post('/refresh', [AuthController::class, 'refresh'])->middleware('auth:api')->name('refresh');
     Route::post('/me', [AuthController::class, 'me'])->middleware('auth:api')->name('me');
+    Route::post('/profile/update', [AuthController::class, 'updateProfile'])->middleware(['auth:api', 'throttle:mfa_settings'])->name('profile.update');
 });
 
 
 Route::group([
     'middleware' => ['auth:api'],
 ], function ($router) {
+    Route::prefix('auth/2fa')->group(function () {
+        Route::get('/status', [TwoFactorController::class, 'status'])->middleware('throttle:mfa_settings');
+        Route::post('/setup/init', [TwoFactorController::class, 'init'])->middleware('throttle:mfa_settings');
+        Route::post('/setup/verify', [TwoFactorController::class, 'verifySetup'])->middleware('throttle:mfa_settings');
+        Route::post('/disable', [TwoFactorController::class, 'disable'])->middleware('throttle:mfa_settings');
+        Route::post('/recovery/regenerate', [TwoFactorController::class, 'regenerateRecoveryCodes'])->middleware('throttle:mfa_settings');
+    });
+
     Route::resource('role', RoleController::class);
 
     Route::get('users/config', [UserController::class, 'config']);

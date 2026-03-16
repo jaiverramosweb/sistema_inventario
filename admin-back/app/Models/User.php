@@ -35,7 +35,12 @@ class User extends Authenticatable implements JWTSubject
         'phone',
         'type_document',
         'document',
-        'gender'
+        'gender',
+        'two_factor_enabled',
+        'two_factor_secret_encrypted',
+        'two_factor_pending_secret_encrypted',
+        'two_factor_confirmed_at',
+        'two_factor_last_used_step',
     ];
 
     /**
@@ -46,6 +51,9 @@ class User extends Authenticatable implements JWTSubject
     protected $hidden = [
         'password',
         'remember_token',
+        'two_factor_secret_encrypted',
+        'two_factor_pending_secret_encrypted',
+        'two_factor_last_used_step',
     ];
 
     /**
@@ -58,6 +66,8 @@ class User extends Authenticatable implements JWTSubject
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'two_factor_enabled' => 'boolean',
+            'two_factor_confirmed_at' => 'datetime',
         ];
     }
 
@@ -104,5 +114,10 @@ class User extends Authenticatable implements JWTSubject
     public function crmActivities()
     {
         return $this->hasMany(CrmActivity::class);
+    }
+
+    public function recoveryCodes()
+    {
+        return $this->hasMany(UserRecoveryCode::class);
     }
 }
