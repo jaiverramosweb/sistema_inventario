@@ -23,17 +23,18 @@ jobs:
           php-version: '8.2'
           extensions: mbstring, xml, ctype, iconv, pgsql, pdo_pgsql, zip
 
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+          run_install: false
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'pnpm'
           cache-dependency-path: admin-front/pnpm-lock.yaml
-
-      - name: Install pnpm
-        uses: pnpm/action-setup@v3
-        with:
-          version: 9
 
       - name: Install Backend Dependencies
         run: |
