@@ -24,13 +24,15 @@ const chartConfig = ref(null)
 const series = ref([])
 
 const salesReport = ref([])
+const loading = ref(true)
 
 
 const year_list = ref(['2023','2024','2025','2026','2027','2028']);
 const year_selected = ref(new Date().getFullYear() + '')
 
 const infoSalesForMonth = async () => {
-    try {
+    loading.value = true
+  try {
     const resp = await $api('kpi/sales-x-month-year', { 
       method: 'POST',
       body: {
@@ -176,7 +178,12 @@ const infoSalesForMonth = async () => {
     ]
 
   } catch (error) {
+    chartConfig.value = null
+    series.value = []
+    salesReport.value = []
     console.log(error)
+  } finally {
+    loading.value = false
   }
 }
 
@@ -217,6 +224,12 @@ onMounted( () => {
     </template>
 
     <VCardText>
+      <template v-if="loading">
+        <VSkeletonLoader type="text, text" class="mb-6" />
+        <VSkeletonLoader type="image" />
+      </template>
+
+      <template v-else>
       <VRow class="mb-12">
         <VCol
           v-for="sale in salesReport"
@@ -244,12 +257,15 @@ onMounted( () => {
       </VRow>
 
       <VueApexCharts
+        v-if="chartConfig && series.length"
         id="weekly-sales-chart"
         type="line"
         height="225"
         :options="chartConfig"
         :series="series"
       />
+      <div v-else class="text-body-1">Sin datos para graficar</div>
+      </template>
     </VCardText>
   </VCard>
 </template>

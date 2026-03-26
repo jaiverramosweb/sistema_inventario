@@ -29,15 +29,17 @@ ln -nfs "$SHARED_DIR/storage" "$RELEASE_DIR/admin-back/storage"
 
 # 4. Backend: Instalar dependencias y optimizar
 cd "$RELEASE_DIR/admin-back"
-composer install --no-interaction --prefer-dist --optimize-autoloader
+composer install --no-interaction --no-dev --prefer-dist --optimize-autoloader
 php artisan migrate --force
 php artisan config:cache
 php artisan route:cache
 php artisan view:cache
+php artisan event:cache
+php artisan queue:restart
 
 # 5. Frontend: Instalar dependencias y compilar
 cd "$RELEASE_DIR/admin-front"
-pnpm install
+pnpm install --frozen-lockfile
 pnpm run build
 
 # 6. Cambiar enlace simbólico 'current'
@@ -48,11 +50,17 @@ ln -s "$RELEASE_DIR" "$APP_DIR/current"
 sudo systemctl restart php8.2-fpm
 sudo systemctl reload nginx
 
+# Reinicio del worker de colas si existe servicio systemd
+if systemctl list-unit-files | grep -q '^inventario-queue.service'; then
+  sudo systemctl restart inventario-queue
+fi
+
 # 8. Limpiar releases antiguos (mantener últimos 3)
 ls -dt $APP_DIR/releases/* | tail -n +4 | xargs rm -rf
 
 # 9. Ajustar permisos finales para el servidor web
 sudo chown -R Sitecsas:www-data "$APP_DIR"
-sudo chmod -R 775 "$APP_DIR"
+sudo find "$APP_DIR" -type d -exec chmod 775 {} \;
+sudo find "$APP_DIR" -type f -exec chmod 664 {} \;
 
 echo "✅ Despliegue completado con éxito."

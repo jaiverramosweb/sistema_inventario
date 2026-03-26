@@ -7,9 +7,11 @@ const num_sales_month_current_pending = ref(0)
 const num_sales_month_current = ref(0)
 const porcentage_sale_payment = ref(0)
 const porcentage_sale_payment_pending = ref(0)
+const loading = ref(true)
 
 const info = async () => {
-    try {
+    loading.value = true
+  try {
     const resp = await $api('kpi/sales-total-payment', { 
       method: 'POST',
       body: {},
@@ -29,6 +31,8 @@ const info = async () => {
 
   } catch (error) {
     console.log(error)
+  } finally {
+    loading.value = false
   }
 }
 
@@ -39,7 +43,17 @@ onMounted( () => {
 
 <template>
   <VCard>
-    <VCardText>
+    <template v-if="loading">
+      <VCardText>
+        <VSkeletonLoader type="heading, text" />
+      </VCardText>
+      <VCardText>
+        <VSkeletonLoader type="text, text, image" />
+      </VCardText>
+    </template>
+
+    <template v-else>
+      <VCardText>
       <div class="d-flex align-center justify-space-between">
         <div class="text-body-1">
           Visitas Totales
@@ -65,9 +79,9 @@ onMounted( () => {
       <h4 class="text-h4">
         ${{ sales_total_payment_complete }}
       </h4>
-    </VCardText>
+      </VCardText>
 
-    <VCardText>
+      <VCardText>
       <VRow no-gutters>
         <VCol cols="5">
           <div class="d-flex align-center mb-2">
@@ -153,6 +167,7 @@ onMounted( () => {
           rounded
         />
       </div>
-    </VCardText>
+      </VCardText>
+    </template>
   </VCard>
 </template>

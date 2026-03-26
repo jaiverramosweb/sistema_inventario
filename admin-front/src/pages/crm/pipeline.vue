@@ -2,6 +2,8 @@
 import AddOpportunityDialog from '@/components/inventory/crm/opportunity/AddOpportunityDialog.vue'
 import EditOpportunityDialog from '@/components/inventory/crm/opportunity/EditOpportunityDialog.vue'
 
+definePage({ meta: { permission: 'list_opportunity' } })
+
 const stages = ref([])
 const opportunities = ref([])
 const isLoading = ref(false)
@@ -75,6 +77,12 @@ const onDragStart = (opp) => {
 }
 
 const onDrop = (stageId) => {
+  if (!isPermission('edit_opportunity')) {
+    dragItem.value = null
+
+    return
+  }
+
   if (dragItem.value && dragItem.value.pipeline_stage_id !== stageId) {
     moveOpportunity(dragItem.value, stageId)
   }
@@ -86,7 +94,7 @@ const onDrop = (stageId) => {
   <div class="pipeline-container">
     <div class="d-flex justify-space-between align-center mb-6">
       <h2 class="text-h4">🚀 Pipeline de Ventas</h2>
-      <VBtn prepend-icon="ri-add-line" color="primary" @click="isShowAddDialog = true">
+      <VBtn v-if="isPermission('register_opportunity')" prepend-icon="ri-add-line" color="primary" @click="isShowAddDialog = true">
         Nueva Oportunidad
       </VBtn>
     </div>
@@ -104,8 +112,8 @@ const onDrop = (stageId) => {
         </div>
 
         <div class="column-body pa-2">
-          <VCard v-for="opp in getOppsByStage(stage.id)" :key="opp.id" class="mb-3 kanban-card" draggable="true"
-            @dragstart="onDragStart(opp)" @click="openEdit(opp)">
+          <VCard v-for="opp in getOppsByStage(stage.id)" :key="opp.id" class="mb-3 kanban-card" :draggable="isPermission('edit_opportunity')"
+            @dragstart="onDragStart(opp)" @click="isPermission('edit_opportunity') && openEdit(opp)">
             <VCardText class="pa-3">
               <div class="d-flex justify-space-between mb-1">
                 <span class="text-caption text-uppercase">{{ opp.priority }}</span>

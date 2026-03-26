@@ -3,8 +3,12 @@
 
     const statisticsVertical = ref([])
 
+    const loadingInformation = ref(true)
+    const loadingAsesor = ref(true)
+
 
     const information = async () => {
+      loadingInformation.value = true
        try {
         const resp = await $api('kpi/information-general', { 
           method: 'POST',
@@ -17,6 +21,7 @@
         statisticsVertical.value = [
           {
             title: 'Total Ventas',
+            subtitle: '',
             color: 'primary',
             icon: 'ri-shopping-cart-line',
             stats: '$' + resp.total_sale_month_current,
@@ -24,13 +29,15 @@
           },
           {
             title: resp.sucursales_most_sales_month_current ? resp.sucursales_most_sales_month_current.name_sucursale : 'No hay CES registrado',
+            subtitle: '',
             color: 'success',
             icon: 'ri-handbag-line',
-            stats: resp.sucursales_most_sales_month_current ? '$' + resp.sucursales_most_sales_month_current.total_sales : 0,
+            stats: resp.sucursales_most_sales_month_current ? '$' + resp.sucursales_most_sales_month_current.total_sales : '$0',
             change: resp.variation_porcentage_sucursale_most_sale,
           },
           {
             title: 'Total Compras',
+            subtitle: '',
             color: 'secondary',
             icon: 'ri-truck-line',
             stats: '$' + resp.total_purchase_month_current,
@@ -41,10 +48,13 @@
 
       } catch (error) {
         console.log(error)
+      } finally {
+        loadingInformation.value = false
       }
     }
 
     const asesorMostSale = async () => {
+      loadingAsesor.value = true
        try {
         const resp = await $api('kpi/asesor-most-sale', { 
           method: 'POST',
@@ -58,9 +68,9 @@
             {
                 title: 'Asesor con más ventas',
                 subtitle: resp.asesores_most_sales_month_current ? resp.asesores_most_sales_month_current.name_asesor : 'No hay Asesor registrado',
-                stats: resp.asesores_most_sales_month_current ? '$' + resp.asesores_most_sales_month_current.total_sales : 0,
+                stats: resp.asesores_most_sales_month_current ? '$' + resp.asesores_most_sales_month_current.total_sales : '$0',
                 change: resp.variation_porcentage,
-                // image: 'https://cdn-icons-png.flaticon.com/512/3271/3271504.png',
+                image: '',
                 imgWidth: 99,
                 color: 'primary',
             },
@@ -69,6 +79,8 @@
 
       } catch (error) {
         console.log(error)
+      } finally {
+        loadingAsesor.value = false
       }
     }
 
@@ -80,7 +92,7 @@
 
     definePage({
         meta: {
-          permission: 'all'
+          permission: 'dashboard'
         },
     })
 
@@ -89,6 +101,22 @@
     <div>
         <VRow class="match-height" v-if="isPermission('dashboard')">
             <VCol
+              v-if="loadingInformation"
+              v-for="n in 3"
+              :key="`statistics-vertical-skeleton-${n}`"
+              cols="12"
+              sm="6"
+              md="3"
+            >
+              <VCard>
+                <VCardText>
+                  <VSkeletonLoader type="heading, text" />
+                </VCardText>
+              </VCard>
+            </VCol>
+
+            <VCol
+              v-else
               v-for="statistics in statisticsVertical"
               :key="statistics.title"
               cols="12"
@@ -100,6 +128,20 @@
 
             <!-- 👉 Images Cards -->
             <VCol
+                v-if="loadingAsesor"
+                cols="12"
+                sm="6"
+                md="3"
+            >
+                <VCard>
+                  <VCardText>
+                    <VSkeletonLoader type="heading, text, text" />
+                  </VCardText>
+                </VCard>
+            </VCol>
+
+            <VCol
+                v-else
                 v-for="statistics in statisticsWithImages"
                 :key="statistics.title"
                 cols="12"

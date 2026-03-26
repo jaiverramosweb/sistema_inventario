@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
+use App\Models\User;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\PermissionRegistrar;
@@ -17,67 +18,140 @@ class PermissionsDemoSeeder extends Seeder
     // Reset cached roles and permissions
     app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
-    Permission::create(['guard_name' => 'api', 'name' => 'dashboard']);
-    // create permissions
-    Permission::create(['guard_name' => 'api', 'name' => 'register_role']);
-    Permission::create(['guard_name' => 'api', 'name' => 'list_role']);
-    Permission::create(['guard_name' => 'api', 'name' => 'edit_role']);
-    Permission::create(['guard_name' => 'api', 'name' => 'delete_role']);
+    $permissions = [
+      'dashboard',
 
-    Permission::create(['guard_name' => 'api', 'name' => 'register_user']);
-    Permission::create(['guard_name' => 'api', 'name' => 'list_user']);
-    Permission::create(['guard_name' => 'api', 'name' => 'edit_user']);
-    Permission::create(['guard_name' => 'api', 'name' => 'delete_user']);
+      'register_role',
+      'list_role',
+      'edit_role',
+      'delete_role',
 
-    Permission::create(['guard_name' => 'api', 'name' => 'settings']);
+      'register_user',
+      'list_user',
+      'edit_user',
+      'delete_user',
 
-    Permission::create(['guard_name' => 'api', 'name' => 'register_product']);
-    Permission::create(['guard_name' => 'api', 'name' => 'list_product']);
-    Permission::create(['guard_name' => 'api', 'name' => 'edit_product']);
-    Permission::create(['guard_name' => 'api', 'name' => 'delete_product']);
-    Permission::create(['guard_name' => 'api', 'name' => 'show_inventory_product']);
-    Permission::create(['guard_name' => 'api', 'name' => 'show_wallet_price_product']);
+      'settings',
 
-    Permission::create(['guard_name' => 'api', 'name' => 'register_client']);
-    Permission::create(['guard_name' => 'api', 'name' => 'list_client']);
-    Permission::create(['guard_name' => 'api', 'name' => 'edit_client']);
-    Permission::create(['guard_name' => 'api', 'name' => 'delete_client']);
+      'register_product',
+      'list_product',
+      'edit_product',
+      'delete_product',
+      'show_inventory_product',
+      'show_wallet_price_product',
 
-    Permission::create(['guard_name' => 'api', 'name' => 'register_sale']);
-    Permission::create(['guard_name' => 'api', 'name' => 'list_sale']);
-    Permission::create(['guard_name' => 'api', 'name' => 'edit_sale']);
-    Permission::create(['guard_name' => 'api', 'name' => 'delete_sale']);
+      'register_client',
+      'list_client',
+      'edit_client',
+      'delete_client',
 
-    Permission::create(['guard_name' => 'api', 'name' => 'return']);
+      'register_sale',
+      'list_sale',
+      'edit_sale',
+      'delete_sale',
 
-    Permission::create(['guard_name' => 'api', 'name' => 'register_purchase']);
-    Permission::create(['guard_name' => 'api', 'name' => 'list_purchase']);
-    Permission::create(['guard_name' => 'api', 'name' => 'edit_purchase']);
-    Permission::create(['guard_name' => 'api', 'name' => 'delete_purchase']);
+      'return',
 
-    Permission::create(['guard_name' => 'api', 'name' => 'register_transport']);
-    Permission::create(['guard_name' => 'api', 'name' => 'list_transport']);
-    Permission::create(['guard_name' => 'api', 'name' => 'edit_transport']);
-    Permission::create(['guard_name' => 'api', 'name' => 'delete_transport']);
+      'register_purchase',
+      'list_purchase',
+      'edit_purchase',
+      'delete_purchase',
 
-    Permission::create(['guard_name' => 'api', 'name' => 'conversions']);
-    Permission::create(['guard_name' => 'api', 'name' => 'kardex']);
+      'register_transport',
+      'list_transport',
+      'edit_transport',
+      'delete_transport',
+
+      'conversions',
+      'kardex',
+
+      'view_audit_logs',
+      'export_audit_logs',
+
+      'register_lead',
+      'list_lead',
+      'edit_lead',
+      'delete_lead',
+      'convert_lead',
+
+      'register_opportunity',
+      'list_opportunity',
+      'edit_opportunity',
+      'delete_opportunity',
+
+      'register_crm_activity',
+      'list_crm_activity',
+      'edit_crm_activity',
+      'delete_crm_activity',
+
+      'register_refurbish',
+      'list_refurbish',
+      'edit_refurbish',
+      'delete_refurbish',
+    ];
+
+    foreach ($permissions as $permissionName) {
+      Permission::findOrCreate($permissionName, 'api');
+    }
 
     // create roles and assign existing permissions
-    $role = Role::create(['guard_name' => 'api', 'name' => 'Super-Admin']);
+    $role = Role::findOrCreate('Super-Admin', 'api');
+
+    $backfillMap = [
+      'list_client' => ['list_lead'],
+      'register_client' => ['register_lead', 'convert_lead'],
+      'edit_client' => ['edit_lead'],
+      'delete_client' => ['delete_lead'],
+
+      'list_sale' => ['list_opportunity', 'list_crm_activity'],
+      'register_sale' => ['register_opportunity', 'register_crm_activity'],
+      'edit_sale' => ['edit_opportunity', 'edit_crm_activity'],
+      'delete_sale' => ['delete_opportunity', 'delete_crm_activity'],
+
+      'list_product' => ['list_refurbish'],
+      'register_product' => ['register_refurbish'],
+      'edit_product' => ['edit_refurbish'],
+      'delete_product' => ['delete_refurbish'],
+    ];
+
+    Role::with('permissions')->get()->each(function (Role $existingRole) use ($backfillMap) {
+      $currentPermissions = $existingRole->permissions->pluck('name')->all();
+
+      foreach ($backfillMap as $sourcePermission => $targetPermissions) {
+        if (!in_array($sourcePermission, $currentPermissions, true)) {
+          continue;
+        }
+
+        foreach ($targetPermissions as $targetPermission) {
+          if (in_array($targetPermission, $currentPermissions, true)) {
+            continue;
+          }
+
+          $existingRole->givePermissionTo($targetPermission);
+          $currentPermissions[] = $targetPermission;
+        }
+      }
+    });
 
     // gets all permissions via Gate::before rule; see AuthServiceProvider
 
     // create demo users
 
-    $user = \App\Models\User::factory()->create([
-      'name' => 'Example Super-Admin User',
-      'email' => 'superadmin@sitecsas.com',
-      'role_id' => 1,
-      'sucuarsal_id' => 1,
-      'password' => bcrypt('+[z8U]N<<[qyVTDbbp')
-    ]);
-    $user->assignRole($role);
+    $user = User::firstOrCreate(
+      ['email' => 'superadmin@sitecsas.com'],
+      [
+        'name' => 'Example Super-Admin User',
+        'role_id' => 1,
+        'sucuarsal_id' => 1,
+        'password' => bcrypt('+[z8U]N<<[qyVTDbbp'),
+      ]
+    );
+
+    if (!$user->hasRole($role->name)) {
+      $user->assignRole($role);
+    }
+
+    app()[PermissionRegistrar::class]->forgetCachedPermissions();
   }
 }
 

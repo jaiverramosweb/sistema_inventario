@@ -8,7 +8,7 @@ onMounted(() => {
   list()
 })
 
-definePage({ meta: { permission: 'list_client' } }) // Using existing permission for now
+definePage({ meta: { permission: 'list_lead' } })
 
 const search = ref('')
 const statusFilter = ref(null)
@@ -119,7 +119,7 @@ watch([currentPage, statusFilter], () => {
           </VCol>
 
           <VCol cols="12" sm="3" class="text-end">
-            <VBtn prepend-icon="ri-user-add-line" @click="isShowDialog = true">
+            <VBtn v-if="isPermission('register_lead')" prepend-icon="ri-user-add-line" @click="isShowDialog = true">
               Nuevo Lead
             </VBtn>
           </VCol>
@@ -156,17 +156,17 @@ watch([currentPage, statusFilter], () => {
             <td>{{ new Date(item.created_at).toLocaleDateString() }}</td>
             <td>
               <div class="d-flex gap-1">
-                <IconBtn size="small" color="primary" @click="editItem(item)" v-if="item.status !== 'CONTACTADO'">
+                <IconBtn size="small" color="primary" @click="editItem(item)" v-if="item.status !== 'CONTACTADO' && isPermission('edit_lead')">
                   <VIcon icon="ri-pencil-line" />
                   <VTooltip activator="parent">Editar</VTooltip>
                 </IconBtn>
 
-                <IconBtn size="small" color="success" @click="convertItem(item)" v-if="item.status !== 'CONTACTADO'">
+                <IconBtn size="small" color="success" @click="convertItem(item)" v-if="item.status !== 'CONTACTADO' && isPermission('convert_lead')">
                   <VIcon icon="ri-user-follow-line" />
                   <VTooltip activator="parent">Convertir a Cliente</VTooltip>
                 </IconBtn>
 
-                <IconBtn size="small" color="error" @click="deleteItem(item)">
+                <IconBtn size="small" color="error" @click="deleteItem(item)" v-if="isPermission('delete_lead')">
                   <VIcon icon="ri-delete-bin-line" />
                   <VTooltip activator="parent">Eliminar</VTooltip>
                 </IconBtn>

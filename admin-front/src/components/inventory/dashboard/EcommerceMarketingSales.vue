@@ -4,9 +4,11 @@ import marketingExpense from '@images/cards/marketing-expense-logo.png'
 import salesOverview from '@images/cards/sales-overview-logo.png'
 
 const sucursales = ref([])
+const loading = ref(true)
 
 const infoEcomers = async () => {
-    try {
+    loading.value = true
+  try {
     const resp = await $api('kpi/sucursales-report-sales', { 
       method: 'POST',
       body: {},
@@ -21,6 +23,8 @@ const infoEcomers = async () => {
 
   } catch (error) {
     console.log(error)
+  } finally {
+    loading.value = false
   }
 }
 
@@ -31,7 +35,12 @@ onMounted( () => {
 
 <template>
   <VCard color="primary">
+    <VCardText v-if="loading">
+      <VSkeletonLoader type="heading, text, text, image" />
+    </VCardText>
+
     <VCarousel
+      v-else-if="sucursales.length > 0"
       cycle
       :continuous="false"
       :show-arrows="false"
@@ -39,7 +48,6 @@ onMounted( () => {
       delimiter-icon="ri-circle-fill"
       height="auto"
       class="carousel-delimiter-top-end dots-active-white"
-      v-if="sucursales.length > 0"
     >
       <VCarouselItem
         v-for="item in sucursales"
@@ -154,5 +162,9 @@ onMounted( () => {
         </VCardText>
       </VCarouselItem>
     </VCarousel>
+
+    <VCardText v-else>
+      <div class="text-white text-body-1">Sin datos para mostrar</div>
+    </VCardText>
   </VCard>
 </template>

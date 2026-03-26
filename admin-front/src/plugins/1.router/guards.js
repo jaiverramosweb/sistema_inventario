@@ -1,3 +1,5 @@
+import { $api } from '@/utils/api'
+
 export const setupGuards = router => {
   // 👉 router.beforeEach
   // Docs: https://router.vuejs.org/guide/advanced/navigation-guards.html#global-before-guards
@@ -53,5 +55,41 @@ export const setupGuards = router => {
             }
         /* eslint-enable indent */
     }
+  })
+
+  router.afterEach((to, from) => {
+    const userRaw = localStorage.getItem('user')
+    const token = localStorage.getItem('token')
+
+    if (!userRaw || !token || to.fullPath === from.fullPath) {
+      return
+    }
+
+    const now = Date.now()
+    const lastPath = sessionStorage.getItem('audit_last_path')
+    const lastAt = Number(sessionStorage.getItem('audit_last_at') || '0')
+
+    if (lastPath === to.fullPath && now - lastAt < 45000) {
+      return
+    }
+
+    sessionStorage.setItem('audit_last_path', to.fullPath)
+    sessionStorage.setItem('audit_last_at', String(now))
+
+    const cleanPath = (to.path || '/').replace(/^\//, '')
+    const rawModule = cleanPath.split('/')[0] || 'dashboard'
+    const module = rawModule === 'audit' ? 'auditoria' : rawModule
+
+    $api('audit/navigation', {
+      method: 'POST',
+      body: {
+        route_name: to.name ? String(to.name) : null,
+        module,
+        path: to.fullPath,
+        title: to.meta?.title || null,
+      },
+    }).catch(() => {
+      // noop
+    })
   })
 }

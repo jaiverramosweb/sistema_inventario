@@ -6,7 +6,7 @@ onMounted(() => {
   list()
 })
 
-definePage({ meta: { permission: 'all' } })
+definePage({ meta: { permission: 'list_refurbish' } })
 
 const router = useRouter()
 const search = ref('')
@@ -117,36 +117,13 @@ const startRefurbishment = async () => {
 
   loadingStart.value = true
   try {
-    // Actualizar el producto directamente
-    const formData = new FormData()
-    // Campos requeridos por el backend
-    formData.append('title', selectedProduct.value.title)
-    formData.append('sku', selectedProduct.value.sku)
-    formData.append('price_general', selectedProduct.value.price_general)
-    formData.append('price_company', selectedProduct.value.price_company || selectedProduct.value.price_general)
-    formData.append('category_id', selectedProduct.value.category_id)
-    formData.append('available', selectedProduct.value.available || 1)
-    formData.append('status', selectedProduct.value.status || 'Activo')
-
-    // Campos de reacondicionamiento - USAR VALORES EXACTOS DEL ENUM
-    formData.append('refurbish_state', 'Pendiente Diagnostico')  // ✅ Valor correcto del ENUM
-    formData.append('base_cost', baseCost.value)
-
-    // equipment_type debe ser uno de: Laptop, Desktop, All-in-one, Minipc, Componente, Otros
-    if (equipmentType.value) {
-      const validTypes = ['Laptop', 'Desktop', 'All-in-one', 'Minipc', 'Componente', 'Otros']
-      if (validTypes.includes(equipmentType.value)) {
-        formData.append('equipment_type', equipmentType.value)
-      }
-    }
-
-    if (technicalComments.value) {
-      formData.append('technical_comments', technicalComments.value)
-    }
-
-    const resp = await $api(`products/${selectedProduct.value.id}`, {
+    const resp = await $api(`refurbish/start/${selectedProduct.value.id}`, {
       method: 'POST',
-      body: formData,
+      body: {
+        base_cost: baseCost.value,
+        equipment_type: equipmentType.value || null,
+        technical_comments: technicalComments.value || null,
+      },
       onResponseError({ response }) {
         alert(response._data?.error || 'Error al iniciar reacondicionamiento')
       },
@@ -257,7 +234,7 @@ watch(currentPage, () => {
           </VCol>
 
           <VCol cols="2" class="text-end">
-            <VBtn color="primary" prepend-icon="ri-add-line" @click="showAddEquipmentDialog = true">
+            <VBtn v-if="isPermission('register_refurbish')" color="primary" prepend-icon="ri-add-line" @click="showAddEquipmentDialog = true">
               Agregar Equipo
             </VBtn>
           </VCol>
@@ -327,7 +304,7 @@ watch(currentPage, () => {
             </td>
             <td>
               <div class="d-flex gap-1">
-                <VBtn size="small" color="primary" prepend-icon="ri-tools-line" @click="goToWorkbench(item)">
+                <VBtn v-if="isPermission('edit_refurbish')" size="small" color="primary" prepend-icon="ri-tools-line" @click="goToWorkbench(item)">
                   Workbench
                 </VBtn>
               </div>

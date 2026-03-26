@@ -2,10 +2,10 @@ export default [
   {
     title: 'Dashboard',
     to: { name: 'dashboard' },
-    permission: "all",
+    permission: 'dashboard',
     icon: { icon: 'ri-pie-chart-box-line' },
   },
-  { heading: 'Accesos', permissions: ['list_role', 'list_user', 'settings'] },
+  { heading: 'Accesos', permissions: ['list_role', 'list_user', 'settings', 'view_audit_logs'] },
   {
     title: 'Roles y Permisos',
     to: { name: 'roles-permisos' },
@@ -17,6 +17,12 @@ export default [
     to: { name: 'users' },
     permission: 'list_user',
     icon: { icon: 'ri-group-line' },
+  },
+  {
+    title: 'Auditoria',
+    to: { name: 'audit-logs' },
+    permission: 'view_audit_logs',
+    icon: { icon: 'ri-file-search-line' },
   },
   {
     title: 'Configuraciones',
@@ -54,7 +60,7 @@ export default [
       },
     ],
   },
-  { heading: 'Comercial', permissions: ['list_product', 'register_product', 'list_client', 'register_sale', 'list_sale', 'return'] },
+  { heading: 'Comercial', permissions: ['list_product', 'register_product', 'list_client', 'register_sale', 'list_sale', 'return', 'list_lead', 'list_opportunity'] },
   {
     title: 'CRM',
     icon: { icon: 'ri-customer-service-2-line' },
@@ -62,13 +68,13 @@ export default [
       {
         title: 'Leads (Prospectos)',
         to: 'crm-leads',
-        permission: 'all',
+        permission: 'list_lead',
         icon: { icon: 'ri-radio-button-line' },
       },
       {
         title: 'Pipeline de Ventas',
         to: 'crm-pipeline',
-        permission: 'all',
+        permission: 'list_opportunity',
         icon: { icon: 'ri-radio-button-line' },
       },
     ],
@@ -121,7 +127,7 @@ export default [
     permission: 'return',
     to: 'refound-list',
   },
-  { heading: 'Almacen', permissions: ['register_purchase', 'list_purchase', 'register_transport', 'list_transport', 'conversions', 'kardex'] },
+  { heading: 'Almacen', permissions: ['register_purchase', 'list_purchase', 'register_transport', 'list_transport', 'conversions', 'kardex', 'list_refurbish'] },
   {
     title: 'Compras',
     icon: { icon: 'ri-box-3-line' },
@@ -165,7 +171,7 @@ export default [
       {
         title: 'Banco de Trabajo',
         to: 'refurbish-list',
-        permission: 'all',
+        permission: 'list_refurbish',
         icon: { icon: 'ri-radio-button-line' },
       },
     ],

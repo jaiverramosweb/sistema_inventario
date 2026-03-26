@@ -12,8 +12,24 @@ use Illuminate\Support\Facades\DB;
 
 class KpiController extends Controller
 {
+    private function isSuperAdmin($user): bool
+    {
+        if (!$user) {
+            return false;
+        }
+
+        if (method_exists($user, 'hasRole') && $user->hasRole('Super-Admin')) {
+            return true;
+        }
+
+        return (int) $user->role_id === 1;
+    }
+
     public function information_general()
     {
+        $user = auth('api')->user();
+        $isSuperAdmin = $this->isSuperAdmin($user);
+
         $year = date("Y");
         $month = date("m");
 
@@ -22,11 +38,17 @@ class KpiController extends Controller
         $totalSaleMountCurrent = Sale::whereYear('created_at', $year)
             ->whereMonth('created_at', $month)
             ->where('state', 1)
+            ->when($user && !$isSuperAdmin, function ($query) use ($user) {
+                $query->where('user_id', $user->id);
+            })
             ->sum('total');
 
         $totalSaleMountBefore = Sale::whereYear('created_at', $date_before->format('Y'))
             ->whereMonth('created_at', $date_before->format('m'))
             ->where('state', 1)
+            ->when($user && !$isSuperAdmin, function ($query) use ($user) {
+                $query->where('user_id', $user->id);
+            })
             ->sum('total');
 
         $variation_porcentage_total_sale = $totalSaleMountBefore > 0 ? (($totalSaleMountCurrent - $totalSaleMountBefore) / $totalSaleMountBefore) * 100 : 0;
@@ -36,6 +58,9 @@ class KpiController extends Controller
             ->whereYear('sales.created_at', $year)
             ->whereMonth('sales.created_at', $month)
             ->where('sales.state', 1)
+            ->when($user && !$isSuperAdmin, function ($query) use ($user) {
+                $query->where('sales.user_id', $user->id);
+            })
             ->selectRaw("
                 sales.sucursal_id as sucursal_sales_id,
                 sucursales.name as name_sucursale,
@@ -53,6 +78,9 @@ class KpiController extends Controller
                 ->whereYear('created_at', $date_before->format('Y'))
                 ->whereMonth('created_at', $date_before->format('m'))
                 ->where('state', 1)
+                ->when($user && !$isSuperAdmin, function ($query) use ($user) {
+                    $query->where('user_id', $user->id);
+                })
                 ->sum('total');
             
                 $variation_porcentage_sucursale_most_sale =$totalSaleMountBeforeSucursale > 0 ? (($sucursales_most_sales_month_current->total_sales - $totalSaleMountBeforeSucursale) / $totalSaleMountBeforeSucursale) * 100 : 0;
@@ -62,11 +90,17 @@ class KpiController extends Controller
         $totalPurchaseMonthCurrent = Puchase::whereYear('created_at', $year)
             ->whereMonth('created_at', $month)
             ->where('state', 3)
+            ->when($user && !$isSuperAdmin, function ($query) use ($user) {
+                $query->where('user_id', $user->id);
+            })
             ->sum('total');
 
         $totalPurchaseMonthBefore = Puchase::whereYear('created_at', $date_before->format('Y'))
             ->whereMonth('created_at', $date_before->format('m'))
             ->where('state', 3)
+            ->when($user && !$isSuperAdmin, function ($query) use ($user) {
+                $query->where('user_id', $user->id);
+            })
             ->sum('total');
 
         $variation_porcentage_purchase = $totalPurchaseMonthBefore > 0 ? (($totalPurchaseMonthCurrent - $totalPurchaseMonthBefore) / $totalPurchaseMonthBefore) * 100 : 0;
@@ -84,6 +118,9 @@ class KpiController extends Controller
 
     public function asesorMostSale()
     {
+        $user = auth('api')->user();
+        $isSuperAdmin = $this->isSuperAdmin($user);
+
         $year = date("Y");
         $month = date("m");
 
@@ -94,6 +131,9 @@ class KpiController extends Controller
             ->whereYear('sales.created_at', $year)
             ->whereMonth('sales.created_at', $month)
             ->where('sales.state', 1)
+            ->when($user && !$isSuperAdmin, function ($query) use ($user) {
+                $query->where('sales.user_id', $user->id);
+            })
             ->selectRaw("
                 sales.user_id as asesor_id,
                 users.name as name_asesor,
@@ -127,6 +167,9 @@ class KpiController extends Controller
 
     public function salesTotalPayment()
     {
+        $user = auth('api')->user();
+        $isSuperAdmin = $this->isSuperAdmin($user);
+
         $year = date("Y");
         $month = date("m");
 
@@ -136,6 +179,9 @@ class KpiController extends Controller
             ->whereMonth('created_at', $month)
             ->where('state', 1)
             ->where('state_mayment', 3)
+            ->when($user && !$isSuperAdmin, function ($query) use ($user) {
+                $query->where('user_id', $user->id);
+            })
             ->sum('total');
 
 
@@ -147,6 +193,9 @@ class KpiController extends Controller
             ->whereMonth('created_at', $date_before->format('m'))
             ->where('state', 1)
             ->where('state_mayment', 3)
+            ->when($user && !$isSuperAdmin, function ($query) use ($user) {
+                $query->where('user_id', $user->id);
+            })
             ->sum('total');
 
             $variation_porcentage_payment = $sales_total_payment_complete_before > 0 ? (($sales_total_payment_complete - $sales_total_payment_complete_before) / $sales_total_payment_complete_before) * 100 : 0;
@@ -156,22 +205,31 @@ class KpiController extends Controller
             ->whereMonth('created_at', $month)
             ->where('state', 1)
             ->where('state_mayment', 3)
+            ->when($user && !$isSuperAdmin, function ($query) use ($user) {
+                $query->where('user_id', $user->id);
+            })
             ->count(); 
 
         $num_sales_month_current_pending = Sale::whereYear('created_at', $year)
             ->whereMonth('created_at', $month)
             ->where('state', 1)
             ->whereIn('state_mayment', [1,2])
+            ->when($user && !$isSuperAdmin, function ($query) use ($user) {
+                $query->where('user_id', $user->id);
+            })
             ->count(); 
 
         $num_sales_month_current = Sale::whereYear('created_at', $year)
             ->whereMonth('created_at', $month)
             ->where('state', 1)
+            ->when($user && !$isSuperAdmin, function ($query) use ($user) {
+                $query->where('user_id', $user->id);
+            })
             ->count(); 
 
-        $porcentage_sale_payment = ($num_sales_month_current_complete / $num_sales_month_current) * 100;
+        $porcentage_sale_payment = $num_sales_month_current > 0 ? ($num_sales_month_current_complete / $num_sales_month_current) * 100 : 0;
 
-        $porcentage_sale_payment_pending = ($num_sales_month_current_pending / $num_sales_month_current) * 100;
+        $porcentage_sale_payment_pending = $num_sales_month_current > 0 ? ($num_sales_month_current_pending / $num_sales_month_current) * 100 : 0;
 
 
         return response()->json([
@@ -187,6 +245,9 @@ class KpiController extends Controller
 
     public function sucursalesReportSales()
     {
+        $user = auth('api')->user();
+        $isSuperAdmin = $this->isSuperAdmin($user);
+
         $year = date("Y");
         $month = date("m");
 
@@ -201,12 +262,18 @@ class KpiController extends Controller
                 ->whereMonth('created_at', $month)
                 ->where('state', 1)
                 ->where('sucursal_id', $sucursal->id)
+                ->when($user && !$isSuperAdmin, function ($query) use ($user) {
+                    $query->where('user_id', $user->id);
+                })
                 ->sum('total');
 
             $sale_total_before = Sale::whereYear('created_at', $date_before->format('Y'))
                 ->whereMonth('created_at', $date_before->format('m'))
                 ->where('state', 1)
                 ->where('sucursal_id', $sucursal->id)
+                ->when($user && !$isSuperAdmin, function ($query) use ($user) {
+                    $query->where('user_id', $user->id);
+                })
                 ->sum('total');
 
             $variation_porcentage = $sale_total_before > 0 ? (($sale_total - $sale_total_before) / $sale_total_before) * 100 : 0;
@@ -215,24 +282,36 @@ class KpiController extends Controller
                 ->whereMonth('created_at', $month)
                 ->where('state', 1)
                 ->where('sucursal_id', $sucursal->id)
+                ->when($user && !$isSuperAdmin, function ($query) use ($user) {
+                    $query->where('user_id', $user->id);
+                })
                 ->count();
 
             $num_sales_total_cotizacion = Sale::whereYear('created_at', $year)
                 ->whereMonth('created_at', $month)
                 ->where('state', 2)
                 ->where('sucursal_id', $sucursal->id)
+                ->when($user && !$isSuperAdmin, function ($query) use ($user) {
+                    $query->where('user_id', $user->id);
+                })
                 ->count();
 
             $amount_total_payment = Sale::whereYear('created_at', $year)
                 ->whereMonth('created_at', $month)
                 ->where('state', 1)
                 ->where('sucursal_id', $sucursal->id)
+                ->when($user && !$isSuperAdmin, function ($query) use ($user) {
+                    $query->where('user_id', $user->id);
+                })
                 ->sum('paid_out');
 
             $amount_total_no_payment = Sale::whereYear('created_at', $year)
                 ->whereMonth('created_at', $month)
                 ->where('state', 1)
                 ->where('sucursal_id', $sucursal->id)
+                ->when($user && !$isSuperAdmin, function ($query) use ($user) {
+                    $query->where('user_id', $user->id);
+                })
                 ->sum('debt');
 
 
@@ -255,6 +334,9 @@ class KpiController extends Controller
 
     public function clientMostSale()
     {
+        $user = auth('api')->user();
+        $isSuperAdmin = $this->isSuperAdmin($user);
+
         $year = date("Y");
         $month = date("m");
 
@@ -265,6 +347,9 @@ class KpiController extends Controller
             ->where('sales.state', 1)
             ->whereYear('sales.created_at', $year)
             ->whereMonth('sales.created_at', $month)
+            ->when($user && !$isSuperAdmin, function ($query) use ($user) {
+                $query->where('sales.user_id', $user->id);
+            })
             ->selectRaw("
                 sales.client_id as client_id,
                 clients.name as client_name,
@@ -283,6 +368,9 @@ class KpiController extends Controller
                 ->whereMonth('created_at', $date_before->format('m'))
                 ->where('state', 1)
                 ->where('client_id', $client->client_id)
+                ->when($user && !$isSuperAdmin, function ($query) use ($user) {
+                    $query->where('user_id', $user->id);
+                })
                 ->sum('total');
 
             $variation_porcentage = $client_before > 0 ? (($client->total_sales - $client_before) /  $client_before) * 100 : 0;
@@ -296,11 +384,17 @@ class KpiController extends Controller
 
     public function salesXMonthYear(Request $request)
     {
+        $user = auth('api')->user();
+        $isSuperAdmin = $this->isSuperAdmin($user);
+
         $year = $request->year;
 
         $sales_year_current = DB::table('sales')->whereNull('sales.deleted_at')
             ->where('sales.state', 1)
             ->whereYear('sales.created_at', $year)
+            ->when($user && !$isSuperAdmin, function ($query) use ($user) {
+                $query->where('sales.user_id', $user->id);
+            })
             ->selectRaw("
                 TO_CHAR(sales.created_at, 'YYYY-MM') AS created_format,
                 SUM(sales.total) AS total_sales
@@ -311,6 +405,9 @@ class KpiController extends Controller
         $sales_year_before = DB::table('sales')->whereNull('sales.deleted_at')
             ->where('sales.state', 1)
             ->whereYear('sales.created_at', $year - 1)
+            ->when($user && !$isSuperAdmin, function ($query) use ($user) {
+                $query->where('sales.user_id', $user->id);
+            })
             ->selectRaw("
                 TO_CHAR(sales.created_at, 'YYYY-MM') AS created_format,
                 SUM(sales.total) AS total_sales
@@ -328,6 +425,9 @@ class KpiController extends Controller
 
     public function categoryMostSales(Request $request)
     {
+        $user = auth('api')->user();
+        $isSuperAdmin = $this->isSuperAdmin($user);
+
         $year = $request->year;
         $month = $request->month;
 
@@ -338,6 +438,9 @@ class KpiController extends Controller
             ->whereNull('sales.deleted_at')
             ->whereYear('sale_details.created_at', $year)
             ->whereMonth('sale_details.created_at', $month)
+            ->when($user && !$isSuperAdmin, function ($query) use ($user) {
+                $query->where('sales.user_id', $user->id);
+            })
             ->selectRaw("
                 sale_details.product_categoryid as category_id,
                 categories.title as category,
@@ -362,6 +465,9 @@ class KpiController extends Controller
                 ->whereNull('sales.deleted_at')
                 ->whereYear('sale_details.created_at', $year)
                 ->whereMonth('sale_details.created_at', $month)
+                ->when($user && !$isSuperAdmin, function ($query) use ($user) {
+                    $query->where('sales.user_id', $user->id);
+                })
                 ->selectRaw("
                     sale_details.product_id as product_id,
                     products.title as product,

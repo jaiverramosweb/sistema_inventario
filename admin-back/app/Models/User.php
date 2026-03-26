@@ -10,6 +10,7 @@ use PHPOpenSourceSaver\JWTAuth\Contracts\JWTSubject;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use App\Traits\Auditable;
 
 class User extends Authenticatable implements JWTSubject
 {
@@ -17,6 +18,9 @@ class User extends Authenticatable implements JWTSubject
     use HasFactory, Notifiable;
     use HasRoles;
     use SoftDeletes;
+    use Auditable {
+        getAuditExcludedAttributes as private baseAuditExcludedAttributes;
+    }
 
     protected $guard_name = 'api';
 
@@ -119,5 +123,16 @@ class User extends Authenticatable implements JWTSubject
     public function recoveryCodes()
     {
         return $this->hasMany(UserRecoveryCode::class);
+    }
+
+    public function getAuditExcludedAttributes(): array
+    {
+        return array_merge($this->baseAuditExcludedAttributes(), [
+            'password',
+            'remember_token',
+            'two_factor_secret_encrypted',
+            'two_factor_pending_secret_encrypted',
+            'two_factor_last_used_step',
+        ]);
     }
 }

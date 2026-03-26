@@ -18,6 +18,7 @@ const currentTab = ref('')
 const categories = ref([])
 
 const productData = ref([])
+const loading = ref(true)
 
 const resolveChipColor = status => {
   if (status === 1)
@@ -104,7 +105,8 @@ const month_selected = ref(((new Date().getMonth() + 1) <= 9 ? "0"+(new Date().g
 
 
 const infoSalesCategory = async () => {
-    try {
+    loading.value = true
+  try {
     const resp = await $api('kpi/category-most-sales', { 
       method: 'POST',
       body: {
@@ -124,6 +126,8 @@ const infoSalesCategory = async () => {
 
   } catch (error) {
     console.log(error)
+  } finally {
+    loading.value = false
   }
 }
 
@@ -179,7 +183,11 @@ onMounted( () => {
       </div> -->
     </template>
 
-    <VCardText class="pb-6">
+    <VCardText v-if="loading" class="pb-6">
+      <VSkeletonLoader type="heading, image" />
+    </VCardText>
+
+    <VCardText v-else class="pb-6">
       <VSlideGroup
         v-model="currentTab"
         show-arrows
@@ -230,7 +238,11 @@ onMounted( () => {
       </VSlideGroup>
     </VCardText>
 
-    <VTable class="text-no-wrap text-sm referral-table">
+    <VCardText v-if="loading">
+      <VSkeletonLoader type="table-thead, table-row-divider@4" />
+    </VCardText>
+
+    <VTable v-else class="text-no-wrap text-sm referral-table">
       <thead>
         <tr>
           <th scope="col">

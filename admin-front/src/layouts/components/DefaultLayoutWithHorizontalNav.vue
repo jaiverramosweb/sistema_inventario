@@ -55,13 +55,7 @@ watch([
 
     <!-- 👉 Pages -->
     <RouterView v-slot="{ Component }">
-      <Suspense
-        :timeout="0"
-        @fallback="isFallbackStateActive = true"
-        @resolve="isFallbackStateActive = false"
-      >
-        <Component :is="Component" />
-      </Suspense>
+      <Component :is="Component" />
     </RouterView>
 
     <!-- 👉 Footer -->

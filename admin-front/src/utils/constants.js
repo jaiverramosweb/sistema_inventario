@@ -141,6 +141,73 @@ export const PERMISOS = [
       ]
   },
   {
+      'name': 'CRM Leads',
+      'permisos': [
+          {
+              name: 'Registrar',
+              permiso: 'register_lead',
+          },
+          {
+              name: 'Listado',
+              permiso: 'list_lead',
+          },
+          {
+              name: 'Editar',
+              permiso: 'edit_lead',
+          },
+          {
+              name: 'Eliminar',
+              permiso: 'delete_lead',
+          },
+          {
+              name: 'Convertir',
+              permiso: 'convert_lead',
+          },
+      ]
+  },
+  {
+      'name': 'CRM Oportunidades',
+      'permisos': [
+          {
+              name: 'Registrar',
+              permiso: 'register_opportunity',
+          },
+          {
+              name: 'Listado',
+              permiso: 'list_opportunity',
+          },
+          {
+              name: 'Editar',
+              permiso: 'edit_opportunity',
+          },
+          {
+              name: 'Eliminar',
+              permiso: 'delete_opportunity',
+          },
+      ]
+  },
+  {
+      'name': 'CRM Actividades',
+      'permisos': [
+          {
+              name: 'Registrar',
+              permiso: 'register_crm_activity',
+          },
+          {
+              name: 'Listado',
+              permiso: 'list_crm_activity',
+          },
+          {
+              name: 'Editar',
+              permiso: 'edit_crm_activity',
+          },
+          {
+              name: 'Eliminar',
+              permiso: 'delete_crm_activity',
+          },
+      ]
+  },
+  {
       'name': 'Compras',
       'permisos': [
           {
@@ -184,6 +251,27 @@ export const PERMISOS = [
       ]
   },
   {
+      'name': 'Reacondicionamiento',
+      'permisos': [
+          {
+              name: 'Registrar',
+              permiso: 'register_refurbish',
+          },
+          {
+              name: 'Listado',
+              permiso: 'list_refurbish',
+          },
+          {
+              name: 'Editar',
+              permiso: 'edit_refurbish',
+          },
+          {
+              name: 'Eliminar',
+              permiso: 'delete_refurbish',
+          },
+      ]
+  },
+  {
       'name': 'Conversiones',
       'permisos': [
           {
@@ -198,6 +286,19 @@ export const PERMISOS = [
           {
               name: 'Disponible',
               permiso: 'kardex',
+          },
+      ]
+  },
+  {
+      'name': 'Auditoria',
+      'permisos': [
+          {
+              name: 'Ver registros',
+              permiso: 'view_audit_logs',
+          },
+          {
+              name: 'Exportar',
+              permiso: 'export_audit_logs',
           },
       ]
   },

@@ -15,6 +15,8 @@ use Illuminate\Support\Facades\Storage;
 
 class UserController extends Controller
 {
+    private const PROTECTED_SEEDER_USER_EMAIL = 'superadmin@sitecsas.com';
+
     /**
      * Display a listing of the resource.
      */
@@ -24,7 +26,10 @@ class UserController extends Controller
         
         $search = $request->get('search');
 
-        $users = User::where(DB::raw("users.name || ' ' || users.email || ' ' || COALESCE(users.phone,'')"), 'ilike', '%' . $search . '%')->orderBy('id', 'desc')->get();
+        $users = User::where(DB::raw("users.name || ' ' || users.email || ' ' || COALESCE(users.phone,'')"), 'ilike', '%' . $search . '%')
+            ->where('email', '<>', self::PROTECTED_SEEDER_USER_EMAIL)
+            ->orderBy('id', 'desc')
+            ->get();
 
         $users_json = UserResource::collection($users);
 
@@ -148,7 +153,17 @@ class UserController extends Controller
      */
     public function destroy(string $id)
     {
+        Gate::authorize('delete', User::class);
+
         $user = User::findOrFail($id);
+
+        if (strcasecmp($user->email, self::PROTECTED_SEEDER_USER_EMAIL) === 0) {
+            return response()->json([
+                'status' => 403,
+                'message' => 'No se puede eliminar este usuario protegido.'
+            ], 403);
+        }
+
         $user->delete();
         return response()->json([
             'status' => 203,

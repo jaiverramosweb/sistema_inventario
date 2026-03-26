@@ -2,7 +2,7 @@
 import { ref, onMounted, computed, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 
-definePage({ meta: { permission: 'all' } })
+definePage({ meta: { permission: 'edit_refurbish' } })
 
 const router = useRouter()
 const route = useRoute()
@@ -348,11 +348,11 @@ watch(selectedComponent, (value) => {
               Use estas acciones para registrar cambios físicos en el equipo. Todo movimiento queda auditado.
             </p>
             <div class="d-flex flex-wrap gap-4">
-              <VBtn color="primary" prepend-icon="ri-add-line" @click="showAddComponentDialog = true"
+              <VBtn v-if="isPermission('edit_refurbish')" color="primary" prepend-icon="ri-add-line" @click="showAddComponentDialog = true"
                 class="flex-grow-1">
                 Instalar Componente
               </VBtn>
-              <VBtn color="secondary" variant="outlined" prepend-icon="ri-qr-code-line"
+              <VBtn v-if="isPermission('edit_refurbish')" color="secondary" variant="outlined" prepend-icon="ri-qr-code-line"
                 @click="showUnregisteredDialog = true" class="flex-grow-1">
                 Retirar No Registrada
               </VBtn>
@@ -403,7 +403,7 @@ watch(selectedComponent, (value) => {
                   </VChip>
                 </td>
                 <td>
-                  <VBtn size="small" color="error" variant="tonal" prepend-icon="ri-delete-bin-line"
+                  <VBtn v-if="isPermission('edit_refurbish')" size="small" color="error" variant="tonal" prepend-icon="ri-delete-bin-line"
                     @click="openRemoveDialog(component)">
                     Retirar
                   </VBtn>
@@ -452,7 +452,7 @@ watch(selectedComponent, (value) => {
 
         <VCard class="mb-6">
           <VCardText>
-            <VBtn block color="success" size="large" prepend-icon="ri-check-line" @click="showFinishDialog = true">
+            <VBtn v-if="isPermission('edit_refurbish')" block color="success" size="large" prepend-icon="ri-check-line" @click="showFinishDialog = true">
               Finalizar Reacondicionamiento
             </VBtn>
           </VCardText>

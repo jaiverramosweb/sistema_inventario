@@ -33,6 +33,8 @@ use App\Http\Controllers\CRM\OpportunityController;
 use App\Http\Controllers\CRM\PipelineStageController;
 use App\Http\Controllers\CRM\CrmActivityController;
 use App\Http\Controllers\CRM\LeadConversionController;
+use App\Http\Controllers\Audit\AuditExportController;
+use App\Http\Controllers\Audit\AuditLogController;
 
 // Route::get('/user', function (Request $request) {
 //     return $request->user();
@@ -55,7 +57,7 @@ Route::group([
 
 
 Route::group([
-    'middleware' => ['auth:api'],
+    'middleware' => ['auth:api', 'audit.route'],
 ], function ($router) {
     Route::prefix('auth/2fa')->group(function () {
         Route::get('/status', [TwoFactorController::class, 'status'])->middleware('throttle:mfa_settings');
@@ -147,29 +149,40 @@ Route::group([
 
     // Módulo de Reacondicionamiento
     Route::prefix('refurbish')->group(function () {
-        Route::get('/equipment/{id}', [RefurbishController::class, 'show']); // Datos del equipo y sus piezas
-        Route::post('/start/{id}', [RefurbishController::class, 'start']);   // Iniciar proceso
-        Route::post('/add-component', [RefurbishController::class, 'addComponent']);
-        Route::post('/remove-component', [RefurbishController::class, 'removeComponent']);
-        Route::post('/remove-unregistered', [RefurbishController::class, 'removeUnregistered']);
-        Route::post('/finish/{id}', [RefurbishController::class, 'finish']); // Finalizar y tasar
+        Route::get('/equipment/{id}', [RefurbishController::class, 'show'])->middleware('permission:list_refurbish');
+        Route::post('/start/{id}', [RefurbishController::class, 'start'])->middleware('permission:register_refurbish');
+        Route::post('/add-component', [RefurbishController::class, 'addComponent'])->middleware('permission:edit_refurbish');
+        Route::post('/remove-component', [RefurbishController::class, 'removeComponent'])->middleware('permission:edit_refurbish');
+        Route::post('/remove-unregistered', [RefurbishController::class, 'removeUnregistered'])->middleware('permission:edit_refurbish');
+        Route::post('/finish/{id}', [RefurbishController::class, 'finish'])->middleware('permission:edit_refurbish');
     });
 
     // Módulo CRM
     Route::prefix('crm')->group(function () {
-        Route::resource('leads', LeadController::class);
-        Route::post('leads/{lead}/convert', [LeadConversionController::class, 'convert']);
-        
-        Route::resource('opportunities', OpportunityController::class);
-        Route::post('opportunities/{opportunity}/change-stage', [OpportunityController::class, 'changeStage']);
-        
-        Route::get('pipeline-stages', [PipelineStageController::class, 'index']);
-        Route::post('pipeline-stages', [PipelineStageController::class, 'store']);
-        Route::put('pipeline-stages/{stage}', [PipelineStageController::class, 'update']);
-        Route::delete('pipeline-stages/{stage}', [PipelineStageController::class, 'destroy']);
-        Route::post('pipeline-stages/reorder', [PipelineStageController::class, 'reorder']);
-        
-        Route::resource('activities', CrmActivityController::class);
+        Route::get('leads', [LeadController::class, 'index'])->middleware('permission:list_lead');
+        Route::post('leads', [LeadController::class, 'store'])->middleware('permission:register_lead');
+        Route::get('leads/{lead}', [LeadController::class, 'show'])->middleware('permission:list_lead');
+        Route::put('leads/{lead}', [LeadController::class, 'update'])->middleware('permission:edit_lead');
+        Route::delete('leads/{lead}', [LeadController::class, 'destroy'])->middleware('permission:delete_lead');
+        Route::post('leads/{lead}/convert', [LeadConversionController::class, 'convert'])->middleware('permission:convert_lead');
+
+        Route::get('opportunities', [OpportunityController::class, 'index'])->middleware('permission:list_opportunity');
+        Route::post('opportunities', [OpportunityController::class, 'store'])->middleware('permission:register_opportunity');
+        Route::get('opportunities/{opportunity}', [OpportunityController::class, 'show'])->middleware('permission:list_opportunity');
+        Route::put('opportunities/{opportunity}', [OpportunityController::class, 'update'])->middleware('permission:edit_opportunity');
+        Route::delete('opportunities/{opportunity}', [OpportunityController::class, 'destroy'])->middleware('permission:delete_opportunity');
+        Route::post('opportunities/{opportunity}/change-stage', [OpportunityController::class, 'changeStage'])->middleware('permission:edit_opportunity');
+
+        Route::get('pipeline-stages', [PipelineStageController::class, 'index'])->middleware('permission:list_opportunity');
+        Route::post('pipeline-stages', [PipelineStageController::class, 'store'])->middleware('permission:edit_opportunity');
+        Route::put('pipeline-stages/{stage}', [PipelineStageController::class, 'update'])->middleware('permission:edit_opportunity');
+        Route::delete('pipeline-stages/{stage}', [PipelineStageController::class, 'destroy'])->middleware('permission:edit_opportunity');
+        Route::post('pipeline-stages/reorder', [PipelineStageController::class, 'reorder'])->middleware('permission:edit_opportunity');
+
+        Route::get('activities', [CrmActivityController::class, 'index'])->middleware('permission:list_crm_activity');
+        Route::post('activities', [CrmActivityController::class, 'store'])->middleware('permission:register_crm_activity');
+        Route::put('activities/{activity}', [CrmActivityController::class, 'update'])->middleware('permission:edit_crm_activity');
+        Route::delete('activities/{activity}', [CrmActivityController::class, 'destroy'])->middleware('permission:delete_crm_activity');
     });
 
 
@@ -178,7 +191,19 @@ Route::group([
     Route::get("sales-pdf/{id}",    [SaleController::class, 'sale_pdf']);
     Route::get("pushases-pdf/{id}", [PuchaseController::class, 'pushases_pdf']);
     Route::get("transport-pdf/{id}", [TransportController::class, 'transports_pdf']);
+
+    Route::prefix('audit')->group(function () {
+        Route::post('navigation', [AuditLogController::class, 'navigation'])->name('audit.navigation');
+
+        Route::group(['middleware' => ['permission:view_audit_logs']], function () {
+            Route::get('logs', [AuditLogController::class, 'index'])->name('audit.logs.index');
+            Route::get('logs/filters', [AuditLogController::class, 'filters'])->name('audit.logs.filters');
+            Route::get('logs/{id}', [AuditLogController::class, 'show'])->name('audit.logs.show');
+        });
+
+        Route::get('logs/export', [AuditExportController::class, 'export'])
+            ->middleware('permission:export_audit_logs')
+            ->name('audit.logs.export');
+    });
     
 });
-
-

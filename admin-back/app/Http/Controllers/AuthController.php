@@ -11,6 +11,8 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use App\Services\Audit\AuditAction;
+use App\Services\Audit\AuditLogger;
 
 
 class AuthController extends Controller
@@ -53,9 +55,21 @@ class AuthController extends Controller
     public function login()
     {
         $credentials = request(['email', 'password']);
+        $auditLogger = app(AuditLogger::class);
 
         $user = User::where('email', $credentials['email'] ?? null)->first();
         if (! $user || ! Hash::check($credentials['password'] ?? '', $user->password)) {
+            $auditLogger->log([
+                'action' => AuditAction::INICIO_SESION_FALLIDO,
+                'module' => 'auth',
+                'description' => 'Intento fallido de inicio de sesion',
+                'status' => false,
+                'metadata' => [
+                    'email' => $credentials['email'] ?? null,
+                    'reason' => 'invalid_credentials',
+                ],
+            ]);
+
             return response()->json(['error' => 'Unauthorized'], 401);
         }
 
@@ -106,11 +120,25 @@ class AuthController extends Controller
 
         if (($challenge['attempts'] ?? 0) >= 5) {
             Cache::forget($this->mfaCacheKey($mfaToken));
+            app(AuditLogger::class)->log([
+                'action' => AuditAction::MFA_VERIFICACION_FALLIDA,
+                'module' => 'auth',
+                'description' => 'MFA bloqueado por demasiados intentos',
+                'status' => false,
+                'metadata' => ['reason' => 'too_many_attempts'],
+            ]);
             return response()->json(['error' => 'Too many attempts'], 429);
         }
 
         if (($challenge['ip'] ?? null) !== request()->ip()) {
             Cache::forget($this->mfaCacheKey($mfaToken));
+            app(AuditLogger::class)->log([
+                'action' => AuditAction::MFA_VERIFICACION_FALLIDA,
+                'module' => 'auth',
+                'description' => 'MFA invalido por IP distinta',
+                'status' => false,
+                'metadata' => ['reason' => 'invalid_ip'],
+            ]);
             return response()->json(['error' => 'Invalid MFA challenge'], 401);
         }
 
@@ -129,6 +157,16 @@ class AuthController extends Controller
         if (! $isValid || ($user->two_factor_last_used_step !== null && $matchedStep <= $user->two_factor_last_used_step)) {
             $challenge['attempts'] = ($challenge['attempts'] ?? 0) + 1;
             Cache::put($this->mfaCacheKey($mfaToken), $challenge, now()->addMinutes(5));
+            app(AuditLogger::class)->log([
+                'action' => AuditAction::MFA_VERIFICACION_FALLIDA,
+                'module' => 'auth',
+                'description' => 'Codigo MFA invalido',
+                'status' => false,
+                'metadata' => [
+                    'user_id' => $user->id,
+                    'reason' => 'invalid_code',
+                ],
+            ]);
             return response()->json(['error' => 'Invalid verification code'], 422);
         }
 
@@ -136,6 +174,15 @@ class AuthController extends Controller
         $user->save();
 
         Cache::forget($this->mfaCacheKey($mfaToken));
+
+        app(AuditLogger::class)->log([
+            'action' => AuditAction::MFA_VERIFICACION_EXITOSA,
+            'module' => 'auth',
+            'entity_type' => User::class,
+            'entity_id' => (string) $user->id,
+            'description' => 'Verificacion MFA exitosa',
+            'status' => true,
+        ]);
 
         $token = auth('api')->login($user);
         return $this->respondWithToken($token);
@@ -161,6 +208,13 @@ class AuthController extends Controller
 
         if (($challenge['attempts'] ?? 0) >= 5) {
             Cache::forget($this->mfaCacheKey($mfaToken));
+            app(AuditLogger::class)->log([
+                'action' => AuditAction::MFA_RECUPERACION_FALLIDA,
+                'module' => 'auth',
+                'description' => 'Recovery MFA bloqueado por demasiados intentos',
+                'status' => false,
+                'metadata' => ['reason' => 'too_many_attempts'],
+            ]);
             return response()->json(['error' => 'Too many attempts'], 429);
         }
 
@@ -181,10 +235,29 @@ class AuthController extends Controller
         if (! $consumed) {
             $challenge['attempts'] = ($challenge['attempts'] ?? 0) + 1;
             Cache::put($this->mfaCacheKey($mfaToken), $challenge, now()->addMinutes(5));
+            app(AuditLogger::class)->log([
+                'action' => AuditAction::MFA_RECUPERACION_FALLIDA,
+                'module' => 'auth',
+                'description' => 'Recovery code MFA invalido',
+                'status' => false,
+                'metadata' => [
+                    'user_id' => $user->id,
+                    'reason' => 'invalid_recovery_code',
+                ],
+            ]);
             return response()->json(['error' => 'Invalid recovery code'], 422);
         }
 
         Cache::forget($this->mfaCacheKey($mfaToken));
+
+        app(AuditLogger::class)->log([
+            'action' => AuditAction::MFA_RECUPERACION_EXITOSA,
+            'module' => 'auth',
+            'entity_type' => User::class,
+            'entity_id' => (string) $user->id,
+            'description' => 'Autenticacion MFA con recovery code',
+            'status' => true,
+        ]);
 
         $token = auth('api')->login($user);
         return $this->respondWithToken($token);
@@ -242,6 +315,16 @@ class AuthController extends Controller
      */
     public function logout()
     {
+        $user = auth('api')->user();
+        app(AuditLogger::class)->log([
+            'action' => AuditAction::CIERRE_SESION,
+            'module' => 'auth',
+            'entity_type' => $user ? User::class : null,
+            'entity_id' => $user ? (string) $user->id : null,
+            'description' => 'Cierre de sesion',
+            'status' => true,
+        ]);
+
         auth()->logout();
 
         return response()->json(['message' => 'Successfully logged out']);

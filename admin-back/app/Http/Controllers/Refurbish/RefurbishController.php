@@ -17,6 +17,32 @@ class RefurbishController extends Controller
     }
 
     /**
+     * Iniciar proceso de reacondicionamiento
+     */
+    public function start(Request $request, $id)
+    {
+        $request->validate([
+            'base_cost' => 'required|numeric|min:0',
+            'equipment_type' => 'nullable|in:Laptop,Desktop,All-in-one,Minipc,Componente,Otros',
+            'technical_comments' => 'nullable|string',
+        ]);
+
+        $equipment = Product::findOrFail($id);
+
+        $equipment->update([
+            'refurbish_state' => 'Pendiente Diagnostico',
+            'base_cost' => $request->base_cost,
+            'equipment_type' => $request->equipment_type,
+            'technical_comments' => $request->technical_comments,
+        ]);
+
+        return response()->json([
+            'message' => 'Equipo agregado al modulo de reacondicionamiento',
+            'equipment' => $equipment,
+        ]);
+    }
+
+    /**
      * Obtener el estado actual del equipo para el Workbench
      */
     public function show($id)
