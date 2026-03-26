@@ -91,11 +91,17 @@ class PermissionsDemoSeeder extends Seeder
     ];
 
     foreach ($permissions as $permissionName) {
-      Permission::findOrCreate($permissionName, 'api');
+      Permission::query()->firstOrCreate([
+        'name' => $permissionName,
+        'guard_name' => 'api',
+      ]);
     }
 
     // create roles and assign existing permissions
-    $role = Role::findOrCreate('Super-Admin', 'api');
+    $role = Role::query()->firstOrCreate([
+      'name' => 'Super-Admin',
+      'guard_name' => 'api',
+    ]);
 
     $backfillMap = [
       'list_client' => ['list_lead'],
