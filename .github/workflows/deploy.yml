@@ -57,15 +57,20 @@ jobs:
           port: ${{ secrets.REMOTE_PORT || 5922 }}
           command_timeout: 40m
           script: |
-            if [ -d "/var/www/sistema_inventario/temp_deploy/.git" ]; then
-                echo "♻️ Updating existing repository..."
-                cd /var/www/sistema_inventario/temp_deploy && git fetch origin main && git checkout main && git pull --ff-only origin main
-            else
+            if [ ! -d "/var/www/sistema_inventario/temp_deploy/.git" ]; then
                 echo "📥 Cloning fresh repository..."
                 rm -rf /var/www/sistema_inventario/temp_deploy
-                mkdir -p /var/www/sistema_inventario/temp_deploy
                 git clone -b main https://github.com/jaiverramosweb/sistema_inventario.git /var/www/sistema_inventario/temp_deploy
             fi
+
+            echo "♻️ Syncing temp_deploy to origin/main..."
+            cd /var/www/sistema_inventario/temp_deploy
+            git fetch --prune origin main
+            git checkout main
+            git reset --hard origin/main
+            git clean -fdx
+            git rev-parse --short HEAD
+
             cd /var/www/sistema_inventario/temp_deploy
             chmod +x deploy.sh
             ./deploy.sh
