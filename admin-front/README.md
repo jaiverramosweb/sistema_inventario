@@ -1,35 +1,38 @@
-# vue
+# Admin Front - Inventario
 
-This template should help get you started developing with Vue 3 in Vite.
+Frontend SPA en Vue 3 + Vuetify para operar compras, ventas, conversiones, traslados y kardex.
 
-## Recommended IDE Setup
+## Requisitos
 
-[VS Code](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=johnsoncodehk.volar) (and disable Vetur).
+- Node.js 18+
+- PNPM 9+
 
-## Type Support for `.vue` Imports in TS
+## Puesta en marcha local
 
-Since TypeScript cannot handle type information for `.vue` imports, they are shimmed to be a generic Vue component type by default. In most cases this is fine if you don't really care about component prop types outside of templates.
-
-However, if you wish to get actual prop types in `.vue` imports (for example to get props validation when using manual `h(...)` calls), you can run `Volar: Switch TS Plugin on/off` from VS Code command palette.
-
-## Customize configuration
-
-See [Vite Configuration Reference](https://vitejs.dev/config/).
-
-## Project Setup
-
-```sh
-npm install
+```bash
+pnpm install
+pnpm run dev
 ```
 
-### Compile and Hot-Reload for Development
+Variables de entorno esperadas en `.env`:
 
-```sh
-npm run dev
-```
+- `VITE_API_BASE_URL` (ejemplo: `http://127.0.0.1:8000/api/`)
 
-### Type-Check, Compile and Minify for Production
+## Scripts utiles para QA rapido
 
-```sh
-npm run build
-```
+- `pnpm run qa:lint`: valida estilo y errores obvios de frontend antes de una ronda QA.
+- `pnpm run dev`: levanta el front para smoke manual.
+
+## Smoke QA minimo (Sprint 3)
+
+1. Login valido y navegacion base del menu.
+2. Compras: intentar re-atender una compra ya atendida y validar feedback de error.
+3. Ventas/Pagos: intentar sobrepago y validar bloqueo + mensaje visible.
+4. Conversiones: forzar stock insuficiente y validar bloqueo de negocio.
+5. Traslados: intentar recepcion sin salida confirmada y validar bloqueo.
+
+## Criterio de aceptacion QA
+
+- Los errores funcionales deben verse en UI con mensaje claro (sin romper pantalla).
+- Flujos bloqueados deben mantenerse en estado consistente despues de refrescar.
+- No introducir cambios visuales o refactors grandes en Sprint 3.

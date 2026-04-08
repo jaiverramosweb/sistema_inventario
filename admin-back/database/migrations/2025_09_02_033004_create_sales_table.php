@@ -32,8 +32,10 @@ return new class extends Migration
             $table->softDeletes();
         });
 
-        // Ajustar secuencia de ID para que empiece en 1000
-        DB::statement("ALTER SEQUENCE sales_id_seq RESTART WITH 1000;");
+        // Ajustar secuencia de ID para que empiece en 1000 (solo PostgreSQL)
+        if (DB::getDriverName() === 'pgsql') {
+            DB::statement("ALTER SEQUENCE sales_id_seq RESTART WITH 1000;");
+        }
     }
 
     /**
