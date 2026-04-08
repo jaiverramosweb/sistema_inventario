@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Puchase;
 
+use App\Http\Controllers\Concerns\ApiErrorResponse;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\PuchaseResource;
 use App\Models\Provider;
@@ -17,19 +18,42 @@ use Illuminate\Support\Facades\Validator;
 
 class PuchaseController extends Controller
 {
-    private function errorResponse(int $status, string $code, string $message, array $errors = [])
-    {
-        $body = [
-            'status' => $status,
-            'code' => $code,
-            'message' => $message,
-        ];
+    use ApiErrorResponse;
 
-        if (!empty($errors)) {
-            $body['errors'] = $errors;
+    private function normalizePurchasePayload(Request $request): array
+    {
+        $payload = $request->all();
+
+        if (isset($payload['date_emission']) && !isset($payload['date_emition'])) {
+            $payload['date_emition'] = $payload['date_emission'];
         }
 
-        return response()->json($body, $status);
+        if (isset($payload['importe']) && !isset($payload['immporte'])) {
+            $payload['immporte'] = $payload['importe'];
+        }
+
+        foreach (['pushase_details', 'puchase_details', 'purchase_details'] as $detailsKey) {
+            if (isset($payload[$detailsKey]) && is_array($payload[$detailsKey])) {
+                $payload['pushase_details'] = $payload[$detailsKey];
+                break;
+            }
+        }
+
+        if (isset($payload['pushase_details']) && is_array($payload['pushase_details'])) {
+            $payload['pushase_details'] = array_map(function ($detail) {
+                if (!is_array($detail)) {
+                    return $detail;
+                }
+
+                if (isset($detail['product_id']) && !isset($detail['product']['id'])) {
+                    $detail['product']['id'] = $detail['product_id'];
+                }
+
+                return $detail;
+            }, $payload['pushase_details']);
+        }
+
+        return $payload;
     }
 
     /**
@@ -94,13 +118,19 @@ class PuchaseController extends Controller
     {
         Gate::authorize('create', Puchase::class);
 
-        $validator = Validator::make($request->all(), [
+        $payload = $this->normalizePurchasePayload($request);
+
+        $validator = Validator::make($payload, [
             'warehouse_id' => ['required', 'integer', 'exists:warehouses,id'],
             'provider_id' => ['required', 'integer', 'exists:providers,id'],
             'type_comprobant' => ['required', 'string', 'max:50'],
             'n_comprobant' => ['nullable', 'string', 'max:120'],
             'date_emition' => ['nullable', 'date'],
             'date_emission' => ['nullable', 'date'],
+            'total' => ['nullable', 'numeric', 'min:0'],
+            'immporte' => ['nullable', 'numeric', 'min:0'],
+            'importe' => ['nullable', 'numeric', 'min:0'],
+            'iva' => ['nullable', 'numeric', 'min:0'],
             'description' => ['nullable', 'string'],
             'pushase_details' => ['required', 'array', 'min:1'],
             'pushase_details.*.product.id' => ['required', 'integer', 'exists:products,id'],
@@ -114,7 +144,7 @@ class PuchaseController extends Controller
             return $this->errorResponse(422, 'VALIDATION_ERROR', 'Datos de compra invalidos.', $validator->errors()->toArray());
         }
 
-        $dateEmission = $request->date_emition ?? $request->date_emission;
+        $dateEmission = $payload['date_emition'] ?? null;
 
         if(!$dateEmission){
             return $this->errorResponse(422, 'VALIDATION_ERROR', 'El campo fecha de emision es obligatorio.');
@@ -122,22 +152,22 @@ class PuchaseController extends Controller
 
         $puchase = null;
 
-        DB::transaction(function () use ($request, $dateEmission, &$puchase) {
+        DB::transaction(function () use ($payload, $dateEmission, &$puchase) {
             $puchase = Puchase::create([
-                'warehouse_id' => $request->warehouse_id,
+                'warehouse_id' => $payload['warehouse_id'],
                 'user_id' => auth('api')->user()->id,
                 'sucuarsal_id' =>  auth('api')->user()->sucuarsal_id,
                 'date_emition' => $dateEmission,
-                'type_comprobant' => $request->type_comprobant,
-                'n_comprobant' => $request->n_comprobant,
-                'provider_id' => $request->provider_id,
-                'total' => $request->total,
-                'immporte' => $request->importe,
-                'iva' => $request->iva,
-                'description' => $request->description
+                'type_comprobant' => $payload['type_comprobant'],
+                'n_comprobant' => $payload['n_comprobant'] ?? null,
+                'provider_id' => $payload['provider_id'],
+                'total' => $payload['total'] ?? 0,
+                'immporte' => $payload['immporte'] ?? ($payload['total'] ?? 0),
+                'iva' => $payload['iva'] ?? 0,
+                'description' => $payload['description'] ?? null
             ]);
 
-            foreach ($request->pushase_details as $value) {
+            foreach ($payload['pushase_details'] as $value) {
                 PuchaseDetail::create([
                     'puchase_id' => $puchase->id,
                     'product_id' => $value['product']['id'],
@@ -184,10 +214,7 @@ class PuchaseController extends Controller
             return $this->errorResponse(404, 'PURCHASE_NOT_FOUND', 'La compra solicitada no existe.');
         }
 
-        $payload = $request->all();
-        if(isset($payload['date_emission']) && !isset($payload['date_emition'])){
-            $payload['date_emition'] = $payload['date_emission'];
-        }
+        $payload = $this->normalizePurchasePayload($request);
 
         $validator = Validator::make($payload, [
             'warehouse_id' => ['sometimes', 'integer', 'exists:warehouses,id'],
@@ -219,10 +246,6 @@ class PuchaseController extends Controller
             'iva',
             'description',
         ];
-
-        if (isset($payload['importe']) && !isset($payload['immporte'])) {
-            $payload['immporte'] = $payload['importe'];
-        }
 
         $purchase->update(collect($payload)->only($allowed)->toArray());
 

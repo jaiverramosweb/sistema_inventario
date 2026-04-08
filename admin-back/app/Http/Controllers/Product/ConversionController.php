@@ -2,28 +2,20 @@
 
 namespace App\Http\Controllers\Product;
 
+use App\Http\Controllers\Concerns\ApiErrorResponse;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\ConversionResource;
 use App\Models\Conversion;
-use App\Models\ProductWarehouse;
+use App\Services\Inventory\ProductWarehouseStockService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class ConversionController extends Controller
 {
-    private function errorResponse(int $status, string $code, string $message, array $errors = [])
+    use ApiErrorResponse;
+
+    public function __construct(private ProductWarehouseStockService $stockService)
     {
-        $body = [
-            'status' => $status,
-            'code' => $code,
-            'message' => $message,
-        ];
-
-        if (!empty($errors)) {
-            $body['errors'] = $errors;
-        }
-
-        return response()->json($body, $status);
     }
 
     /**
@@ -75,11 +67,11 @@ class ConversionController extends Controller
 
         $conversion = DB::transaction(function () use ($request, $warehouseId, $user) {
             // Disminucion de stock
-            $product_warehouse = ProductWarehouse::where('product_id', $request->product_id)
-                ->where('unit_id', $request->unit_start_id)
-                ->where('warehouse_id', $warehouseId)
-                ->lockForUpdate()
-                ->first();
+            $product_warehouse = $this->stockService->lock(
+                (int) $request->product_id,
+                (int) $request->unit_start_id,
+                (int) $warehouseId
+            );
 
             if(!$product_warehouse || $product_warehouse->stock < (int) $request->quantity_start){
                 return null;
@@ -89,25 +81,12 @@ class ConversionController extends Controller
                 'stock' => $product_warehouse->stock - (int) $request->quantity_start
             ]);
 
-            // Aumento de stock
-            $product_warehouse_aument = ProductWarehouse::where('product_id', $request->product_id)
-                ->where('unit_id', $request->unit_end_id)
-                ->where('warehouse_id', $warehouseId)
-                ->lockForUpdate()
-                ->first();
-
-            if(!$product_warehouse_aument){
-                ProductWarehouse::create([
-                    'product_id' => $request->product_id,
-                    'warehouse_id' => $warehouseId,
-                    'unit_id' => $request->unit_end_id,
-                    'stock' => (int) $request->quantity_end,
-                ]);
-            } else {
-                $product_warehouse_aument->update([
-                    'stock' => $product_warehouse_aument->stock + (int) $request->quantity_end
-                ]);
-            }
+            $this->stockService->increaseOrCreate(
+                (int) $request->product_id,
+                (int) $request->unit_end_id,
+                (int) $warehouseId,
+                (float) $request->quantity_end
+            );
 
             // Registro
             return Conversion::create([
@@ -163,11 +142,11 @@ class ConversionController extends Controller
 
         $result = DB::transaction(function () use ($conversion) {
             // devolver la unidad convertida
-            $product_warehouse = ProductWarehouse::where('product_id', $conversion->product_id)
-                ->where('unit_id', $conversion->unit_end_id)
-                ->where('warehouse_id', $conversion->warehause_id)
-                ->lockForUpdate()
-                ->first();
+            $product_warehouse = $this->stockService->lock(
+                (int) $conversion->product_id,
+                (int) $conversion->unit_end_id,
+                (int) $conversion->warehause_id
+            );
 
             if(!$product_warehouse || $product_warehouse->stock < $conversion->quantity_end)
             {
@@ -178,25 +157,12 @@ class ConversionController extends Controller
                 'stock' => $product_warehouse->stock - $conversion->quantity_end
             ]);
 
-            // aumentar el stock de la unidad origen
-            $product_warehouse_aument = ProductWarehouse::where('product_id', $conversion->product_id)
-                ->where('unit_id', $conversion->unit_start_id)
-                ->where('warehouse_id', $conversion->warehause_id)
-                ->lockForUpdate()
-                ->first();
-
-            if(!$product_warehouse_aument){
-                ProductWarehouse::create([
-                    'product_id' => $conversion->product_id,
-                    'warehouse_id' => $conversion->warehause_id,
-                    'unit_id' => $conversion->unit_start_id,
-                    'stock' => $conversion->quantity_start,
-                ]);
-            } else {
-                $product_warehouse_aument->update([
-                    'stock' => $product_warehouse_aument->stock + $conversion->quantity_start
-                ]);
-            }
+            $this->stockService->increaseOrCreate(
+                (int) $conversion->product_id,
+                (int) $conversion->unit_start_id,
+                (int) $conversion->warehause_id,
+                (float) $conversion->quantity_start
+            );
 
             // eliminar la conversion
             $conversion->delete();

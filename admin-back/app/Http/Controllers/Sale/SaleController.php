@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Sale;
 
 use App\Exports\Sale\SaleDownloadExcel;
+use App\Http\Controllers\Concerns\ApiErrorResponse;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\SaleRequest;
 use App\Http\Resources\SaleResource;
@@ -24,20 +25,7 @@ use Illuminate\Support\Facades\Gate;
 
 class SaleController extends Controller
 {
-    private function errorResponse(int $status, string $code, string $message, array $errors = [])
-    {
-        $body = [
-            'status' => $status,
-            'code' => $code,
-            'message' => $message,
-        ];
-
-        if (!empty($errors)) {
-            $body['errors'] = $errors;
-        }
-
-        return response()->json($body, $status);
-    }
+    use ApiErrorResponse;
 
     /**
      * Display a listing of the resource.

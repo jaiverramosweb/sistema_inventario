@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers\Puchase;
 
+use App\Http\Controllers\Concerns\ApiErrorResponse;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\PurchaseDetailResource;
-use App\Models\ProductWarehouse;
 use App\Models\Puchase;
 use App\Models\PuchaseDetail;
+use App\Services\Finance\DocumentTotalsService;
+use App\Services\Inventory\ProductWarehouseStockService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
@@ -14,19 +16,38 @@ use Illuminate\Support\Facades\Validator;
 
 class PuchaseDetailController extends Controller
 {
-    private function errorResponse(int $status, string $code, string $message, array $errors = [])
-    {
-        $body = [
-            'status' => $status,
-            'code' => $code,
-            'message' => $message,
-        ];
+    use ApiErrorResponse;
 
-        if (!empty($errors)) {
-            $body['errors'] = $errors;
+    public function __construct(
+        private DocumentTotalsService $documentTotalsService,
+        private ProductWarehouseStockService $stockService,
+    )
+    {
+    }
+
+    private function normalizeDetailPayload(Request $request): array
+    {
+        $payload = $request->all();
+
+        if (!isset($payload['puchase_id'])) {
+            $payload['puchase_id'] = $payload['purchase_id']
+                ?? $payload['pushase_id']
+                ?? $payload['purchace_id']
+                ?? null;
         }
 
-        return response()->json($body, $status);
+        if (!isset($payload['puchase_detail_id'])) {
+            $payload['puchase_detail_id'] = $payload['purchase_detail_id']
+                ?? $payload['pushase_detail_id']
+                ?? $payload['purchace_detail_id']
+                ?? null;
+        }
+
+        if (isset($payload['product_id']) && !isset($payload['product']['id'])) {
+            $payload['product']['id'] = $payload['product_id'];
+        }
+
+        return $payload;
     }
 
     /**
@@ -36,7 +57,9 @@ class PuchaseDetailController extends Controller
     {
         Gate::authorize('update', Puchase::class);
 
-        $validator = Validator::make($request->all(), [
+        $payload = $this->normalizeDetailPayload($request);
+
+        $validator = Validator::make($payload, [
             'puchase_id' => ['required', 'integer', 'exists:puchases,id'],
             'product.id' => ['required', 'integer', 'exists:products,id'],
             'unit_id' => ['required', 'integer', 'exists:units,id'],
@@ -49,31 +72,32 @@ class PuchaseDetailController extends Controller
             return $this->errorResponse(422, 'VALIDATION_ERROR', 'Datos del detalle invalidos.', $validator->errors()->toArray());
         }
 
-        $product = $request->product;
+        $product = $payload['product'];
         $details = null;
         $newImport = 0;
         $newIVA = 0;
         $newTotal = 0;
 
-        DB::transaction(function () use ($request, $product, &$details, &$newImport, &$newIVA, &$newTotal) {
-            $purchase = Puchase::where('id', $request->puchase_id)->lockForUpdate()->first();
+        DB::transaction(function () use ($payload, $product, &$details, &$newImport, &$newIVA, &$newTotal) {
+            $purchase = Puchase::where('id', $payload['puchase_id'])->lockForUpdate()->first();
 
             if (!$purchase) {
                 return;
             }
 
             $details = PuchaseDetail::create([
-                'puchase_id' => $request->puchase_id,
+                'puchase_id' => $payload['puchase_id'],
                 'product_id' => $product['id'],
-                'unit_id' => $request->unit_id,
-                'quantity' => $request->quantity,
-                'price_unit' => $request->price_unit,
-                'total' => $request->total,
+                'unit_id' => $payload['unit_id'],
+                'quantity' => $payload['quantity'],
+                'price_unit' => $payload['price_unit'],
+                'total' => $payload['total'],
             ]);
 
-            $newImport = round($purchase->immporte + $request->total, 2);
-            $newIVA = round($newImport * 0.18, 2);
-            $newTotal = round($newImport + $newIVA, 2);
+            $totals = $this->documentTotalsService->calculateFromImport((float) $purchase->immporte + (float) $payload['total']);
+            $newImport = $totals['immporte'];
+            $newIVA = $totals['iva'];
+            $newTotal = $totals['total'];
 
             $state = 1;
 
@@ -97,6 +121,7 @@ class PuchaseDetailController extends Controller
             'status' => 201,
             'data' => new PurchaseDetailResource($details),
             'immporte' => $newImport,
+            'importe' => $newImport,
             'iva' => $newIVA,
             'total' => $newTotal
         ]);
@@ -109,7 +134,9 @@ class PuchaseDetailController extends Controller
     {
         Gate::authorize('update', Puchase::class);
 
-        $validator = Validator::make($request->all(), [
+        $payload = $this->normalizeDetailPayload($request);
+
+        $validator = Validator::make($payload, [
             'puchase_id' => ['required', 'integer', 'exists:puchases,id'],
             'unit_id' => ['required', 'integer', 'exists:units,id'],
             'quantity' => ['required', 'numeric', 'min:0.01'],
@@ -124,7 +151,7 @@ class PuchaseDetailController extends Controller
 
         $response = null;
 
-        DB::transaction(function () use ($request, $id, &$response) {
+        DB::transaction(function () use ($payload, $id, &$response) {
             $detail = PuchaseDetail::where('id', $id)->lockForUpdate()->first();
 
             if (!$detail) {
@@ -133,18 +160,18 @@ class PuchaseDetailController extends Controller
             }
 
             if($detail->state != 1){
-                if($detail->quantity != $request->quantity){
+                if($detail->quantity != $payload['quantity']){
                     $response = $this->errorResponse(403, 'PURCHASE_DETAIL_QUANTITY_FORBIDDEN', 'No puedes editar la cantidad del detalle por que ya se a entregado el producto');
                     return;
                 }
 
-                if($detail->unit_id != $request->unit_id){
+                if($detail->unit_id != $payload['unit_id']){
                     $response = $this->errorResponse(403, 'PURCHASE_DETAIL_UNIT_FORBIDDEN', 'No puedes editar la unidad del detalle por que ya se a entregado el producto');
                     return;
                 }
             }
 
-            $purchase = Puchase::where('id', $request->puchase_id)->lockForUpdate()->first();
+            $purchase = Puchase::where('id', $payload['puchase_id'])->lockForUpdate()->first();
 
             if (!$purchase) {
                 $response = $this->errorResponse(404, 'PURCHASE_NOT_FOUND', 'La compra seleccionada no existe.');
@@ -154,17 +181,22 @@ class PuchaseDetailController extends Controller
             $old_total = $detail->total;
 
             $detail->update([
-                'puchase_id' => $request->puchase_id,
-                'unit_id' => $request->unit_id,
-                'quantity' => $request->quantity,
-                'price_unit' => $request->price_unit,
-                'total' => $request->total,
-                'description' => $request->description
+                'puchase_id' => $payload['puchase_id'],
+                'unit_id' => $payload['unit_id'],
+                'quantity' => $payload['quantity'],
+                'price_unit' => $payload['price_unit'],
+                'total' => $payload['total'],
+                'description' => $payload['description'] ?? null
             ]);
 
-            $newImport = round(($purchase->immporte - $old_total) + $request->total, 2);
-            $newIVA = round($newImport * 0.18, 2);
-            $newTotal = round($newImport + $newIVA, 2);
+            $totals = $this->documentTotalsService->calculateFromDelta(
+                (float) $purchase->immporte,
+                (float) $old_total,
+                (float) $payload['total']
+            );
+            $newImport = $totals['immporte'];
+            $newIVA = $totals['iva'];
+            $newTotal = $totals['total'];
 
             $purchase->update([
                 'immporte' => $newImport,
@@ -177,6 +209,7 @@ class PuchaseDetailController extends Controller
                 'data' => new PurchaseDetailResource($detail),
                 'total' => $newTotal,
                 'immporte' => $newImport,
+                'importe' => $newImport,
                 'iva' => $newIVA
             ]);
         });
@@ -192,9 +225,11 @@ class PuchaseDetailController extends Controller
     {
         Gate::authorize('update', Puchase::class);
 
-        $validator = Validator::make($request->all(), [
-            'purchace_id' => ['required', 'integer', 'exists:puchases,id'],
-            'purchace_detail_id' => ['required', 'integer', 'exists:puchase_details,id'],
+        $payload = $this->normalizeDetailPayload($request);
+
+        $validator = Validator::make($payload, [
+            'puchase_id' => ['required', 'integer', 'exists:puchases,id'],
+            'puchase_detail_id' => ['required', 'integer', 'exists:puchase_details,id'],
         ]);
 
         if ($validator->fails()) {
@@ -203,14 +238,14 @@ class PuchaseDetailController extends Controller
 
         date_default_timezone_set('America/Bogota');
 
-        $purchace_id = $request->purchace_id;
-        $purchace_detail_id = $request->purchace_detail_id;
+        $puchase_id = $payload['puchase_id'];
+        $puchase_detail_id = $payload['puchase_detail_id'];
 
         $response = null;
 
-        DB::transaction(function () use ($purchace_id, $purchace_detail_id, &$response) {
-            $purchase = Puchase::where('id', $purchace_id)->lockForUpdate()->first();
-            $detail = PuchaseDetail::where('id', $purchace_detail_id)->lockForUpdate()->first();
+        DB::transaction(function () use ($puchase_id, $puchase_detail_id, &$response) {
+            $purchase = Puchase::where('id', $puchase_id)->lockForUpdate()->first();
+            $detail = PuchaseDetail::where('id', $puchase_detail_id)->lockForUpdate()->first();
 
             if (!$purchase) {
                 $response = $this->errorResponse(404, 'PURCHASE_NOT_FOUND', 'La compra seleccionada no existe.');
@@ -238,27 +273,15 @@ class PuchaseDetailController extends Controller
                 'date_delivery' => now()
             ]);
 
-            $product_warehouse = ProductWarehouse::where('product_id', $detail->product_id)
-                ->where('warehouse_id', $purchase->warehouse_id)
-                ->where('unit_id', $detail->unit_id)
-                ->lockForUpdate()
-                ->first();
+            $this->stockService->increaseOrCreate(
+                (int) $detail->product_id,
+                (int) $detail->unit_id,
+                (int) $purchase->warehouse_id,
+                (float) $detail->quantity
+            );
 
-            if($product_warehouse){
-                $product_warehouse->update([
-                    'stock' => $product_warehouse->stock + $detail->quantity
-                ]);
-            } else {
-                ProductWarehouse::create([
-                    'product_id' => $detail->product_id,
-                    'warehouse_id' => $purchase->warehouse_id,
-                    'unit_id' => $detail->unit_id,
-                    'stock' => $detail->quantity,
-                ]);
-            }
-
-            $n_details = PuchaseDetail::where('puchase_id', $purchace_id)->count();
-            $n_details_attends = PuchaseDetail::where('puchase_id', $purchace_id)->where('state', 2)->count();
+            $n_details = PuchaseDetail::where('puchase_id', $puchase_id)->count();
+            $n_details_attends = PuchaseDetail::where('puchase_id', $puchase_id)->where('state', 2)->count();
 
             $purchase->update([
                 'state' => $n_details_attends == $n_details ? 3 : 2
@@ -305,9 +328,10 @@ class PuchaseDetailController extends Controller
 
             $detail->delete();
 
-            $newImport = round($purchase->immporte - $detail->total, 2);
-            $newIVA = round($newImport * 0.18, 2);
-            $newTotal = round($newImport + $newIVA, 2);
+            $totals = $this->documentTotalsService->calculateFromImport((float) $purchase->immporte - (float) $detail->total);
+            $newImport = $totals['immporte'];
+            $newIVA = $totals['iva'];
+            $newTotal = $totals['total'];
 
             $purchase->update([
                 'immporte' => $newImport,
@@ -320,6 +344,7 @@ class PuchaseDetailController extends Controller
                 'id' => $id,
                 'total' => $newTotal,
                 'immporte' => $newImport,
+                'importe' => $newImport,
                 'iva' => $newIVA
             ]);
         });

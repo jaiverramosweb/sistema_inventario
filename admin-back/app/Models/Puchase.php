@@ -109,7 +109,7 @@ class Puchase extends Model
         if($user){
             if($user->role_id != 1){
                 if($user->role_id == 2){
-                    $query->where("sucursal_id", $user->sucuarsal_id);
+                    $query->where("sucuarsal_id", $user->sucuarsal_id);
                 } else {
                     $query->where("user_id", $user->id);
                 }

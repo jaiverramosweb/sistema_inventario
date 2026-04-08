@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers\Sale;
 
+use App\Http\Controllers\Concerns\ApiErrorResponse;
 use App\Http\Controllers\Controller;
 use App\Models\Sale;
 use App\Models\SalePayment;
+use App\Services\Sale\SalePaymentStateService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
@@ -12,44 +14,10 @@ use Illuminate\Support\Facades\Validator;
 
 class SalePaimentController extends Controller
 {
-    private function errorResponse(int $status, string $code, string $message, array $errors = [])
+    use ApiErrorResponse;
+
+    public function __construct(private SalePaymentStateService $paymentStateService)
     {
-        $body = [
-            'status' => $status,
-            'code' => $code,
-            'message' => $message,
-        ];
-
-        if (!empty($errors)) {
-            $body['errors'] = $errors;
-        }
-
-        return response()->json($body, $status);
-    }
-
-    private function moneyToCents($value): int
-    {
-        return (int) round(((float) $value) * 100);
-    }
-
-    private function centsToMoney(int $value): float
-    {
-        return round($value / 100, 2);
-    }
-
-    private function resolvePaymentState(int $debtCents, int $paidOutCents): array
-    {
-        $state_mayment = 1;
-        $date_completed = null;
-
-        if ($debtCents <= 0) {
-            $state_mayment = 3;
-            $date_completed = now();
-        } elseif ($paidOutCents > 0) {
-            $state_mayment = 2;
-        }
-
-        return [$state_mayment, $date_completed];
     }
 
     /**
@@ -70,7 +38,7 @@ class SalePaimentController extends Controller
         }
 
         date_default_timezone_set('America/Bogota');
-        $amountCents = $this->moneyToCents($request->amount);
+        $amountCents = $this->paymentStateService->moneyToCents($request->amount);
 
         if ($amountCents <= 0) {
             return $this->errorResponse(422, 'PAYMENT_AMOUNT_INVALID', 'El monto del pago debe ser mayor a cero.');
@@ -88,8 +56,8 @@ class SalePaimentController extends Controller
                 return;
             }
 
-            $totalCents = $this->moneyToCents($sale->total);
-            $paidOutCents = $this->moneyToCents($sale->paid_out);
+            $totalCents = $this->paymentStateService->moneyToCents($sale->total);
+            $paidOutCents = $this->paymentStateService->moneyToCents($sale->paid_out);
             $newPaidOutCents = $paidOutCents + $amountCents;
 
             if ($newPaidOutCents > $totalCents) {
@@ -103,15 +71,8 @@ class SalePaimentController extends Controller
                 'amount' => $request->amount
             ]);
 
-            $newDebtCents = max(0, $totalCents - $newPaidOutCents);
-            [$state_mayment, $date_completed] = $this->resolvePaymentState($newDebtCents, $newPaidOutCents);
-
-            $sale->update([
-                'debt' => $this->centsToMoney($newDebtCents),
-                'paid_out' => $this->centsToMoney($newPaidOutCents),
-                'state_mayment' => $state_mayment,
-                'date_completed' => $date_completed,
-            ]);
+            $paymentPayload = $this->paymentStateService->buildPaymentPayload($totalCents, $newPaidOutCents);
+            $sale->update(collect($paymentPayload)->except(['debt_cents'])->toArray());
         });
 
         if ($response) {
@@ -129,7 +90,7 @@ class SalePaimentController extends Controller
                 'method_payment' => $salePayment->payment_method,
                 'amount' => $salePayment->amount,
             ],
-            'payment_total' => $this->centsToMoney($newPaidOutCents),
+            'payment_total' => $this->paymentStateService->centsToMoney($newPaidOutCents),
         ]);
     }
 
@@ -153,7 +114,7 @@ class SalePaimentController extends Controller
 
         date_default_timezone_set('America/Bogota');
 
-        $amountCents = $this->moneyToCents($request->amount);
+        $amountCents = $this->paymentStateService->moneyToCents($request->amount);
 
         if ($amountCents <= 0) {
             return $this->errorResponse(422, 'PAYMENT_AMOUNT_INVALID', 'El monto del pago debe ser mayor a cero.');
@@ -171,7 +132,7 @@ class SalePaimentController extends Controller
                 return;
             }
 
-            $amountOldCents = $this->moneyToCents($salePayment->amount);
+            $amountOldCents = $this->paymentStateService->moneyToCents($salePayment->amount);
             $sale = Sale::where('id', $salePayment->sale_id)->lockForUpdate()->first();
 
             if (!$sale) {
@@ -179,8 +140,8 @@ class SalePaimentController extends Controller
                 return;
             }
 
-            $totalCents = $this->moneyToCents($sale->total);
-            $paidOutCents = $this->moneyToCents($sale->paid_out);
+            $totalCents = $this->paymentStateService->moneyToCents($sale->total);
+            $paidOutCents = $this->paymentStateService->moneyToCents($sale->paid_out);
             $newPaidOutCents = ($paidOutCents - $amountOldCents) + $amountCents;
 
             if ($newPaidOutCents > $totalCents) {
@@ -193,15 +154,8 @@ class SalePaimentController extends Controller
                 'amount' => $request->amount
             ]);
 
-            $newDebtCents = max(0, $totalCents - $newPaidOutCents);
-            [$state_mayment, $date_completed] = $this->resolvePaymentState($newDebtCents, $newPaidOutCents);
-
-            $sale->update([
-                'paid_out' => $this->centsToMoney($newPaidOutCents),
-                'debt' => $this->centsToMoney($newDebtCents),
-                'state_mayment' => $state_mayment,
-                'date_completed' => $date_completed,
-            ]);
+            $paymentPayload = $this->paymentStateService->buildPaymentPayload($totalCents, $newPaidOutCents);
+            $sale->update(collect($paymentPayload)->except(['debt_cents'])->toArray());
         });
 
         if ($response) {
@@ -219,7 +173,7 @@ class SalePaimentController extends Controller
                 'method_payment' => $salePayment->payment_method,
                 'amount' => $salePayment->amount,
             ],
-            'payment_total' => $this->centsToMoney($newPaidOutCents),
+            'payment_total' => $this->paymentStateService->centsToMoney($newPaidOutCents),
         ]);
     }
 
@@ -251,20 +205,13 @@ class SalePaimentController extends Controller
 
             $salePayment->delete();
 
-            $totalCents = $this->moneyToCents($sale->total);
-            $paidOutCents = $this->moneyToCents($sale->paid_out);
-            $amountCents = $this->moneyToCents($salePayment->amount);
+            $totalCents = $this->paymentStateService->moneyToCents($sale->total);
+            $paidOutCents = $this->paymentStateService->moneyToCents($sale->paid_out);
+            $amountCents = $this->paymentStateService->moneyToCents($salePayment->amount);
 
             $newPaidOutCents = max(0, $paidOutCents - $amountCents);
-            $newDebtCents = max(0, $totalCents - $newPaidOutCents);
-            [$state_mayment, $date_completed] = $this->resolvePaymentState($newDebtCents, $newPaidOutCents);
-
-            $sale->update([
-                'paid_out' => $this->centsToMoney($newPaidOutCents),
-                'debt' => $this->centsToMoney($newDebtCents),
-                'state_mayment' => $state_mayment,
-                'date_completed' => $date_completed,
-            ]);
+            $paymentPayload = $this->paymentStateService->buildPaymentPayload($totalCents, $newPaidOutCents);
+            $sale->update(collect($paymentPayload)->except(['debt_cents'])->toArray());
         });
 
         if ($response) {
@@ -282,7 +229,7 @@ class SalePaimentController extends Controller
                 'method_payment' => $salePayment->payment_method,
                 'amount' => $salePayment->amount,
             ],
-            'payment_total' => $this->centsToMoney($newPaidOutCents),
+            'payment_total' => $this->paymentStateService->centsToMoney($newPaidOutCents),
         ]);
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Transport;
 
+use App\Http\Controllers\Concerns\ApiErrorResponse;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\TransportResource;
 use App\Models\Transport;
@@ -16,20 +17,7 @@ use Illuminate\Support\Facades\Validator;
 
 class TransportController extends Controller
 {
-    private function errorResponse(int $status, string $code, string $message, array $errors = [])
-    {
-        $body = [
-            'status' => $status,
-            'code' => $code,
-            'message' => $message,
-        ];
-
-        if (!empty($errors)) {
-            $body['errors'] = $errors;
-        }
-
-        return response()->json($body, $status);
-    }
+    use ApiErrorResponse;
 
     /**
      * Display a listing of the resource.

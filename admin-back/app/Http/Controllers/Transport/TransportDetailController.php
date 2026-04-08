@@ -2,11 +2,14 @@
 
 namespace App\Http\Controllers\Transport;
 
+use App\Http\Controllers\Concerns\ApiErrorResponse;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\TransportDetailResource;
 use App\Models\ProductWarehouse;
 use App\Models\Transport;
 use App\Models\TransportDetail;
+use App\Services\Finance\DocumentTotalsService;
+use App\Services\Inventory\ProductWarehouseStockService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
@@ -14,19 +17,13 @@ use Illuminate\Support\Facades\Validator;
 
 class TransportDetailController extends Controller
 {
-    private function errorResponse(int $status, string $code, string $message, array $errors = [])
+    use ApiErrorResponse;
+
+    public function __construct(
+        private DocumentTotalsService $documentTotalsService,
+        private ProductWarehouseStockService $stockService,
+    )
     {
-        $body = [
-            'status' => $status,
-            'code' => $code,
-            'message' => $message,
-        ];
-
-        if (!empty($errors)) {
-            $body['errors'] = $errors;
-        }
-
-        return response()->json($body, $status);
     }
 
     /**
@@ -72,9 +69,10 @@ class TransportDetailController extends Controller
                 'state' => 1
             ]);
 
-            $newImport = round($transport->impote + $request->total, 2);
-            $newIVA = round($newImport * 0.18, 2);
-            $newTotal = round($newImport + $newIVA, 2);
+            $totals = $this->documentTotalsService->calculateFromImport((float) $transport->impote + (float) $request->total);
+            $newImport = $totals['impote'];
+            $newIVA = $totals['iva'];
+            $newTotal = $totals['total'];
 
             $transport->update([
                 'impote' => $newImport,
@@ -162,9 +160,14 @@ class TransportDetailController extends Controller
                 'description' => $request->description
             ]);
 
-            $newImport = round(($transport->impote - $old_total) + $request->total, 2);
-            $newIVA = round($newImport * 0.18, 2);
-            $newTotal = round($newImport + $newIVA, 2);
+            $totals = $this->documentTotalsService->calculateFromDelta(
+                (float) $transport->impote,
+                (float) $old_total,
+                (float) $request->total
+            );
+            $newImport = $totals['impote'];
+            $newIVA = $totals['iva'];
+            $newTotal = $totals['total'];
 
             $transport->update([
                 'impote' => $newImport,
@@ -298,24 +301,12 @@ class TransportDetailController extends Controller
                 return;
             }
 
-            $product_warehouse = ProductWarehouse::where('product_id', $detail->product_id)
-                ->where('unit_id', $detail->unit_id)
-                ->where('warehouse_id', $transport->warehause_end_id)
-                ->lockForUpdate()
-                ->first();
-
-            if(!$product_warehouse){
-                ProductWarehouse::create([
-                    'product_id' => $detail->product_id,
-                    'unit_id' => $detail->unit_id,
-                    'warehouse_id' => $transport->warehause_end_id,
-                    'stock' => $detail->quantity
-                ]);
-            } else {
-                $product_warehouse->update([
-                    'stock' => $product_warehouse->stock + $detail->quantity
-                ]);
-            }
+            $this->stockService->increaseOrCreate(
+                (int) $detail->product_id,
+                (int) $detail->unit_id,
+                (int) $transport->warehause_end_id,
+                (float) $detail->quantity
+            );
 
             $detail->update([
                 'state' => 3,
@@ -363,9 +354,10 @@ class TransportDetailController extends Controller
 
             $detail->delete();
 
-            $newImport = round($transport->impote - $detail->total, 2);
-            $newIVA = round($newImport * 0.18, 2);
-            $newTotal = round($newImport + $newIVA, 2);
+            $totals = $this->documentTotalsService->calculateFromImport((float) $transport->impote - (float) $detail->total);
+            $newImport = $totals['impote'];
+            $newIVA = $totals['iva'];
+            $newTotal = $totals['total'];
 
             $transport->update([
                 'impote' => $newImport,

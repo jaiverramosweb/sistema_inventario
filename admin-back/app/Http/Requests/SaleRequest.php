@@ -32,13 +32,32 @@ class SaleRequest extends FormRequest
             'iva' => 'nullable',
             'state' => 'nullable',
             'state_mayment' => 'nullable',
+            'state_payment' => 'nullable',
             'debt' => 'nullable',
             'paid_out' => 'nullable',
             'date_completed' => 'nullable',
             'description' => 'nullable',
             'sale_details' => 'nullable|array',
+            'saleDetails' => 'nullable|array',
             'payments' => 'nullable|array',
         ];
+    }
+
+    protected function prepareForValidation(): void
+    {
+        $payload = [];
+
+        if ($this->has('state_payment') && !$this->has('state_mayment')) {
+            $payload['state_mayment'] = $this->input('state_payment');
+        }
+
+        if ($this->has('saleDetails') && !$this->has('sale_details')) {
+            $payload['sale_details'] = $this->input('saleDetails');
+        }
+
+        if (!empty($payload)) {
+            $this->merge($payload);
+        }
     }
 
     public function messages(): array

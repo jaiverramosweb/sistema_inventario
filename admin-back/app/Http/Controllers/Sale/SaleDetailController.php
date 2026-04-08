@@ -6,34 +6,14 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\SaleDetailsResource;
 use App\Models\Sale;
 use App\Models\SaleDetail;
+use App\Services\Sale\SalePaymentStateService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 
 class SaleDetailController extends Controller
 {
-    private function moneyToCents($value): int
+    public function __construct(private SalePaymentStateService $paymentStateService)
     {
-        return (int) round(((float) $value) * 100);
-    }
-
-    private function centsToMoney(int $value): float
-    {
-        return round($value / 100, 2);
-    }
-
-    private function resolvePaymentState(int $debtCents, int $paidOutCents): array
-    {
-        $state_mayment = 1;
-        $date_completed = null;
-
-        if ($debtCents <= 0) {
-            $state_mayment = 3;
-            $date_completed = now();
-        } elseif ($paidOutCents > 0) {
-            $state_mayment = 2;
-        }
-
-        return [$state_mayment, $date_completed];
     }
 
     /**
@@ -70,8 +50,11 @@ class SaleDetailController extends Controller
         $total = $sale->total + $details->total;
         $debt = $sale->debt + $details->total;
 
-        $debtCents = max(0, $this->moneyToCents($debt));
-        [$state_mayment, $date_completed] = $this->resolvePaymentState($debtCents, $this->moneyToCents($sale->paid_out));
+        $debtCents = max(0, $this->paymentStateService->moneyToCents($debt));
+        [$state_mayment, $date_completed] = $this->paymentStateService->resolveState(
+            $debtCents,
+            $this->paymentStateService->moneyToCents($sale->paid_out)
+        );
         $state_delivery = 1;
 
         if($sale->state == 1){
@@ -129,8 +112,8 @@ class SaleDetailController extends Controller
             ]);
         }
 
-        $newTotalAfterUpdateCents = ($this->moneyToCents($sale->total) - $this->moneyToCents($details->total)) + $this->moneyToCents($total_detail);
-        $paidOutCents = $this->moneyToCents($paid_out);
+        $newTotalAfterUpdateCents = ($this->paymentStateService->moneyToCents($sale->total) - $this->paymentStateService->moneyToCents($details->total)) + $this->paymentStateService->moneyToCents($total_detail);
+        $paidOutCents = $this->paymentStateService->moneyToCents($paid_out);
 
         if($newTotalAfterUpdateCents < $paidOutCents){
             return response()->json([
@@ -173,10 +156,9 @@ class SaleDetailController extends Controller
         $date_completed = null;
         $state_delivery = 1;
 
-        $newTotalCents = ($this->moneyToCents($sale->total) - $this->moneyToCents($total_old)) + $this->moneyToCents($details->total);
-        $paidOutCents = $this->moneyToCents($paid_out);
-        $newDebtCents = max(0, $newTotalCents - $paidOutCents);
-        [$state_mayment, $date_completed] = $this->resolvePaymentState($newDebtCents, $paidOutCents);
+        $newTotalCents = ($this->paymentStateService->moneyToCents($sale->total) - $this->paymentStateService->moneyToCents($total_old)) + $this->paymentStateService->moneyToCents($details->total);
+        $paidOutCents = $this->paymentStateService->moneyToCents($paid_out);
+        $paymentPayload = $this->paymentStateService->buildPaymentPayload($newTotalCents, $paidOutCents);
 
         $detail_attention_count = SaleDetail::where('sale_id', $sale->id)
             ->where('state_attention', 3)
@@ -192,10 +174,10 @@ class SaleDetailController extends Controller
             'discount' => ($sale->discount - $discount_old) + ($details->discount * $details->quantity),
             'iva' => ($sale->iva - $iva_old) + ($details->iva * $details->quantity),
             'subtotal' => ($sale->subtotal - $subtotal_old) + $details->subtotal,
-            'total' => $this->centsToMoney($newTotalCents),
-            'debt' => $this->centsToMoney($newDebtCents),
-            'state_mayment' => $state_mayment,
-            'date_completed' => $date_completed,
+            'total' => $this->paymentStateService->centsToMoney($newTotalCents),
+            'debt' => $paymentPayload['debt'],
+            'state_mayment' => $paymentPayload['state_mayment'],
+            'date_completed' => $paymentPayload['date_completed'],
             'state_delivery' => $state_delivery
         ]);
 
@@ -241,10 +223,9 @@ class SaleDetailController extends Controller
         $date_completed = null;
         $state_delivery = 1;
 
-        $newTotalCents = max(0, $this->moneyToCents($sale->total) - $this->moneyToCents($total_old));
-        $paidOutCents = $this->moneyToCents($paid_out);
-        $newDebtCents = max(0, $newTotalCents - $paidOutCents);
-        [$state_mayment, $date_completed] = $this->resolvePaymentState($newDebtCents, $paidOutCents);
+        $newTotalCents = max(0, $this->paymentStateService->moneyToCents($sale->total) - $this->paymentStateService->moneyToCents($total_old));
+        $paidOutCents = $this->paymentStateService->moneyToCents($paid_out);
+        $paymentPayload = $this->paymentStateService->buildPaymentPayload($newTotalCents, $paidOutCents);
 
         $detail_attention_count = SaleDetail::where('sale_id', $sale->id)
             ->where('state_attention', 3)
@@ -263,10 +244,10 @@ class SaleDetailController extends Controller
             'discount' => $sale->discount - $discount_old,
             'iva' => $sale->iva - $iva_old,
             'subtotal' => $sale->subtotal - $subtotal_old,
-            'total' => $this->centsToMoney($newTotalCents),
-            'debt' => $this->centsToMoney($newDebtCents),
-            'state_mayment' => $state_mayment,
-            'date_completed' => $date_completed,
+            'total' => $this->paymentStateService->centsToMoney($newTotalCents),
+            'debt' => $paymentPayload['debt'],
+            'state_mayment' => $paymentPayload['state_mayment'],
+            'date_completed' => $paymentPayload['date_completed'],
             'state_delivery' => $state_delivery
         ]);
 
