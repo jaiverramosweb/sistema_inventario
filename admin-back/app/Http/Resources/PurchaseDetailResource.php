@@ -19,11 +19,11 @@ class PurchaseDetailResource extends JsonResource
             'id' => $this->id,
             'product_id' => $this->product_id,
             'product' => [
-                'title' => $this->product->title,
-                'sku' => $this->product->sku,
+                'title' => optional($this->product)->title,
+                'sku' => optional($this->product)->sku,
             ],
             'unit_id' => $this->unit_id,
-            'unit' => $this->unit->name,
+            'unit' => optional($this->unit)->name,
             'quantity' => $this->quantity,
             'price_unit' => $this->price_unit,
             'total' => $this->total,
@@ -34,7 +34,7 @@ class PurchaseDetailResource extends JsonResource
             ] : null,
             'date_delivery' => $this->date_delivery ? Carbon::parse( $this->date_delivery)->format("Y-m-d") : null,
             'description' => $this->description,
-            'created_at' => $this->created_at->format("Y-m-d h:i A")
+            'created_at' => $this->created_at?->format("Y-m-d h:i A")
         ];
     }
 }
