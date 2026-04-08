@@ -3,6 +3,8 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Contracts\Validation\Validator;
+use Illuminate\Http\Exceptions\HttpResponseException;
 
 class SaleRequest extends FormRequest
 {
@@ -23,7 +25,7 @@ class SaleRequest extends FormRequest
     {
         return [
             'client_id' => 'nullable',
-            'type_client' => 'nullable',
+            'type_client' => 'nullable|integer|in:1,2',
             'discount' => 'nullable',
             'subtotal' => 'nullable',
             'total' => 'nullable',
@@ -37,5 +39,23 @@ class SaleRequest extends FormRequest
             'sale_details' => 'nullable|array',
             'payments' => 'nullable|array',
         ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'type_client.integer' => 'El tipo de cliente debe ser numerico.',
+            'type_client.in' => 'El tipo de cliente debe ser 1 (cliente final) o 2 (cliente empresa).',
+        ];
+    }
+
+    protected function failedValidation(Validator $validator): void
+    {
+        throw new HttpResponseException(response()->json([
+            'status' => 422,
+            'code' => 'VALIDATION_ERROR',
+            'message' => 'Los datos enviados no son validos.',
+            'errors' => $validator->errors()->toArray(),
+        ], 422));
     }
 }

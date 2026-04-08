@@ -11,6 +11,21 @@ use Illuminate\Support\Facades\DB;
 
 class ConversionController extends Controller
 {
+    private function errorResponse(int $status, string $code, string $message, array $errors = [])
+    {
+        $body = [
+            'status' => $status,
+            'code' => $code,
+            'message' => $message,
+        ];
+
+        if (!empty($errors)) {
+            $body['errors'] = $errors;
+        }
+
+        return response()->json($body, $status);
+    }
+
     /**
      * Display a listing of the resource.
      */
@@ -48,10 +63,14 @@ class ConversionController extends Controller
         $warehouseId = $request->warehause_id ?? $request->warehouse_id;
 
         if(!$user || !$warehouseId){
-            return response()->json([
-                'status' => 422,
-                'message' => 'Faltan datos obligatorios para registrar la conversion.',
-            ], 422);
+            return $this->errorResponse(
+                422,
+                'VALIDATION_ERROR',
+                'Faltan datos obligatorios para registrar la conversion.',
+                [
+                    'warehouse_id' => ['El almacen es obligatorio.'],
+                ]
+            );
         }
 
         $conversion = DB::transaction(function () use ($request, $warehouseId, $user) {
@@ -104,10 +123,11 @@ class ConversionController extends Controller
         });
 
         if(!$conversion){
-            return response()->json([
-                'status' => 403,
-                'message' => 'No puedes registra la conversion por que no se encuentra con el stock suficiente',
-            ], 403);
+            return $this->errorResponse(
+                422,
+                'INSUFFICIENT_STOCK',
+                'No puedes registrar la conversion porque no hay stock suficiente.'
+            );
         }
 
         return response()->json([
@@ -185,10 +205,11 @@ class ConversionController extends Controller
         });
 
         if(!$result){
-            return response()->json([
-                'status' => 403,
-                'message' => 'No puedes realizar la eliminación por que no se encuentra con el stock suficiente',
-            ]);
+            return $this->errorResponse(
+                422,
+                'INSUFFICIENT_STOCK',
+                'No puedes realizar la eliminacion porque no hay stock suficiente.'
+            );
         }
 
         return response()->json([

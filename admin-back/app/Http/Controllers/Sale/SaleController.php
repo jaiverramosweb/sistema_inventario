@@ -16,6 +16,7 @@ use App\Models\SalePayment;
 use App\Models\Warehouse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Maatwebsite\Excel\Facades\Excel;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -23,6 +24,21 @@ use Illuminate\Support\Facades\Gate;
 
 class SaleController extends Controller
 {
+    private function errorResponse(int $status, string $code, string $message, array $errors = [])
+    {
+        $body = [
+            'status' => $status,
+            'code' => $code,
+            'message' => $message,
+        ];
+
+        if (!empty($errors)) {
+            $body['errors'] = $errors;
+        }
+
+        return response()->json($body, $status);
+    }
+
     /**
      * Display a listing of the resource.
      */
@@ -56,68 +72,86 @@ class SaleController extends Controller
 
     public function stockAttentionDetails(Request $request)
     {
-        $sale_detail_id = $request->sale_detail_id;
-        $sale_detail = SaleDetail::find($sale_detail_id);
-
-        $state_attention = $sale_detail->state_attention; // estado en pendiente
-        $quantity = 0;
-        $quantity_pending = $sale_detail->quantity_pending;
-
-        $wharehouse_product = ProductWarehouse::where('product_id', $sale_detail->product_id)
-            ->where('warehouse_id', $sale_detail->warehouse_id)
-            ->where('unit_id', $sale_detail->unit_id)
-            ->first();
-
-        if($wharehouse_product && $wharehouse_product->stock >= $sale_detail->quantity_pending){ // Entrega completa
-            $state_attention = 3; // estado de atencion completo
-            $quantity = $sale_detail->quantity_pending;
-
-            $wharehouse_product->update([
-                'stock' => $wharehouse_product->stock - $sale_detail->quantity_pending
-            ]);
-
-            $quantity_pending =0 ;
-
-        } else {
-            if($wharehouse_product && $wharehouse_product->stock > 0 && $wharehouse_product->stock < $sale_detail->quantity_pending){
-                $state_attention = 2; // estado de atencion incompleto
-                $quantity = $wharehouse_product->stock;
-            
-                $quantity_pending = $sale_detail->quantity_pending - $wharehouse_product->stock;
-
-                $wharehouse_product->update([
-                    'stock' => 0
-                ]);
-            }
-        }
-
-        $sale_detail->update([
-            'state_attention' => $state_attention,
-            'quantity_pending' => $quantity_pending
+        $validator = Validator::make($request->all(), [
+            'sale_detail_id' => ['required', 'integer', 'exists:sale_details,id'],
         ]);
 
-        if($quantity > 0){
-            SaleDetailAttention::create([
-                'sale_detail_id' => $sale_detail->id,
-                'product_id' => $sale_detail->product_id,
-                'warehouse_id' => $sale_detail->warehouse_id,
-                'unit_id' => $sale_detail->unit_id,
-                'quantity' => $quantity,
-            ]);
+        if ($validator->fails()) {
+            return $this->errorResponse(422, 'VALIDATION_ERROR', 'Datos de atencion invalidos.', $validator->errors()->toArray());
         }
 
-        $counter_complte = 0;
-        $counter_detail = 0;
+        $sale_detail_id = $request->sale_detail_id;
+        $sale_detail = null;
 
-        $counter_complte = SaleDetail::where('sale_id', $sale_detail->sale_id)->where('state_attention', 3)->count();
-        $counter_detail = SaleDetail::where('sale_id', $sale_detail->sale_id)->count();
+        DB::transaction(function () use ($sale_detail_id, &$sale_detail) {
+            $sale_detail = SaleDetail::where('id', $sale_detail_id)->lockForUpdate()->first();
 
-        if($counter_complte == $counter_detail){
-            $sale = $sale_detail->sale;
+            if (!$sale_detail) {
+                return;
+            }
 
-            $sale->update([
-                'state_delivery' => 3 // estado de entrega completo
+            $state_attention = $sale_detail->state_attention;
+            $quantity = 0;
+            $quantity_pending = $sale_detail->quantity_pending;
+
+            $wharehouse_product = ProductWarehouse::where('product_id', $sale_detail->product_id)
+                ->where('warehouse_id', $sale_detail->warehouse_id)
+                ->where('unit_id', $sale_detail->unit_id)
+                ->lockForUpdate()
+                ->first();
+
+            if($wharehouse_product && $wharehouse_product->stock >= $sale_detail->quantity_pending){
+                $state_attention = 3;
+                $quantity = $sale_detail->quantity_pending;
+
+                $wharehouse_product->update([
+                    'stock' => $wharehouse_product->stock - $sale_detail->quantity_pending
+                ]);
+
+                $quantity_pending =0 ;
+
+            } else {
+                if($wharehouse_product && $wharehouse_product->stock > 0 && $wharehouse_product->stock < $sale_detail->quantity_pending){
+                    $state_attention = 2;
+                    $quantity = $wharehouse_product->stock;
+                    $quantity_pending = $sale_detail->quantity_pending - $wharehouse_product->stock;
+
+                    $wharehouse_product->update([
+                        'stock' => 0
+                    ]);
+                }
+            }
+
+            $sale_detail->update([
+                'state_attention' => $state_attention,
+                'quantity_pending' => $quantity_pending
             ]);
+
+            if($quantity > 0){
+                SaleDetailAttention::create([
+                    'sale_detail_id' => $sale_detail->id,
+                    'product_id' => $sale_detail->product_id,
+                    'warehouse_id' => $sale_detail->warehouse_id,
+                    'unit_id' => $sale_detail->unit_id,
+                    'quantity' => $quantity,
+                ]);
+            }
+
+            $counter_complte = SaleDetail::where('sale_id', $sale_detail->sale_id)->where('state_attention', 3)->count();
+            $counter_detail = SaleDetail::where('sale_id', $sale_detail->sale_id)->count();
+
+            if($counter_complte == $counter_detail){
+                $sale = Sale::where('id', $sale_detail->sale_id)->lockForUpdate()->first();
+                if ($sale) {
+                    $sale->update([
+                        'state_delivery' => 3
+                    ]);
+                }
+            }
+        });
+
+        if (!$sale_detail) {
+            return $this->errorResponse(404, 'SALE_DETAIL_NOT_FOUND', 'El detalle de venta no existe.');
         }
 
         return response()->json([
@@ -311,7 +345,11 @@ class SaleController extends Controller
      */
     public function show(string $id)
     {
-        $sale = Sale::findOrFail($id);
+        $sale = Sale::find($id);
+
+        if (!$sale) {
+            return $this->errorResponse(404, 'SALE_NOT_FOUND', 'La venta solicitada no existe.');
+        }
 
         return response()->json([
             'status' => 200,
@@ -326,12 +364,32 @@ class SaleController extends Controller
     {
         Gate::authorize('update', Sale::class);
 
-        $sale = Sale::findOrFail($id);
+        $sale = Sale::find($id);
+        if (!$sale) {
+            return $this->errorResponse(404, 'SALE_NOT_FOUND', 'La venta solicitada no existe.');
+        }
         if($sale->state == 2 && $request->state == 1){
             date_default_timezone_set('America/Bogota');
             $request->request->add(['date_validation' => now()]);
         }
-        $sale->update($request->all());
+        $allowed = [
+            'client_id',
+            'type_client',
+            'discount',
+            'subtotal',
+            'total',
+            'iva',
+            'state',
+            'state_mayment',
+            'debt',
+            'paid_out',
+            'date_validation',
+            'date_completed',
+            'description',
+            'state_delivery',
+        ];
+
+        $sale->update(collect($request->all())->only($allowed)->toArray());
 
         return response()->json([
             'status' => 200

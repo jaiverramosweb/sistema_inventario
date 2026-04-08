@@ -11,10 +11,27 @@ use App\Models\Unit;
 use App\Models\Warehouse;
 use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Validator;
 
 class PuchaseController extends Controller
 {
+    private function errorResponse(int $status, string $code, string $message, array $errors = [])
+    {
+        $body = [
+            'status' => $status,
+            'code' => $code,
+            'message' => $message,
+        ];
+
+        if (!empty($errors)) {
+            $body['errors'] = $errors;
+        }
+
+        return response()->json($body, $status);
+    }
+
     /**
      * Display a listing of the resource.
      */
@@ -77,39 +94,60 @@ class PuchaseController extends Controller
     {
         Gate::authorize('create', Puchase::class);
 
+        $validator = Validator::make($request->all(), [
+            'warehouse_id' => ['required', 'integer', 'exists:warehouses,id'],
+            'provider_id' => ['required', 'integer', 'exists:providers,id'],
+            'type_comprobant' => ['required', 'string', 'max:50'],
+            'n_comprobant' => ['nullable', 'string', 'max:120'],
+            'date_emition' => ['nullable', 'date'],
+            'date_emission' => ['nullable', 'date'],
+            'description' => ['nullable', 'string'],
+            'pushase_details' => ['required', 'array', 'min:1'],
+            'pushase_details.*.product.id' => ['required', 'integer', 'exists:products,id'],
+            'pushase_details.*.unit_id' => ['required', 'integer', 'exists:units,id'],
+            'pushase_details.*.quantity' => ['required', 'numeric', 'min:0.01'],
+            'pushase_details.*.price_unit' => ['required', 'numeric', 'min:0'],
+            'pushase_details.*.total' => ['required', 'numeric', 'min:0'],
+        ]);
+
+        if ($validator->fails()) {
+            return $this->errorResponse(422, 'VALIDATION_ERROR', 'Datos de compra invalidos.', $validator->errors()->toArray());
+        }
+
         $dateEmission = $request->date_emition ?? $request->date_emission;
 
         if(!$dateEmission){
-            return response()->json([
-                'status' => 422,
-                'message' => 'El campo fecha de emision es obligatorio.',
-            ], 422);
+            return $this->errorResponse(422, 'VALIDATION_ERROR', 'El campo fecha de emision es obligatorio.');
         }
 
-        $puchase = Puchase::create([
-            'warehouse_id' => $request->warehouse_id,
-            'user_id' => auth('api')->user()->id,
-            'sucuarsal_id' =>  auth('api')->user()->sucuarsal_id,
-            'date_emition' => $dateEmission,
-            'type_comprobant' => $request->type_comprobant,
-            'n_comprobant' => $request->n_comprobant,
-            'provider_id' => $request->provider_id,
-            'total' => $request->total,
-            'immporte' => $request->importe,
-            'iva' => $request->iva,
-            'description' => $request->description
-        ]);
+        $puchase = null;
 
-        foreach ($request->pushase_details as $value) {
-            PuchaseDetail::create([
-                'puchase_id' => $puchase->id,
-                'product_id' => $value['product']['id'],
-                'unit_id' => $value['unit_id'],
-                'quantity' => $value['quantity'],
-                'price_unit' => $value['price_unit'],
-                'total' => $value['total'],
+        DB::transaction(function () use ($request, $dateEmission, &$puchase) {
+            $puchase = Puchase::create([
+                'warehouse_id' => $request->warehouse_id,
+                'user_id' => auth('api')->user()->id,
+                'sucuarsal_id' =>  auth('api')->user()->sucuarsal_id,
+                'date_emition' => $dateEmission,
+                'type_comprobant' => $request->type_comprobant,
+                'n_comprobant' => $request->n_comprobant,
+                'provider_id' => $request->provider_id,
+                'total' => $request->total,
+                'immporte' => $request->importe,
+                'iva' => $request->iva,
+                'description' => $request->description
             ]);
-        }
+
+            foreach ($request->pushase_details as $value) {
+                PuchaseDetail::create([
+                    'puchase_id' => $puchase->id,
+                    'product_id' => $value['product']['id'],
+                    'unit_id' => $value['unit_id'],
+                    'quantity' => $value['quantity'],
+                    'price_unit' => $value['price_unit'],
+                    'total' => $value['total'],
+                ]);
+            }
+        });
 
         return response()->json([
             'status' => 201
@@ -121,7 +159,11 @@ class PuchaseController extends Controller
      */
     public function show(string $id)
     {
-        $purchase = Puchase::findOrFail($id);
+        $purchase = Puchase::find($id);
+
+        if (!$purchase) {
+            return $this->errorResponse(404, 'PURCHASE_NOT_FOUND', 'La compra solicitada no existe.');
+        }
 
         return response()->json([
             'status' => 200,
@@ -136,14 +178,53 @@ class PuchaseController extends Controller
     {
         Gate::authorize('update', Puchase::class);
 
-        $purchase = Puchase::findOrFail($id);
+        $purchase = Puchase::find($id);
+
+        if (!$purchase) {
+            return $this->errorResponse(404, 'PURCHASE_NOT_FOUND', 'La compra solicitada no existe.');
+        }
 
         $payload = $request->all();
         if(isset($payload['date_emission']) && !isset($payload['date_emition'])){
             $payload['date_emition'] = $payload['date_emission'];
         }
 
-        $purchase->update($payload);
+        $validator = Validator::make($payload, [
+            'warehouse_id' => ['sometimes', 'integer', 'exists:warehouses,id'],
+            'date_emition' => ['sometimes', 'date'],
+            'state' => ['sometimes', 'integer'],
+            'type_comprobant' => ['sometimes', 'string', 'max:50'],
+            'n_comprobant' => ['sometimes', 'nullable', 'string', 'max:120'],
+            'provider_id' => ['sometimes', 'integer', 'exists:providers,id'],
+            'total' => ['sometimes', 'numeric', 'min:0'],
+            'immporte' => ['sometimes', 'numeric', 'min:0'],
+            'importe' => ['sometimes', 'numeric', 'min:0'],
+            'iva' => ['sometimes', 'numeric', 'min:0'],
+            'description' => ['sometimes', 'nullable', 'string'],
+        ]);
+
+        if ($validator->fails()) {
+            return $this->errorResponse(422, 'VALIDATION_ERROR', 'Datos de compra invalidos.', $validator->errors()->toArray());
+        }
+
+        $allowed = [
+            'warehouse_id',
+            'date_emition',
+            'state',
+            'type_comprobant',
+            'n_comprobant',
+            'provider_id',
+            'total',
+            'immporte',
+            'iva',
+            'description',
+        ];
+
+        if (isset($payload['importe']) && !isset($payload['immporte'])) {
+            $payload['immporte'] = $payload['importe'];
+        }
+
+        $purchase->update(collect($payload)->only($allowed)->toArray());
 
         return response()->json([
             'status' => 200
@@ -157,12 +238,14 @@ class PuchaseController extends Controller
     {
         Gate::authorize('delete', Puchase::class);
 
-        $purchase = Puchase::findOrFail($id);
+        $purchase = Puchase::find($id);
+
+        if (!$purchase) {
+            return $this->errorResponse(404, 'PURCHASE_NOT_FOUND', 'La compra solicitada no existe.');
+        }
+
         if($purchase->state != 1){
-            return response()->json([
-            'status' => 403,
-            'message' => 'No puedes eliminar esta compra por que ya a iniciado su proceso de entrega'
-        ]);
+            return $this->errorResponse(403, 'PURCHASE_DELETE_FORBIDDEN', 'No puedes eliminar esta compra por que ya a iniciado su proceso de entrega');
         }
         
         $purchase->delete();

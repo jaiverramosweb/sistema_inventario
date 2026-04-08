@@ -63,11 +63,13 @@ const year_list = ref(['2025', '2026', '2027', '2028', '2029', '2030']);
 
 
 const config = async () => {
+  warning_warehouse.value = null
+
   try {
     const resp = await $api('transports/config', {
       method: 'get',
       onResponseError({ response }) {
-        console.log(response)
+        warning_warehouse.value = response._data.error
       },
     })
     warehouses.value = resp.warehouses
@@ -97,7 +99,7 @@ const querySelections = query => {
       const resp = await $api(`products/search_product?search=${search.value ? search.value : ''}`, {
         method: 'get',
         onResponseError({ response }) {
-          console.log(response)
+          warning_warehouse.value = response._data.error
         },
       })
 
@@ -128,6 +130,8 @@ watch(select_product, value => {
 // Fin busqueda de productos
 
 const info = async () => {
+  warning_warehouse.value = null
+
   try {
 
     const data = {
@@ -141,7 +145,7 @@ const info = async () => {
       method: 'POST',
       body: data,
       onResponseError({ response }) {
-        console.log(response)
+        warning_warehouse.value = response._data.error
       },
     })
 
@@ -159,6 +163,7 @@ const reset = () => {
   warehouse_id.value = null
   select_product.value = null
   search.value = ''
+  warning_warehouse.value = null
 }
 
 const getNameUnit = (movimients_for_unit, units) => {

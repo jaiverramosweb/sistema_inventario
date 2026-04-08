@@ -1,5 +1,55 @@
 import { ofetch } from 'ofetch'
 
+const DEFAULT_API_ERROR_MESSAGE = 'No se pudo completar la solicitud. Intente nuevamente.'
+
+function extractValidationMessage(errors) {
+  if (!errors) {
+    return null
+  }
+
+  if (Array.isArray(errors)) {
+    return errors.find(item => typeof item === 'string' && item.trim()) || null
+  }
+
+  if (typeof errors === 'object') {
+    for (const value of Object.values(errors)) {
+      if (Array.isArray(value)) {
+        const firstMessage = value.find(item => typeof item === 'string' && item.trim())
+        if (firstMessage) {
+          return firstMessage
+        }
+      }
+
+      if (typeof value === 'string' && value.trim()) {
+        return value
+      }
+    }
+  }
+
+  return null
+}
+
+function resolveApiErrorMessage(response) {
+  const payload = response?._data
+
+  if (!payload) {
+    return null
+  }
+
+  if (typeof payload === 'string' && payload.trim()) {
+    return payload
+  }
+
+  const candidates = [
+    payload.error,
+    payload.message,
+    payload.detail,
+    extractValidationMessage(payload.errors),
+  ]
+
+  return candidates.find(item => typeof item === 'string' && item.trim()) || null
+}
+
 function parseJwt(token) {
   try {
     // Aquí separamos la segunda parte (el payload) que contiene los datos como la fecha de expiración
@@ -52,6 +102,27 @@ export const $api = ofetch.create({
         ...options.headers,
         Authorization: `Bearer ${accessToken}`,
       }
+    }
+  },
+  onResponseError({ response }) {
+    const normalizedMessage = resolveApiErrorMessage(response) || DEFAULT_API_ERROR_MESSAGE
+    const currentPayload = response?._data
+
+    if (!currentPayload || typeof currentPayload !== 'object' || Array.isArray(currentPayload)) {
+      response._data = {
+        error: normalizedMessage,
+        message: normalizedMessage,
+      }
+
+      return
+    }
+
+    if (!currentPayload.error) {
+      currentPayload.error = normalizedMessage
+    }
+
+    if (!currentPayload.message) {
+      currentPayload.message = normalizedMessage
     }
   },
 })

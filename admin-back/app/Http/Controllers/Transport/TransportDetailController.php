@@ -8,10 +8,27 @@ use App\Models\ProductWarehouse;
 use App\Models\Transport;
 use App\Models\TransportDetail;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Validator;
 
 class TransportDetailController extends Controller
 {
+    private function errorResponse(int $status, string $code, string $message, array $errors = [])
+    {
+        $body = [
+            'status' => $status,
+            'code' => $code,
+            'message' => $message,
+        ];
+
+        if (!empty($errors)) {
+            $body['errors'] = $errors;
+        }
+
+        return response()->json($body, $status);
+    }
+
     /**
      * Store a newly created resource in storage.
      */
@@ -19,37 +36,62 @@ class TransportDetailController extends Controller
     {
         Gate::authorize('update', Transport::class);
 
-        $product = $request->product;
+        $validator = Validator::make($request->all(), [
+            'transport_id' => ['required', 'integer', 'exists:transports,id'],
+            'product.id' => ['required', 'integer', 'exists:products,id'],
+            'unit_id' => ['required', 'integer', 'exists:units,id'],
+            'quantity' => ['required', 'numeric', 'min:0.01'],
+            'price_unit' => ['required', 'numeric', 'min:0'],
+            'total' => ['required', 'numeric', 'min:0'],
+        ]);
 
-        $transport = Transport::findOrFail($request->transport_id);
-
-        if($transport->state >= 3){
-            return response()->json([
-                'status' => 403,
-                'message' => 'No puedes agregar mas productos por que ya se le dio salida a la solicitud'
-            ]);
+        if ($validator->fails()) {
+            return $this->errorResponse(422, 'VALIDATION_ERROR', 'Datos del detalle de traslado invalidos.', $validator->errors()->toArray());
         }
 
+        $product = $request->product;
+        $details = null;
+        $newImport = 0;
+        $newIVA = 0;
+        $newTotal = 0;
 
-        $details = TransportDetail::create([
-            'transport_id' => $request->transport_id,
-            'product_id' => $product['id'],
-            'unit_id' => $request->unit_id,
-            'quantity' => $request->quantity,
-            'price_unit' => $request->price_unit,
-            'total' => $request->total,
-            'state' => 1
-        ]);     
+        DB::transaction(function () use ($request, $product, &$details, &$newImport, &$newIVA, &$newTotal) {
+            $transport = Transport::where('id', $request->transport_id)->lockForUpdate()->first();
 
-        $newImport = round($transport->impote + $request->total, 2);
-        $newIVA = round($newImport * 0.18, 2);
-        $newTotal = round($newImport + $newIVA, 2);
+            if(!$transport || $transport->state >= 3){
+                return;
+            }
 
-        $transport->update([
-            'impote' => $newImport,
-            'iva' => $newIVA,
-            'total' => $newTotal
-        ]);
+            $details = TransportDetail::create([
+                'transport_id' => $request->transport_id,
+                'product_id' => $product['id'],
+                'unit_id' => $request->unit_id,
+                'quantity' => $request->quantity,
+                'price_unit' => $request->price_unit,
+                'total' => $request->total,
+                'state' => 1
+            ]);
+
+            $newImport = round($transport->impote + $request->total, 2);
+            $newIVA = round($newImport * 0.18, 2);
+            $newTotal = round($newImport + $newIVA, 2);
+
+            $transport->update([
+                'impote' => $newImport,
+                'iva' => $newIVA,
+                'total' => $newTotal
+            ]);
+        });
+
+        if (!$details) {
+            $transport = Transport::find($request->transport_id);
+
+            if (!$transport) {
+                return $this->errorResponse(404, 'TRANSPORT_NOT_FOUND', 'El traslado seleccionado no existe.');
+            }
+
+            return $this->errorResponse(403, 'TRANSPORT_DETAIL_CREATE_FORBIDDEN', 'No puedes agregar mas productos por que ya se le dio salida a la solicitud');
+        }
 
         return response()->json([
             'status' => 201,
@@ -67,161 +109,227 @@ class TransportDetailController extends Controller
     {
         Gate::authorize('update', Transport::class);
 
-        $detail = TransportDetail::findOrFail($id);
+        $validator = Validator::make($request->all(), [
+            'transport_id' => ['required', 'integer', 'exists:transports,id'],
+            'unit_id' => ['required', 'integer', 'exists:units,id'],
+            'quantity' => ['required', 'numeric', 'min:0.01'],
+            'price_unit' => ['required', 'numeric', 'min:0'],
+            'total' => ['required', 'numeric', 'min:0'],
+            'description' => ['nullable', 'string'],
+        ]);
 
-        if($detail->state != 1){
-            if($detail->quantity != $request->quantity){
-                return response()->json([
-                    'status' => 403,
-                    'message' => 'No puedes editar la cantidad del detalle por que ya se a entregado el producto'
-                ]);
-            }
-
-            if($detail->unit_id != $request->unit_id){
-                return response()->json([
-                    'status' => 403,
-                    'message' => 'No puedes editar la unidad del detalle por que ya se a entregado el producto'
-                ]);
-            }
+        if ($validator->fails()) {
+            return $this->errorResponse(422, 'VALIDATION_ERROR', 'Datos del detalle de traslado invalidos.', $validator->errors()->toArray());
         }
 
-        $old_total = $detail->total;
+        $response = null;
 
+        DB::transaction(function () use ($request, $id, &$response) {
+            $detail = TransportDetail::where('id', $id)->lockForUpdate()->first();
 
-        $detail->update([
-            'transport_id' => $request->transport_id,
-            'unit_id' => $request->unit_id,
-            'quantity' => $request->quantity,
-            'price_unit' => $request->price_unit,
-            'total' => $request->total,
-            'description' => $request->description
-        ]);
+            if (!$detail) {
+                $response = $this->errorResponse(404, 'TRANSPORT_DETAIL_NOT_FOUND', 'El detalle de traslado no existe.');
+                return;
+            }
 
-        $transport = Transport::findOrFail($request->transport_id);
+            if($detail->state != 1){
+                if($detail->quantity != $request->quantity){
+                    $response = $this->errorResponse(403, 'TRANSPORT_DETAIL_QUANTITY_FORBIDDEN', 'No puedes editar la cantidad del detalle por que ya se a entregado el producto');
+                    return;
+                }
 
-        $newImport = round(($transport->impote - $old_total) + $request->total, 2);
-        $newIVA = round($newImport * 0.18, 2);
-        $newTotal = round($newImport + $newIVA, 2);
+                if($detail->unit_id != $request->unit_id){
+                    $response = $this->errorResponse(403, 'TRANSPORT_DETAIL_UNIT_FORBIDDEN', 'No puedes editar la unidad del detalle por que ya se a entregado el producto');
+                    return;
+                }
+            }
 
-        $transport->update([
-            'impote' => $newImport,
-            'iva' => $newIVA,
-            'total' => $newTotal
-        ]);
+            $transport = Transport::where('id', $request->transport_id)->lockForUpdate()->first();
 
-        return response()->json([
-            'status' => 200,
-            'data' => new TransportDetailResource($detail),
-            'total' => $newTotal,
-            'impote' => $newImport,
-            'iva' => $newIVA
-        ]);
+            if (!$transport) {
+                $response = $this->errorResponse(404, 'TRANSPORT_NOT_FOUND', 'El traslado seleccionado no existe.');
+                return;
+            }
+
+            $old_total = $detail->total;
+
+            $detail->update([
+                'transport_id' => $request->transport_id,
+                'unit_id' => $request->unit_id,
+                'quantity' => $request->quantity,
+                'price_unit' => $request->price_unit,
+                'total' => $request->total,
+                'description' => $request->description
+            ]);
+
+            $newImport = round(($transport->impote - $old_total) + $request->total, 2);
+            $newIVA = round($newImport * 0.18, 2);
+            $newTotal = round($newImport + $newIVA, 2);
+
+            $transport->update([
+                'impote' => $newImport,
+                'iva' => $newIVA,
+                'total' => $newTotal
+            ]);
+
+            $response = response()->json([
+                'status' => 200,
+                'data' => new TransportDetailResource($detail),
+                'total' => $newTotal,
+                'impote' => $newImport,
+                'iva' => $newIVA
+            ]);
+        });
+
+        return $response ?? $this->errorResponse(500, 'TRANSPORT_DETAIL_UPDATE_ERROR', 'No se pudo actualizar el detalle de traslado.');
     }
 
     public function attentionExit(Request $request)
     {
         Gate::authorize('update', Transport::class);
 
+        $validator = Validator::make($request->all(), [
+            'transport_detail_id' => ['required', 'integer', 'exists:transport_details,id'],
+        ]);
+
+        if ($validator->fails()) {
+            return $this->errorResponse(422, 'VALIDATION_ERROR', 'Datos de salida invalidos.', $validator->errors()->toArray());
+        }
+
         date_default_timezone_set('America/Bogota');
 
         $transport_detail_id = $request->transport_detail_id;
-        $detail = TransportDetail::findOrFail($transport_detail_id);
-        $transport = $detail->transport;
+        $response = null;
 
-        if($detail->state != 1){
-            return response()->json([
-                'status' => 403,
-                'message' => 'No se puede dar salida a este producto por que ya se atendio'
+        DB::transaction(function () use ($transport_detail_id, &$response) {
+            $detail = TransportDetail::where('id', $transport_detail_id)->lockForUpdate()->first();
+
+            if (!$detail) {
+                $response = $this->errorResponse(404, 'TRANSPORT_DETAIL_NOT_FOUND', 'El detalle de traslado no existe.');
+                return;
+            }
+
+            $transport = Transport::where('id', $detail->transport_id)->lockForUpdate()->first();
+
+            if (!$transport) {
+                $response = $this->errorResponse(404, 'TRANSPORT_NOT_FOUND', 'El traslado asociado no existe.');
+                return;
+            }
+
+            if($detail->state != 1){
+                $response = $this->errorResponse(403, 'TRANSPORT_EXIT_FORBIDDEN', 'No se puede dar salida a este producto por que ya se atendio');
+                return;
+            }
+
+            $product_warehouse = ProductWarehouse::where('product_id', $detail->product_id)
+                ->where('unit_id', $detail->unit_id)
+                ->where('warehouse_id', $transport->warehause_start_id)
+                ->lockForUpdate()
+                ->first();
+
+            if(!$product_warehouse){
+                $response = $this->errorResponse(403, 'TRANSPORT_EXIT_STOCK_UNAVAILABLE', 'No se puede atender la cantidad solicitada por que no existe stock en el almacen de salida');
+                return;
+            }
+
+            if($product_warehouse->stock < $detail->quantity){
+                $response = $this->errorResponse(403, 'TRANSPORT_EXIT_STOCK_INSUFFICIENT', 'No se puede atender la cantidad solicitada por que unicamente tenemos ' . $product_warehouse->stock . ' unidades');
+                return;
+            }
+
+            $product_warehouse->update([
+                'stock' => $product_warehouse->stock - $detail->quantity
             ]);
-        }
 
-        $product_warehouse = ProductWarehouse::where('product_id', $detail->product_id)
-            ->where('unit_id', $detail->unit_id)
-            ->where('warehouse_id', $transport->warehause_start_id)
-            ->first();
-
-        if(!$product_warehouse){
-            return response()->json([
-                'status' => 403,
-                'message' => 'No se puede atender la cantidad solicitada por que no existe stock en el almacen de salida'
+            $detail->update([
+                'state' => 2,
+                'user_exit_id' => auth('api')->user()->id,
+                'date_exit' => now()
             ]);
-        }
 
-        if($product_warehouse->stock < $detail->quantity){
-            return response()->json([
-                'status' => 403,
-                'message' => 'No se puede atender la cantidad solicitada por que unicamente tenemos ' . $product_warehouse->stock . ' unidades'
+            $response = response()->json([
+                'status' => 200,
+                'data' => new TransportDetailResource($detail)
             ]);
-        }
+        });
 
-        $product_warehouse->update([
-            'stock' => $product_warehouse->stock - $detail->quantity
-        ]);
-
-        $detail->update([
-            'state' => 2,
-            'user_exit_id' => auth('api')->user()->id,
-            'date_exit' => now()
-        ]);
-
-        return response()->json([
-            'status' => 200,
-            'data' => new TransportDetailResource($detail)
-        ]);
+        return $response ?? $this->errorResponse(500, 'TRANSPORT_EXIT_ERROR', 'No se pudo registrar la salida del detalle.');
     }
 
     public function attentionDelivery(Request $request)
     {
         Gate::authorize('update', Transport::class);
 
+        $validator = Validator::make($request->all(), [
+            'transport_detail_id' => ['required', 'integer', 'exists:transport_details,id'],
+        ]);
+
+        if ($validator->fails()) {
+            return $this->errorResponse(422, 'VALIDATION_ERROR', 'Datos de recepcion invalidos.', $validator->errors()->toArray());
+        }
+
         date_default_timezone_set('America/Bogota');
 
         $transport_detail_id = $request->transport_detail_id;
-        $detail = TransportDetail::findOrFail($transport_detail_id);
-        $transport = $detail->transport;
+        $response = null;
 
-        if($detail->state == 3){
-            return response()->json([
-                'status' => 403,
-                'message' => 'No se puede dar salida a este producto por que ya se atendio'
-            ], 403);
-        }
+        DB::transaction(function () use ($transport_detail_id, &$response) {
+            $detail = TransportDetail::where('id', $transport_detail_id)->lockForUpdate()->first();
 
-        if($detail->state == 1){
-            return response()->json([
-                'status' => 403,
-                'message' => 'No se puede recibir este producto por que aun no tiene salida'
-            ], 403);
-        }
+            if (!$detail) {
+                $response = $this->errorResponse(404, 'TRANSPORT_DETAIL_NOT_FOUND', 'El detalle de traslado no existe.');
+                return;
+            }
 
-        $product_warehouse = ProductWarehouse::where('product_id', $detail->product_id)
-            ->where('unit_id', $detail->unit_id)
-            ->where('warehouse_id', $transport->warehause_end_id)
-            ->first();
+            $transport = Transport::where('id', $detail->transport_id)->lockForUpdate()->first();
 
-        if(!$product_warehouse){
-            $product_warehouse = ProductWarehouse::create([
-                'product_id' => $detail->product_id,
-                'unit_id' => $detail->unit_id,
-                'warehouse_id' => $transport->warehause_end_id,
-                'stock' => $detail->quantity
+            if (!$transport) {
+                $response = $this->errorResponse(404, 'TRANSPORT_NOT_FOUND', 'El traslado asociado no existe.');
+                return;
+            }
+
+            if($detail->state == 3){
+                $response = $this->errorResponse(403, 'TRANSPORT_DELIVERY_FORBIDDEN', 'No se puede recibir este producto por que ya se atendio');
+                return;
+            }
+
+            if($detail->state == 1){
+                $response = $this->errorResponse(403, 'TRANSPORT_DELIVERY_EXIT_REQUIRED', 'No se puede recibir este producto por que aun no tiene salida');
+                return;
+            }
+
+            $product_warehouse = ProductWarehouse::where('product_id', $detail->product_id)
+                ->where('unit_id', $detail->unit_id)
+                ->where('warehouse_id', $transport->warehause_end_id)
+                ->lockForUpdate()
+                ->first();
+
+            if(!$product_warehouse){
+                ProductWarehouse::create([
+                    'product_id' => $detail->product_id,
+                    'unit_id' => $detail->unit_id,
+                    'warehouse_id' => $transport->warehause_end_id,
+                    'stock' => $detail->quantity
+                ]);
+            } else {
+                $product_warehouse->update([
+                    'stock' => $product_warehouse->stock + $detail->quantity
+                ]);
+            }
+
+            $detail->update([
+                'state' => 3,
+                'user_delivery_id' => auth('api')->user()->id,
+                'date_delivery' => now()
             ]);
-        } else {
-            $product_warehouse->update([
-                'stock' => $product_warehouse->stock + $detail->quantity
+
+            $response = response()->json([
+                'status' => 200,
+                'data' => new TransportDetailResource($detail)
             ]);
-        }
+        });
 
-        $detail->update([
-            'state' => 3,
-            'user_delivery_id' => auth('api')->user()->id,
-            'date_delivery' => now()
-        ]);
-
-        return response()->json([
-            'status' => 200,
-            'data' => new TransportDetailResource($detail)
-        ]);
+        return $response ?? $this->errorResponse(500, 'TRANSPORT_DELIVERY_ERROR', 'No se pudo registrar la recepcion del detalle.');
     }
 
     /**
@@ -231,35 +339,49 @@ class TransportDetailController extends Controller
     {
         Gate::authorize('update', Transport::class);
 
-        $detail = TransportDetail::findOrFail($id);
+        $response = null;
 
-        if($detail->state != 1){
-            return response()->json([
-                    'status' => 403,
-                    'message' => 'No puedes eliminar el detalle por que ya se a entregado'
-                ]);
-        }
+        DB::transaction(function () use ($id, &$response) {
+            $detail = TransportDetail::where('id', $id)->lockForUpdate()->first();
 
-        $detail->delete();
+            if (!$detail) {
+                $response = $this->errorResponse(404, 'TRANSPORT_DETAIL_NOT_FOUND', 'El detalle de traslado no existe.');
+                return;
+            }
 
-        $transport = $detail->transport;
+            if($detail->state != 1){
+                $response = $this->errorResponse(403, 'TRANSPORT_DETAIL_DELETE_FORBIDDEN', 'No puedes eliminar el detalle por que ya se a entregado');
+                return;
+            }
 
-        $newImport = round($transport->impote - $detail->total, 2);
-        $newIVA = round($newImport * 0.18, 2);
-        $newTotal = round($newImport + $newIVA, 2);
+            $transport = Transport::where('id', $detail->transport_id)->lockForUpdate()->first();
 
-        $transport->update([
-            'impote' => $newImport,
-            'iva' => $newIVA,
-            'total' => $newTotal
-        ]);
+            if (!$transport) {
+                $response = $this->errorResponse(404, 'TRANSPORT_NOT_FOUND', 'El traslado asociado no existe.');
+                return;
+            }
 
-        return response()->json([
-            'status' => 200,
-            'id' => $id,
-            'total' => $newTotal,
-            'impote' => $newImport,
-            'iva' => $newIVA
-        ]);
+            $detail->delete();
+
+            $newImport = round($transport->impote - $detail->total, 2);
+            $newIVA = round($newImport * 0.18, 2);
+            $newTotal = round($newImport + $newIVA, 2);
+
+            $transport->update([
+                'impote' => $newImport,
+                'iva' => $newIVA,
+                'total' => $newTotal
+            ]);
+
+            $response = response()->json([
+                'status' => 200,
+                'id' => $id,
+                'total' => $newTotal,
+                'impote' => $newImport,
+                'iva' => $newIVA
+            ]);
+        });
+
+        return $response ?? $this->errorResponse(500, 'TRANSPORT_DETAIL_DELETE_ERROR', 'No se pudo eliminar el detalle de traslado.');
     }
 }
