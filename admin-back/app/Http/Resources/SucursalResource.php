@@ -19,7 +19,7 @@ class SucursalResource extends JsonResource
             'name' => $this->name,
             'address' => $this->address,
             'status' => $this->status,
-            'created_at' => $this->created_at->format("Y-m-d"),
+            'created_at' => $this->created_at?->format("Y-m-d"),
         ];
     }
 }
