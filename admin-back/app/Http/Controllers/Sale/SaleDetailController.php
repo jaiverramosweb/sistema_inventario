@@ -7,14 +7,42 @@ use App\Http\Resources\SaleDetailsResource;
 use App\Models\Sale;
 use App\Models\SaleDetail;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 
 class SaleDetailController extends Controller
 {
+    private function moneyToCents($value): int
+    {
+        return (int) round(((float) $value) * 100);
+    }
+
+    private function centsToMoney(int $value): float
+    {
+        return round($value / 100, 2);
+    }
+
+    private function resolvePaymentState(int $debtCents, int $paidOutCents): array
+    {
+        $state_mayment = 1;
+        $date_completed = null;
+
+        if ($debtCents <= 0) {
+            $state_mayment = 3;
+            $date_completed = now();
+        } elseif ($paidOutCents > 0) {
+            $state_mayment = 2;
+        }
+
+        return [$state_mayment, $date_completed];
+    }
+
     /**
      * Store a newly created resource in storage.
      */
     public function store(Request $request)
     {
+        Gate::authorize('update', Sale::class);
+
         date_default_timezone_set('America/Bogota');
 
         $product = $request->product;
@@ -42,16 +70,9 @@ class SaleDetailController extends Controller
         $total = $sale->total + $details->total;
         $debt = $sale->debt + $details->total;
 
-        $state_mayment = 1;
-        $date_completed = null;
+        $debtCents = max(0, $this->moneyToCents($debt));
+        [$state_mayment, $date_completed] = $this->resolvePaymentState($debtCents, $this->moneyToCents($sale->paid_out));
         $state_delivery = 1;
-
-        if($debt == 0){
-            $state_mayment = 3;
-            $date_completed = now();
-        } else if($sale->paid_out > 0) {
-            $state_mayment = 2;
-        }
 
         if($sale->state == 1){
             $state_delivery = 2;
@@ -85,6 +106,8 @@ class SaleDetailController extends Controller
      */
     public function update(Request $request, string $id)
     {
+        Gate::authorize('update', Sale::class);
+
         date_default_timezone_set('America/Bogota');
 
         $details = SaleDetail::findOrFail($id);
@@ -106,7 +129,10 @@ class SaleDetailController extends Controller
             ]);
         }
 
-        if((((float)$sale->total - (float)$details->total) + (float)$total_detail) < $paid_out){
+        $newTotalAfterUpdateCents = ($this->moneyToCents($sale->total) - $this->moneyToCents($details->total)) + $this->moneyToCents($total_detail);
+        $paidOutCents = $this->moneyToCents($paid_out);
+
+        if($newTotalAfterUpdateCents < $paidOutCents){
             return response()->json([
                 'status' => 403,
                 'message' => 'No se puede editar este producto por que el monto sera menos que el cancelado',
@@ -115,7 +141,7 @@ class SaleDetailController extends Controller
 
         $quantity_attend = (int)$details->quantity - (int)$details->quantity_pending;
 
-        if($quantity_attend < (int)$request->quantity){
+        if((int)$request->quantity < $quantity_attend){
             return response()->json([
                 'status' => 403,
                 'message' => 'no puedes ingresar una cantidad menor a la entregada',
@@ -147,13 +173,10 @@ class SaleDetailController extends Controller
         $date_completed = null;
         $state_delivery = 1;
 
-        if((($sale->total - $total_old) + $details->total) == $paid_out){
-            $state_mayment = 3;
-            $date_completed = now();
-        } else if($paid_out > 0){
-            $state_mayment = 2;
-            $date_completed = null;
-        }
+        $newTotalCents = ($this->moneyToCents($sale->total) - $this->moneyToCents($total_old)) + $this->moneyToCents($details->total);
+        $paidOutCents = $this->moneyToCents($paid_out);
+        $newDebtCents = max(0, $newTotalCents - $paidOutCents);
+        [$state_mayment, $date_completed] = $this->resolvePaymentState($newDebtCents, $paidOutCents);
 
         $detail_attention_count = SaleDetail::where('sale_id', $sale->id)
             ->where('state_attention', 3)
@@ -169,8 +192,8 @@ class SaleDetailController extends Controller
             'discount' => ($sale->discount - $discount_old) + ($details->discount * $details->quantity),
             'iva' => ($sale->iva - $iva_old) + ($details->iva * $details->quantity),
             'subtotal' => ($sale->subtotal - $subtotal_old) + $details->subtotal,
-            'total' => ($sale->total - $total_old) + $details->total,
-            'debt' => ($sale->debt - $total_old) + $details->total,
+            'total' => $this->centsToMoney($newTotalCents),
+            'debt' => $this->centsToMoney($newDebtCents),
             'state_mayment' => $state_mayment,
             'date_completed' => $date_completed,
             'state_delivery' => $state_delivery
@@ -192,6 +215,8 @@ class SaleDetailController extends Controller
      */
     public function destroy(string $id)
     {
+        Gate::authorize('update', Sale::class);
+
         date_default_timezone_set('America/Bogota');
 
         $details = SaleDetail::findOrFail($id);
@@ -216,13 +241,10 @@ class SaleDetailController extends Controller
         $date_completed = null;
         $state_delivery = 1;
 
-        if((($sale->total - $total_old) + $details->total) == $paid_out){
-            $state_mayment = 3;
-            $date_completed = now();
-        } else if($paid_out > 0){
-            $state_mayment = 2;
-            $date_completed = null;
-        }
+        $newTotalCents = max(0, $this->moneyToCents($sale->total) - $this->moneyToCents($total_old));
+        $paidOutCents = $this->moneyToCents($paid_out);
+        $newDebtCents = max(0, $newTotalCents - $paidOutCents);
+        [$state_mayment, $date_completed] = $this->resolvePaymentState($newDebtCents, $paidOutCents);
 
         $detail_attention_count = SaleDetail::where('sale_id', $sale->id)
             ->where('state_attention', 3)
@@ -241,8 +263,8 @@ class SaleDetailController extends Controller
             'discount' => $sale->discount - $discount_old,
             'iva' => $sale->iva - $iva_old,
             'subtotal' => $sale->subtotal - $subtotal_old,
-            'total' => $sale->total - $total_old,
-            'debt' => $sale->debt - $total_old,
+            'total' => $this->centsToMoney($newTotalCents),
+            'debt' => $this->centsToMoney($newDebtCents),
             'state_mayment' => $state_mayment,
             'date_completed' => $date_completed,
             'state_delivery' => $state_delivery

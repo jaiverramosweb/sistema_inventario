@@ -50,14 +50,31 @@ const loadUserFromStorage = () => {
   user.value = localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')) : null
 }
 
-const logout = async () => {
-  console.log('Logout')
-
+const clearAuthSession = () => {
   localStorage.removeItem('user')
   localStorage.removeItem('token')
+}
 
-  // await router.push("/login")
-  window.location.reload()
+const logout = async () => {
+  const token = localStorage.getItem('token')
+
+  try {
+    if (token) {
+      await $api('auth/logout', {
+        method: 'POST',
+      })
+    }
+  } catch (error) {
+    console.warn('No se pudo cerrar sesion en backend, se limpia sesion local.', error)
+  } finally {
+    clearAuthSession()
+
+    try {
+      await router.replace({ name: 'login' })
+    } catch (navigationError) {
+      window.location.reload()
+    }
+  }
 }
 
 const goToProfileItem = item => {

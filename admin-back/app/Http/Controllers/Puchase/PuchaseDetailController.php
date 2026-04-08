@@ -8,6 +8,7 @@ use App\Models\ProductWarehouse;
 use App\Models\Puchase;
 use App\Models\PuchaseDetail;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 
 class PuchaseDetailController extends Controller
 {
@@ -17,6 +18,8 @@ class PuchaseDetailController extends Controller
      */
     public function store(Request $request)
     {
+        Gate::authorize('update', Puchase::class);
+
         $product = $request->product;
 
         $details = PuchaseDetail::create([
@@ -66,6 +69,8 @@ class PuchaseDetailController extends Controller
      */
     public function update(Request $request, string $id)
     {
+        Gate::authorize('update', Puchase::class);
+
         $detail = PuchaseDetail::findOrFail($id);
 
         if($detail->state != 1){
@@ -119,6 +124,8 @@ class PuchaseDetailController extends Controller
 
     public function attention(Request $request)
     {
+        Gate::authorize('update', Puchase::class);
+
         date_default_timezone_set('America/Bogota');
 
         $purchace_id = $request->purchace_id;
@@ -126,6 +133,20 @@ class PuchaseDetailController extends Controller
 
         $purchase = Puchase::findOrFail($purchace_id);
         $detail = PuchaseDetail::findOrFail($purchace_detail_id);
+
+        if($detail->puchase_id != $purchase->id){
+            return response()->json([
+                'status' => 403,
+                'message' => 'El detalle no pertenece a la compra seleccionada.'
+            ], 403);
+        }
+
+        if($detail->state != 1){
+            return response()->json([
+                'status' => 403,
+                'message' => 'No se puede atender este detalle por que ya fue atendido previamente.'
+            ], 403);
+        }
 
         $detail->update([
             'state' => 2,
@@ -180,6 +201,8 @@ class PuchaseDetailController extends Controller
      */
     public function destroy(string $id)
     {
+        Gate::authorize('update', Puchase::class);
+
         $detail = PuchaseDetail::findOrFail($id);
 
         if($detail->state != 1){

@@ -78,7 +78,7 @@ watch(search, query => {
     return
   }
 
-  if(query.length > 3){
+  if((query?.length || 0) > 3){
     querySelections(query)
   }else{
     items.value = []

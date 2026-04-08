@@ -8,6 +8,7 @@ use App\Models\ProductWarehouse;
 use App\Models\Transport;
 use App\Models\TransportDetail;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 
 class TransportDetailController extends Controller
 {
@@ -16,6 +17,8 @@ class TransportDetailController extends Controller
      */
     public function store(Request $request)
     {
+        Gate::authorize('update', Transport::class);
+
         $product = $request->product;
 
         $transport = Transport::findOrFail($request->transport_id);
@@ -62,6 +65,8 @@ class TransportDetailController extends Controller
      */
     public function update(Request $request, string $id)
     {
+        Gate::authorize('update', Transport::class);
+
         $detail = TransportDetail::findOrFail($id);
 
         if($detail->state != 1){
@@ -115,6 +120,8 @@ class TransportDetailController extends Controller
 
     public function attentionExit(Request $request)
     {
+        Gate::authorize('update', Transport::class);
+
         date_default_timezone_set('America/Bogota');
 
         $transport_detail_id = $request->transport_detail_id;
@@ -132,6 +139,13 @@ class TransportDetailController extends Controller
             ->where('unit_id', $detail->unit_id)
             ->where('warehouse_id', $transport->warehause_start_id)
             ->first();
+
+        if(!$product_warehouse){
+            return response()->json([
+                'status' => 403,
+                'message' => 'No se puede atender la cantidad solicitada por que no existe stock en el almacen de salida'
+            ]);
+        }
 
         if($product_warehouse->stock < $detail->quantity){
             return response()->json([
@@ -158,6 +172,8 @@ class TransportDetailController extends Controller
 
     public function attentionDelivery(Request $request)
     {
+        Gate::authorize('update', Transport::class);
+
         date_default_timezone_set('America/Bogota');
 
         $transport_detail_id = $request->transport_detail_id;
@@ -168,7 +184,14 @@ class TransportDetailController extends Controller
             return response()->json([
                 'status' => 403,
                 'message' => 'No se puede dar salida a este producto por que ya se atendio'
-            ]);
+            ], 403);
+        }
+
+        if($detail->state == 1){
+            return response()->json([
+                'status' => 403,
+                'message' => 'No se puede recibir este producto por que aun no tiene salida'
+            ], 403);
         }
 
         $product_warehouse = ProductWarehouse::where('product_id', $detail->product_id)
@@ -177,18 +200,17 @@ class TransportDetailController extends Controller
             ->first();
 
         if(!$product_warehouse){
-            ProductWarehouse::create([
+            $product_warehouse = ProductWarehouse::create([
                 'product_id' => $detail->product_id,
                 'unit_id' => $detail->unit_id,
                 'warehouse_id' => $transport->warehause_end_id,
-                'unit_id' => $detail->unit_id,
                 'stock' => $detail->quantity
             ]);
+        } else {
+            $product_warehouse->update([
+                'stock' => $product_warehouse->stock + $detail->quantity
+            ]);
         }
-
-        $product_warehouse->update([
-            'stock' => $product_warehouse->stock + $detail->quantity
-        ]);
 
         $detail->update([
             'state' => 3,
@@ -207,6 +229,8 @@ class TransportDetailController extends Controller
      */
     public function destroy(string $id)
     {
+        Gate::authorize('update', Transport::class);
+
         $detail = TransportDetail::findOrFail($id);
 
         if($detail->state != 1){

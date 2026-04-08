@@ -84,7 +84,7 @@ watch(search, query => {
     return
   }
 
-  if(query.length > 3){
+  if((query?.length || 0) > 3){
     querySelections(query)
   }else{
     items.value = []
@@ -380,7 +380,7 @@ const transportDetailDelete = (item) => {
   let INDEX = transport_details.value.findIndex(detail => detail.id == item.id)
 
   if(INDEX != -1){
-    transport_details.value.splice(index, 1)
+    transport_details.value.splice(INDEX, 1)
   }
 
   impote.value = item.impote
@@ -420,7 +420,7 @@ onMounted( () => {
                 <VTextField
                   label="Solicitante"
                   placeholder=""
-                  v-model="user.full_name"
+                  :model-value="user?.full_name || ''"
                   disabled
                 />
               </VCol>
@@ -428,7 +428,7 @@ onMounted( () => {
                 <VTextField
                   label="CES"
                   placeholder=""
-                  v-model="user.sucursale"
+                  :model-value="user?.sucursale || ''"
                   disabled
                 />
               </VCol>

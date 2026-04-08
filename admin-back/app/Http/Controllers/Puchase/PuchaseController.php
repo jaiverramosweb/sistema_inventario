@@ -77,11 +77,20 @@ class PuchaseController extends Controller
     {
         Gate::authorize('create', Puchase::class);
 
+        $dateEmission = $request->date_emition ?? $request->date_emission;
+
+        if(!$dateEmission){
+            return response()->json([
+                'status' => 422,
+                'message' => 'El campo fecha de emision es obligatorio.',
+            ], 422);
+        }
+
         $puchase = Puchase::create([
             'warehouse_id' => $request->warehouse_id,
             'user_id' => auth('api')->user()->id,
             'sucuarsal_id' =>  auth('api')->user()->sucuarsal_id,
-            'date_emition' => $request->date_emition,
+            'date_emition' => $dateEmission,
             'type_comprobant' => $request->type_comprobant,
             'n_comprobant' => $request->n_comprobant,
             'provider_id' => $request->provider_id,
@@ -128,7 +137,13 @@ class PuchaseController extends Controller
         Gate::authorize('update', Puchase::class);
 
         $purchase = Puchase::findOrFail($id);
-        $purchase->update($request->all());
+
+        $payload = $request->all();
+        if(isset($payload['date_emission']) && !isset($payload['date_emition'])){
+            $payload['date_emition'] = $payload['date_emission'];
+        }
+
+        $purchase->update($payload);
 
         return response()->json([
             'status' => 200

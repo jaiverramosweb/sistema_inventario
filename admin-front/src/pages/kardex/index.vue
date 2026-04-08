@@ -114,7 +114,7 @@ watch(search, query => {
 
   warning_warehouse.value = null
 
-  if (query.length > 3) {
+  if ((query?.length || 0) > 3) {
     querySelections(query)
   } else {
     items.value = []
@@ -145,7 +145,10 @@ const info = async () => {
       },
     })
 
-    kardex.value = resp.data
+    kardex.value = (resp.data || []).map(item => ({
+      ...item,
+      title: item.title ?? item.titulo ?? '',
+    }))
 
   } catch (error) {
     console.log(error)
@@ -326,7 +329,7 @@ onMounted(() => {
                         <td><b>V/Total</b></td>
                       </tr>
 
-                      <tr v-for="(movimient2, index5) in movimient2s_for_unit2.movimient2s" :key="index5">
+                      <tr v-for="(movimient2, index5) in movimients_for_unit2.movimients" :key="index5">
                         <td>{{ movimient2.fecha }}</td>
                         <td>{{ movimient2.detalle }}</td>
 

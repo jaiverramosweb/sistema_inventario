@@ -71,7 +71,7 @@ watch(search, query => {
     return
   }
 
-  if(query.length > 3){
+  if((query?.length || 0) > 3){
     querySelections(query)
   }else{
     items.value = []
@@ -156,9 +156,6 @@ const addProduct = async () => {
   }
 
   
-
-  console.log(resp)
-
 }
 
 const calculatePuchaseTotal = () => {
@@ -307,10 +304,19 @@ const purchaseDetailAttention = async (item) => {
     })
 
     if(resp.status == 200){
-      const index = pushase_details.value.findIndex(detail => detail.id == resp.data.id)
+      const detailUpdated = resp.data
+      const detailId = detailUpdated?.id ?? item.id
+      const index = pushase_details.value.findIndex(detail => detail.id == detailId)
 
       if(index != -1){
-        pushase_details.value[index].state = resp.data
+        if(detailUpdated && typeof detailUpdated == 'object'){
+          pushase_details.value[index] = {
+            ...pushase_details.value[index],
+            ...detailUpdated,
+          }
+        } else {
+          pushase_details.value[index].state = detailUpdated
+        }
       }
     }
 
@@ -352,7 +358,7 @@ onMounted( () => {
                 <VTextField
                   label="Solicitante"
                   placeholder=""
-                  v-model="user.full_name"
+                  :model-value="user?.full_name || ''"
                   disabled
                 />
               </VCol>
@@ -360,7 +366,7 @@ onMounted( () => {
                 <VTextField
                   label="CES"
                   placeholder=""
-                  v-model="user.sucursale"
+                  :model-value="user?.sucursale || ''"
                   disabled
                 />
               </VCol>

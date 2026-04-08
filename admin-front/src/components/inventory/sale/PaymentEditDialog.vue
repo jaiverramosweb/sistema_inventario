@@ -1,4 +1,4 @@
-editPayment<script setup>
+<script setup>
 const props = defineProps({
   isDialogVisible: {
     type: Boolean,

@@ -172,7 +172,7 @@ watch(currentPage, (page) => {
 
       <VPagination
         v-model="currentPage"
-        :length="totalPage"
+        :length="totalPages"
       />
     </VCard>
 
