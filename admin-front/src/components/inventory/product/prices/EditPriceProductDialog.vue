@@ -61,7 +61,7 @@ const update = async () => {
   }
 
   if (price.value < 0) {
-    warning.value = 'El stock no puede ser menor a 0'
+    warning.value = 'El precio no puede ser menor a 0'
 
     return
   }
@@ -169,7 +169,7 @@ const dialogVisibleUpdate = val => {
                 label="Tipo de cliente"
                 item-title="name"
                 item-value="id"
-                v-model="type_client_price"
+                v-model="type_client"
               />
             </VCol>
 

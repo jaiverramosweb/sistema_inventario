@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Product;
 use App\Models\ProductItems;
 use App\Models\RefurbishHistory;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class RefurbishService {
@@ -17,13 +18,15 @@ class RefurbishService {
             $equipment = Product::findOrFail($equipmentId);
             $component = Product::findOrFail($componentId);
 
+            $this->ensureEditableEquipment($equipment);
+
             // 1. Crear el vínculo en product_items
             ProductItems::create([
                 'parent_product_id' => $equipment->id,
                 'child_product_id' => $component->id,
                 'cost_at_installation' => $customCost,
                 'affects_final_price' => $applyCost,
-                'user_id' => auth()->id()
+                'user_id' => Auth::id()
             ]);
 
             // 2. Si el usuario decidió sumar al valor del equipo
@@ -47,11 +50,13 @@ class RefurbishService {
     /**
      * OPERACIÓN: QUITAR COMPONENTE
      */
-    public function removeComponent($productItemId, $newStatusForComponent, $reduceValue) {
-        return DB::transaction(function () use ($productItemId, $newStatusForComponent, $reduceValue) {
+    public function removeComponent($productItemId, $newStatusForComponent, $reduceValue, $comments = null) {
+        return DB::transaction(function () use ($productItemId, $newStatusForComponent, $reduceValue, $comments) {
             $item = ProductItems::with('childProduct', 'parentProduct')->findOrFail($productItemId);
             $equipment = $item->parentProduct;
             $component = $item->childProduct;
+
+            $this->ensureEditableEquipment($equipment);
 
             $costToRemove = $item->cost_at_installation;
 
@@ -71,7 +76,12 @@ class RefurbishService {
             $item->delete();
 
             // 4. Historial
-            $this->logHistory($equipment, 'QUITAR', $component, -$costToRemove, "Pieza retirada. Nueva condición: $newStatusForComponent");
+            $historyComment = "Pieza retirada. Nueva condición: $newStatusForComponent";
+            if (!empty($comments)) {
+                $historyComment .= ". $comments";
+            }
+
+            $this->logHistory($equipment, 'QUITAR', $component, -$costToRemove, $historyComment);
 
             return $equipment;
         });
@@ -84,10 +94,12 @@ class RefurbishService {
         return DB::transaction(function () use ($equipmentId, $data) {
             $equipment = Product::findOrFail($equipmentId);
 
+            $this->ensureEditableEquipment($equipment);
+
             // Registro de historia sin componente de inventario vinculado
             RefurbishHistory::create([
                 'product_id' => $equipment->id,
-                'user_id' => auth()->id(),
+                'user_id' => Auth::id(),
                 'sucursal_id' => $data['sucursal_id'] ?? 1,
                 'action' => 'QUITAR',
                 'component_id' => null,
@@ -109,7 +121,7 @@ class RefurbishService {
 
         RefurbishHistory::create([
             'product_id' => $equipment->id,
-            'user_id' => auth()->id(),
+            'user_id' => Auth::id(),
             'sucursal_id' => $equipment->sucursal_id ?? 1, // Fallback a sucursal 1 si no está definida
             'action' => $action,
             'component_id' => $component ? $component->id : null,
@@ -119,5 +131,18 @@ class RefurbishService {
             'component_serial' => $component ? $component->serial : null,
             'comments' => $comments
         ]);
+    }
+
+    private function ensureEditableEquipment(Product $equipment): void
+    {
+        if ($equipment->refurbish_state === 'Finalizado') {
+            throw new \Exception('El equipo ya está finalizado y no admite más cambios de reacondicionamiento.');
+        }
+
+        if (empty($equipment->refurbish_state)) {
+            $equipment->update([
+                'refurbish_state' => 'Pendiente Diagnostico',
+            ]);
+        }
     }
 }

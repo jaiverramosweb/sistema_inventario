@@ -9,6 +9,9 @@
     "preview": "vite preview --port 5050",
     "lint": "eslint . -c .eslintrc.cjs --fix --ext .ts,.js,.cjs,.vue,.tsx,.jsx",
     "qa:lint": "eslint . -c .eslintrc.cjs --fix --ext .ts,.js,.cjs,.vue,.tsx,.jsx",
+    "e2e:smoke": "playwright test tests/e2e/smoke.spec.ts --project=chromium",
+    "e2e:smoke:headed": "playwright test tests/e2e/smoke.spec.ts --project=chromium --headed",
+    "e2e:install": "playwright install chromium",
     "build:icons": "tsx src/plugins/iconify/build-icons.js",
     "msw:init": "msw init public/ --save",
     "postinstall": "npm run build:icons && npm run msw:init"
@@ -70,6 +73,7 @@
     "@iconify/utils": "2.1.23",
     "@iconify/vue": "4.1.1",
     "@intlify/unplugin-vue-i18n": "1.6.0",
+    "@playwright/test": "^1.59.1",
     "@stylistic/stylelint-config": "1.0.1",
     "@stylistic/stylelint-plugin": "2.1.1",
     "@tiptap/extension-character-count": "2.3.0",

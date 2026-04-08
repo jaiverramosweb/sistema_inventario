@@ -41,6 +41,12 @@ const store = async () => {
   error_exists.value = null
   success.value = null
 
+  if (!unit_to_id.value) {
+    warning.value = 'Seleccione una unidad para convertir'
+
+    return
+  }
+
 
   let data = {
     unit_id: props.unitSelected.id,
@@ -64,6 +70,7 @@ const store = async () => {
       success.value = 'Se a añadido con exito'
 
       listUnitConversion.value.unshift(resp.unit_conversion)
+      unit_to_id.value = null
   
       setTimeout(() => {
         success.value = null

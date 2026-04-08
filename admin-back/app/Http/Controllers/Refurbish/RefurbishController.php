@@ -153,6 +153,18 @@ class RefurbishController extends Controller
     public function finish(Request $request, $id)
     {
         $equipment = Product::findOrFail($id);
+
+        if (empty($equipment->refurbish_state)) {
+            return response()->json([
+                'message' => 'No se puede finalizar un equipo que no inició reacondicionamiento.'
+            ], 422);
+        }
+
+        if ($equipment->refurbish_state === 'Finalizado') {
+            return response()->json([
+                'message' => 'El equipo ya está finalizado.'
+            ]);
+        }
         
         $equipment->update([
             'refurbish_state' => 'Finalizado',

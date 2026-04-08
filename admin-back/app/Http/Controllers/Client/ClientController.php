@@ -101,6 +101,8 @@ class ClientController extends Controller
     {
         Gate::authorize('update', Client::class);
 
+        $user = auth('api')->user();
+
         $exists = Client::where('n_document', $request->n_document)->where('id', '<>', $id)->first();
         if ($exists) {
             return response()->json([
@@ -117,9 +119,28 @@ class ClientController extends Controller
             ]);
         }
 
-        $client = Client::findOrFail($id);
+        $client = Client::where('id', $id)
+            ->where(function ($query) use ($user) {
+                if ($user->role_id != 1) {
+                    if ($user->role_id == 2) {
+                        $query->where('sucursal_id', $user->sucuarsal_id);
+                    } else {
+                        $query->where('user_id', $user->id);
+                    }
+                }
+            })
+            ->first();
 
-        $client->update($request->all());
+        if (!$client) {
+            return response()->json([
+                'status' => 403,
+                'message' => 'No tienes permisos para editar este cliente',
+            ]);
+        }
+
+        $payload = $request->except(['user_id', 'sucursal_id']);
+
+        $client->update($payload);
 
         return response()->json([
             'status' => 200,
@@ -135,12 +156,24 @@ class ClientController extends Controller
     {
         Gate::authorize('delete', Client::class);
 
-        $client = Client::findOrFail($id);
+        $user = auth('api')->user();
+
+        $client = Client::where('id', $id)
+            ->where(function ($query) use ($user) {
+                if ($user->role_id != 1) {
+                    if ($user->role_id == 2) {
+                        $query->where('sucursal_id', $user->sucuarsal_id);
+                    } else {
+                        $query->where('user_id', $user->id);
+                    }
+                }
+            })
+            ->first();
 
         if (!$client) {
             return response()->json([
-                'status' => 404,
-                'message' => 'Cliente no encontrado',
+                'status' => 403,
+                'message' => 'No tienes permisos para eliminar este cliente',
             ]);
         }
 

@@ -1,4 +1,6 @@
 <script setup>
+import { downloadAuthenticatedFile } from '@/utils/authDownload'
+
 onMounted(() => {
   list()
   config()
@@ -126,32 +128,25 @@ const avatarText = value => {
   return nameArray.map(word => word.charAt(0).toUpperCase()).join('')
 }
 
-const downloadExcel = () => {
-  let QUERY_PARAMS = ""
-
-  if(search.value){
-    QUERY_PARAMS += "&search=" + search.value
+const downloadExcel = async () => {
+  try {
+    await downloadAuthenticatedFile('products-excel', {
+      query: {
+        z: 1,
+        search: search.value,
+        category_id: category_id.value,
+        warehouse_id: warehouse_id.value,
+        unit_id: unit_id.value,
+        sucursale_id: sucursale_id.value,
+        available: available.value,
+        is_gift: is_gift.value,
+      },
+      filename: 'productos.xlsx',
+      errorMessage: 'No se pudo exportar el listado de productos.',
+    })
+  } catch (error) {
+    console.log(error)
   }
-  if(category_id.value){
-    QUERY_PARAMS += "&category_id=" + category_id.value
-  }
-  if(warehouse_id.value){
-    QUERY_PARAMS += "&warehouse_id=" + warehouse_id.value
-  }
-  if(unit_id.value){
-    QUERY_PARAMS += "&unit_id=" + unit_id.value
-  }
-  if(sucursale_id.value){
-    QUERY_PARAMS += "&sucursale_id=" + sucursale_id.value
-  }
-  if(available.value){
-    QUERY_PARAMS += "&available=" + available.value
-  }
-  if(is_gift.value){
-    QUERY_PARAMS += "&is_gift=" + is_gift.value
-  }
-
-  window.open(import.meta.env.VITE_API_BASE_URL + 'products-excel?z=1' + QUERY_PARAMS, '_blank')
 }
 
 const ImmportProducts = () => {

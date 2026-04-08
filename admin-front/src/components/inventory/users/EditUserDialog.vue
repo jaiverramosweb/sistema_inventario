@@ -24,7 +24,7 @@ onMounted(() => {
   name.value = props.userSelected.name
   email.value = props.userSelected.email
   role_id.value = props.userSelected.role_id
-  sucuarsal_id.value = props.userSelected.sucuarsal_id
+  sucuarsal_id.value = props.userSelected.sucuarsal_id ?? props.userSelected.sucursal_id
   phone.value = props.userSelected.phone
   type_document.value = props.userSelected.type_document
   document.value = props.userSelected.document
@@ -118,7 +118,7 @@ const update = async () => {
       method: 'POST',
       body: formData,
       onResponseError({ response }) {
-        error_exists.value = response._data.error
+        error_exists.value = response?._data?.message || response?._data?.error || 'No se pudo actualizar el usuario.'
       },
     })
 
@@ -126,7 +126,7 @@ const update = async () => {
       error_exists.value = 'Usuario ya existe'
     }
 
-    if (resp.status == 201) {
+    if (resp.status == 200 || resp.status == 201) {
       success.value = 'Editado con exito'
 
       emit('editUser', resp.data)

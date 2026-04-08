@@ -123,7 +123,7 @@ const dialogVisibleUpdate = val => {
             </VCol>
 
             <VCol cols="12">
-              <VSelect :items="props.sucursales" item-title="name" item-value="id" v-model="sucuarsal_id"
+              <VSelect :items="props.sucursales" item-title="name" item-value="id" v-model="sucursal_id"
                 label="Sucursal" placeholder="Select Item" eager />
             </VCol>
 

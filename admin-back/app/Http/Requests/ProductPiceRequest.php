@@ -22,11 +22,11 @@ class ProductPiceRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'product_id'    => 'required',
-            'type_client'   => 'required',
-            'unit_id'       => 'required',
-            'sucursal_id'   => 'nullable',
-            'price'         => 'nullable',
+            'product_id'    => 'required|integer|exists:products,id',
+            'type_client'   => 'required|integer|in:1,2',
+            'unit_id'       => 'required|integer|exists:units,id',
+            'sucursal_id'   => 'nullable|integer|exists:sucursales,id',
+            'price'         => 'required|numeric|min:0',
         ];
     }
 }

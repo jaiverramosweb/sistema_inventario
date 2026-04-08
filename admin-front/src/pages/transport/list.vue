@@ -1,4 +1,6 @@
 <script setup>
+import { downloadAuthenticatedFile } from '@/utils/authDownload'
+
 onMounted(() => {
   list()
   config()
@@ -105,8 +107,15 @@ const deleteNew = (item) => {
   }
 }
 
-const downloadPdf = (item) => {
-  window.open(import.meta.env.VITE_API_BASE_URL + 'transport-pdf/' + item.id, '_blank')
+const downloadPdf = async (item) => {
+  try {
+    await downloadAuthenticatedFile(`transport-pdf/${item.id}`, {
+      filename: `traslado-${item.id}.pdf`,
+      errorMessage: 'No se pudo descargar el PDF del traslado.',
+    })
+  } catch (error) {
+    console.log(error)
+  }
 }
 
 watch(currentPage, (page) => {

@@ -1,4 +1,6 @@
 <script setup>
+import { downloadAuthenticatedFile } from '@/utils/authDownload'
+
 onMounted(() => {
   list()
   config()
@@ -108,8 +110,15 @@ const deleteNew = (item) => {
   }
 }
 
-const downloadPdf = (item) => {
-  window.open(import.meta.env.VITE_API_BASE_URL + 'pushases-pdf/' + item.id, '_blank')
+const downloadPdf = async (item) => {
+  try {
+    await downloadAuthenticatedFile(`pushases-pdf/${item.id}`, {
+      filename: `compra-${item.id}.pdf`,
+      errorMessage: 'No se pudo descargar el PDF de la compra.',
+    })
+  } catch (error) {
+    console.log(error)
+  }
 }
 
 watch(currentPage, (page) => {

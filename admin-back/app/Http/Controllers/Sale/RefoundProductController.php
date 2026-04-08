@@ -67,14 +67,39 @@ class RefoundProductController extends Controller
      */
     public function store(RefoundProductRequest $request)
     {
+        $user = auth('api')->user();
+
         $sale_id = $request->sale_id;
         $sale_detail_id = $request->sale_detail_id;
-        $type = $request->type;
+        $type = (int) $request->type;
         $quantity = $request->quantity;
         $description = $request->description;
 
-        $sale = Sale::find($sale_id);
-        $sale_detail = SaleDetail::find($sale_detail_id);
+        if (!in_array($type, [1, 2, 3], true)) {
+            return response()->json([
+                'status' => 422,
+                'message' => 'El tipo de devolución es inválido.'
+            ]);
+        }
+
+        $sale = $this->scopedSaleQuery($user)->where('id', $sale_id)->first();
+        if (!$sale) {
+            return response()->json([
+                'status' => 403,
+                'message' => 'No se encontró la venta o no tienes permisos para usarla.'
+            ]);
+        }
+
+        $sale_detail = SaleDetail::where('id', $sale_detail_id)
+            ->where('sale_id', $sale->id)
+            ->first();
+
+        if (!$sale_detail) {
+            return response()->json([
+                'status' => 422,
+                'message' => 'El detalle de venta no pertenece a la venta seleccionada.'
+            ]);
+        }
 
         if($sale_detail->quantity < $quantity){
             return response()->json([
@@ -101,6 +126,51 @@ class RefoundProductController extends Controller
             ]);
         }
 
+        $product_warehouse = null;
+        $sale_total_new = null;
+
+        if ($type == 2) {
+            $refound_v = RefoundProduct::where('sale_detail_id', $sale_detail_id)
+                ->where('type', 1)
+                ->first();
+
+            if (!$refound_v) {
+                return response()->json([
+                    'status' => 403,
+                    'message' => 'Es necesario primero pasar por el proceso de reparación y validación técnica.'
+                ]);
+            }
+
+            $product_warehouse = ProductWarehouse::where('product_id', $sale_detail->product_id)
+                ->where('warehouse_id', $sale_detail->warehouse_id)
+                ->where('unit_id', $sale_detail->unit_id)
+                ->first();
+
+            if (!$product_warehouse || $product_warehouse->stock < $quantity) {
+                return response()->json([
+                    'status' => 403,
+                    'message' => 'El producto no cuenta con stock suficiente para realizar el reemplazo.'
+                ]);
+            }
+        }
+
+        if ($type == 3) {
+            $product_warehouse = ProductWarehouse::where('product_id', $sale_detail->product_id)
+                ->where('warehouse_id', $sale_detail->warehouse_id)
+                ->where('unit_id', $sale_detail->unit_id)
+                ->first();
+
+            $sale_details_total = $sale_detail->subtotal * ($sale_detail->quantity - $quantity);
+            $sale_total_new = ($sale->total - $sale_detail->total) + $sale_details_total;
+
+            if ($sale->paid_out > $sale_total_new) {
+                return response()->json([
+                    'status' => 403,
+                    'message' => 'No puedes registrar esta devolución por que el valor cancelado de la venta es mayor, intente editar los pagos de la venta.'
+                ]);
+            }
+        }
+
         try {
             DB::beginTransaction();
             // SI ES REPARACION
@@ -121,29 +191,6 @@ class RefoundProductController extends Controller
     
             // SI ES REEMPLAZO
             if($type == 2){
-                $refound_v = RefoundProduct::where('sale_detail_id', $sale_detail_id)
-                    ->where('type', 1)
-                    ->first();
-    
-                if(!$refound_v){
-                    return response()->json([
-                        'status' => 403,
-                        'message' => 'Es necesario primero pasar por el procesa de reparación y validación tecnica.'
-                    ]);
-                }
-    
-                $product_warehouse = ProductWarehouse::where('product_id', $sale_detail->product_id)
-                    ->where('warehouse_id', $sale_detail->warehouse_id)
-                    ->where('unit_id', $sale_detail->unit_id)
-                    ->first();
-    
-                if($product_warehouse->stock < $quantity){
-                    return response()->json([
-                        'status' => 403,
-                        'message' => 'E producto no cuenta con stock suficiente para realizar el reemplazo.'
-                    ]);
-                }
-    
                 $product_warehouse->update([
                     'stock' => $product_warehouse->stock - $quantity
                 ]);
@@ -160,30 +207,15 @@ class RefoundProductController extends Controller
                     'description' => $description
                 ]);
             }
-    
+            
             // SI ES DEVOLUCION
             if($type == 3){
-                $product_warehouse = ProductWarehouse::where('product_id', $sale_detail->product_id)
-                    ->where('warehouse_id', $sale_detail->warehouse_id)
-                    ->where('unit_id', $sale_detail->unit_id)
-                    ->first();
-    
                 if($product_warehouse){
                     $product_warehouse->update([
                         'stock' => $product_warehouse->stock + $quantity
                     ]);
                 }
-    
-                $sale_details_total = $sale_detail->subtotal * ($sale_detail->quantity - $quantity);
-                $sale_total_new = ($sale->total - $sale_detail->total) + $sale_details_total;
-    
-                if($sale->paid_out > $sale_total_new){
-                        return response()->json([
-                        'status' => 403,
-                        'message' => 'No puedes registrar esta devolución por que el valor cancelado de la venta es mayor, intente editar los pagos de la venta.'
-                    ]);
-                }
-    
+
                 $quantity_soli = $sale_detail->quantity;
                 $quantity_pending = $sale_detail->quantity_pending;
                 $quantity_attend = $quantity_soli - $quantity_pending;
@@ -262,7 +294,8 @@ class RefoundProductController extends Controller
 
         return response()->json([
             'status' => 201,
-            'data' => new RefoundProductResource($refound)
+            'data' => new RefoundProductResource($refound),
+            'message' => 'Devolución registrada con éxito.'
         ]);
     }
 
@@ -279,15 +312,64 @@ class RefoundProductController extends Controller
      */
     public function update(Request $request, string $id)
     {
+        $user = auth('api')->user();
         date_default_timezone_set('America/Bogota');
 
-        $type = $request->type;
-        $state = $request->state;
-        $quantity = $request->quantity;
-        $description = $request->description;
-        $resoslution_description = $request->resoslution_description;
+        $refound = $this->scopedRefoundQuery($user)->where('id', $id)->first();
+        if (!$refound) {
+            return response()->json([
+                'status' => 403,
+                'message' => 'No se encontró la devolución o no tienes permisos para editarla.'
+            ]);
+        }
 
-        $refound = RefoundProduct::findOrFail($id);
+        $rules = [
+            'state' => 'nullable|integer|min:1',
+            'description' => 'nullable|string',
+            'resoslution_description' => 'nullable|string',
+            'quantity' => 'nullable|integer|min:1',
+            'type' => 'nullable|integer|in:1,2,3',
+        ];
+
+        $validated = $request->validate($rules);
+
+        if (isset($validated['type']) && (int) $validated['type'] !== (int) $refound->type) {
+            return response()->json([
+                'status' => 422,
+                'message' => 'No se puede cambiar el tipo de una devolución ya registrada.'
+            ]);
+        }
+
+        $state = $validated['state'] ?? $refound->state;
+        $quantity = $validated['quantity'] ?? $refound->quantity;
+        $description = $validated['description'] ?? null;
+        $resoslution_description = $validated['resoslution_description'] ?? null;
+
+        if ((int) $refound->type === 1) {
+            $saleDetail = $refound->saleDetail;
+            if (!$saleDetail) {
+                return response()->json([
+                    'status' => 422,
+                    'message' => 'La devolución no tiene detalle de venta asociado.'
+                ]);
+            }
+
+            if ($saleDetail->quantity < $quantity) {
+                return response()->json([
+                    'status' => 403,
+                    'message' => 'La cantidad ingresada es mayor a la vendida.'
+                ]);
+            }
+
+            $quantity_attend = $saleDetail->quantity - $saleDetail->quantity_pending;
+            if ($quantity_attend < $quantity) {
+                return response()->json([
+                    'status' => 403,
+                    'message' => 'La cantidad ingresada es mucho mayor a la entregada.'
+                ]);
+            }
+        }
+
         if($refound->type == 1){
             $resoslution_date = null;
 
@@ -300,7 +382,6 @@ class RefoundProductController extends Controller
             }
 
             $refound->update([
-                'type' => $type,
                 'state' => $state,
                 'quantity' => $quantity,
                 'description' => $description,
@@ -310,7 +391,6 @@ class RefoundProductController extends Controller
         }
         if($refound->type == 2 || $refound->type == 3){
             $refound->update([
-                'type' => $type,
                 'state' => $state,
                 'description' => $description
             ]);
@@ -318,7 +398,8 @@ class RefoundProductController extends Controller
 
         return response()->json([
             'status' => 200,
-            'data' => new RefoundProductResource($refound)
+            'data' => new RefoundProductResource($refound),
+            'message' => 'Devolución actualizada con éxito.'
         ]);
 
     }
@@ -328,11 +409,67 @@ class RefoundProductController extends Controller
      */
     public function destroy(string $id)
     {
-        $refound = RefoundProduct::findOrFail($id);
+        $user = auth('api')->user();
+
+        $refound = $this->scopedRefoundQuery($user)->where('id', $id)->first();
+        if (!$refound) {
+            return response()->json([
+                'status' => 403,
+                'message' => 'No se encontró la devolución o no tienes permisos para eliminarla.'
+            ]);
+        }
+
+        if ((int) $refound->type === 2 || (int) $refound->type === 3) {
+            return response()->json([
+                'status' => 409,
+                'message' => 'No se puede eliminar esta devolución porque impacta stock o montos de la venta.'
+            ]);
+        }
+
+        $hasReplacement = RefoundProduct::where('sale_detail_id', $refound->sale_detail_id)
+            ->where('type', 2)
+            ->exists();
+
+        if ($hasReplacement) {
+            return response()->json([
+                'status' => 409,
+                'message' => 'No se puede eliminar la reparación porque ya existe un reemplazo asociado.'
+            ]);
+        }
+
         $refound->delete();
 
         return response()->json([
-            'status' => 200
+            'status' => 200,
+            'message' => 'Devolución eliminada con éxito.'
         ]);
+    }
+
+    private function scopedSaleQuery($user)
+    {
+        return Sale::where(function ($query) use ($user) {
+            if ($user->role_id != 1) {
+                if ($user->role_id == 2) {
+                    $query->where('sucursal_id', $user->sucuarsal_id);
+                } else {
+                    $query->where('user_id', $user->id);
+                }
+            }
+        });
+    }
+
+    private function scopedRefoundQuery($user)
+    {
+        return RefoundProduct::where(function ($query) use ($user) {
+            if ($user->role_id != 1) {
+                if ($user->role_id == 2) {
+                    $query->whereHas('saleDetail.sale', function ($saleQuery) use ($user) {
+                        $saleQuery->where('sucursal_id', $user->sucuarsal_id);
+                    });
+                } else {
+                    $query->where('user_id', $user->id);
+                }
+            }
+        });
     }
 }

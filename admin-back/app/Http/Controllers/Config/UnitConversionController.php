@@ -31,6 +31,11 @@ class UnitConversionController extends Controller
      */
     public function store(Request $request)
     {
+        $validated = $request->validate([
+            'unit_id' => ['required', 'integer', 'exists:units,id'],
+            'unit_to_id' => ['required', 'integer', 'exists:units,id', 'different:unit_id'],
+        ]);
+
         $exists = UnitConversion::where('unit_id', $request->unit_id)
             ->where('unit_to_id', $request->unit_to_id)
             ->first();
@@ -39,15 +44,15 @@ class UnitConversionController extends Controller
             return response()->json([
                 'status' => 403,
                 'message' => 'Unit conversion already exists',
-            ]);
+            ], 403);
         }
 
-        $unit_conversion = UnitConversion::create($request->all());
+        $unit_conversion = UnitConversion::create($validated);
         $unit_conversion_resource = new UnitConversionResource($unit_conversion);
         return response()->json([
             'status' => 201,
             'unit_conversion' => $unit_conversion_resource
-        ]);
+        ], 201);
     }
 
     /**

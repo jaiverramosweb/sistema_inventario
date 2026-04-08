@@ -16,7 +16,34 @@ const lead = ref(JSON.parse(JSON.stringify(props.leadSelected)))
 const sucursales = ref([])
 const warning = ref(null)
 const error_exists = ref(null)
-// const success = ref(null)
+const success = ref(null)
+
+const LEAD_STATUS_OPTIONS = [
+  { title: 'Nuevo', value: 'NEW' },
+  { title: 'Contactado', value: 'CONTACTED' },
+  { title: 'Calificado', value: 'QUALIFIED' },
+  { title: 'Perdido', value: 'LOST' },
+  { title: 'Convertido', value: 'CONVERTED' },
+]
+
+const LEGACY_STATUS_MAP = {
+  NUEVO: 'NEW',
+  CONTACTADO: 'CONTACTED',
+  CALIFICADO: 'QUALIFIED',
+  'NO CERRADO': 'LOST',
+  CLIENTE: 'CONVERTED',
+}
+
+const normalizeLeadStatus = status => LEGACY_STATUS_MAP[status] || status
+
+watch(
+  () => props.leadSelected,
+  (newLead) => {
+    lead.value = JSON.parse(JSON.stringify(newLead))
+    lead.value.status = normalizeLeadStatus(lead.value.status || 'NEW')
+  },
+  { immediate: true },
+)
 
 const getSucursales = async () => {
   try {
@@ -40,6 +67,8 @@ const update = async () => {
     warning.value = 'Se debe de agregar un nombre'
     return
   }
+
+  lead.value.status = normalizeLeadStatus(lead.value.status || 'NEW')
 
   try {
     const resp = await $api(`crm/leads/${lead.value.id}`, {
@@ -118,8 +147,13 @@ const dialogVisibleUpdate = val => {
             </VCol> -->
 
             <VCol cols="6">
-              <VSelect :items="['NUEVO', 'CONTACTADO', 'CALIFICADO', 'NO CERRADO', 'CLIENTE']" label="Estado"
-                v-model="lead.status" />
+              <VSelect
+                :items="LEAD_STATUS_OPTIONS"
+                item-title="title"
+                item-value="value"
+                label="Estado"
+                v-model="lead.status"
+              />
             </VCol>
 
             <VAlert border="start" border-color="warning" v-if="warning" class="mt-4">

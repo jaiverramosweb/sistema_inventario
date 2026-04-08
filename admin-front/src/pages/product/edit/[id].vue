@@ -250,7 +250,7 @@ const addPrice = async () => {
     return
   }
 
-  let IS_DUPLICATE = product_price.value.find(price => price.unit_price_id == unit_price_id.value && price.type_client_price == type_client_price.value)
+  let IS_DUPLICATE = product_price.value.find(item => item.unit_id == unit_price_id.value && item.type_client == type_client_price.value && item.sucursal_id == sucursale_price_id.value)
   if (IS_DUPLICATE) {
     warning_price.value = 'Ya existe este precio'
 
@@ -308,7 +308,7 @@ const deleteItemPrice = (itemDelete) => {
 }
 
 const walletDelete = (item) => {
-  let INDEX = product_price.value.findIndex(item => item.id == item.id)
+  let INDEX = product_price.value.findIndex(wallet => wallet.id == item.id)
   if (INDEX != -1) {
     product_price.value.splice(INDEX, 1)
   }

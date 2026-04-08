@@ -23,11 +23,12 @@ class UserController extends Controller
     public function index(Request $request)
     {
         Gate::authorize('viewAny', User::class);
-        
+
         $search = $request->get('search');
 
         $users = User::where(DB::raw("users.name || ' ' || users.email || ' ' || COALESCE(users.phone,'')"), 'ilike', '%' . $search . '%')
             ->where('email', '<>', self::PROTECTED_SEEDER_USER_EMAIL)
+            ->with(['role', 'sucursale'])
             ->orderBy('id', 'desc')
             ->get();
 
@@ -116,6 +117,7 @@ class UserController extends Controller
         }
 
         $user = User::findOrFail($id);
+        $previousRoleId = (int) $user->role_id;
 
         if ($request->hasFile('image')) {
             if ($user->avatar) {
@@ -130,15 +132,17 @@ class UserController extends Controller
         }
 
         $user->update($request->all());
-        if ($request->role_id != $user->role_id) {
+        if ($request->filled('role_id') && (int) $request->role_id !== $previousRoleId) {
+            $role_old = Role::find($previousRoleId);
+            if ($role_old) {
+                $user->removeRole($role_old);
+            }
 
-            $role_old =  Role::FindOrFail($user->role_id);
-            $user->removeRole($role_old);
-
-            $role_new = Role::FindOrFail($request->role_id);
+            $role_new = Role::findOrFail($request->role_id);
             $user->assignRole($role_new);
         }
 
+        $user->load(['role', 'sucursale']);
 
         $user_json = new UserResource($user);
 

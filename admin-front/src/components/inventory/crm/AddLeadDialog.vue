@@ -17,13 +17,23 @@ const surname = ref(null)
 const email = ref(null)
 const phone = ref(null)
 const source = ref(null)
-const status = ref('NUEVO')
+const status = ref('NEW')
 // const sucursal_id = ref(null)
 
 const sucursales = ref([])
 const warning = ref(null)
 const error_exists = ref(null)
 const success = ref(null)
+
+const LEGACY_STATUS_MAP = {
+  NUEVO: 'NEW',
+  CONTACTADO: 'CONTACTED',
+  CALIFICADO: 'QUALIFIED',
+  'NO CERRADO': 'LOST',
+  CLIENTE: 'CONVERTED',
+}
+
+const normalizeLeadStatus = value => LEGACY_STATUS_MAP[value] || value
 
 const getSucursales = async () => {
   try {
@@ -59,6 +69,8 @@ const store = async () => {
   }
 
   try {
+    data.status = normalizeLeadStatus(data.status || 'NEW')
+
     const resp = await $api("crm/leads", {
       method: 'POST',
       body: data,

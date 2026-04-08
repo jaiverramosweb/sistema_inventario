@@ -1,4 +1,6 @@
 <script setup>
+import { downloadAuthenticatedFile } from '@/utils/authDownload'
+
 definePage({ meta: { permission: 'view_audit_logs' } })
 
 const loading = ref(false)
@@ -125,14 +127,20 @@ const toggleSortDate = () => {
 const exportLogs = async format => {
   exporting.value = true
   try {
-    const query = new URLSearchParams({
+    const query = {
       ...Object.fromEntries(Object.entries(filters).filter(([, value]) => value !== null && value !== '')),
       format,
       sort: sort.value,
       dir: dir.value,
-    }).toString()
+    }
 
-    window.open(`${import.meta.env.VITE_API_BASE_URL}audit/logs/export?${query}`, '_blank')
+    await downloadAuthenticatedFile('audit/logs/export', {
+      query,
+      filename: `audit_logs.${format}`,
+      errorMessage: 'No se pudo exportar el reporte de auditoria.',
+    })
+  } catch (error) {
+    console.error(error)
   } finally {
     exporting.value = false
   }

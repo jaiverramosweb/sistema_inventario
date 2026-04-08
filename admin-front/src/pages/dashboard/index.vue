@@ -7,6 +7,53 @@
     const loadingAsesor = ref(true)
 
 
+    const toNumeric = value => {
+      const parsed = Number(value)
+
+      return Number.isFinite(parsed) ? parsed : 0
+    }
+
+    const formatAmount = value => `$${toNumeric(value).toFixed(2)}`
+
+    const normalizeVariation = value => Number(toNumeric(value).toFixed(2))
+
+    const buildInformationCards = resp => [
+      {
+        title: 'Total Ventas',
+        subtitle: '',
+        color: 'primary',
+        icon: 'ri-shopping-cart-line',
+        stats: formatAmount(resp?.total_sale_month_current),
+        change: normalizeVariation(resp?.variation_porcentage_total_sale),
+      },
+      {
+        title: resp?.sucursales_most_sales_month_current?.name_sucursale || 'No hay sucursal registrada',
+        subtitle: '',
+        color: 'success',
+        icon: 'ri-handbag-line',
+        stats: formatAmount(resp?.sucursales_most_sales_month_current?.total_sales),
+        change: normalizeVariation(resp?.variation_porcentage_sucursale_most_sale),
+      },
+      {
+        title: 'Total Compras',
+        subtitle: '',
+        color: 'secondary',
+        icon: 'ri-truck-line',
+        stats: formatAmount(resp?.total_purchase_month_current),
+        change: normalizeVariation(resp?.variation_porcentage_purchase),
+      },
+    ]
+
+    const buildAsesorCard = resp => [{
+      title: 'Asesor con mas ventas',
+      subtitle: resp?.asesores_most_sales_month_current?.name_asesor || 'No hay asesor registrado',
+      stats: formatAmount(resp?.asesores_most_sales_month_current?.total_sales),
+      change: normalizeVariation(resp?.variation_porcentage),
+      image: '',
+      imgWidth: 99,
+      color: 'primary',
+    }]
+
     const information = async () => {
       loadingInformation.value = true
        try {
@@ -18,36 +65,10 @@
           },
         })
 
-        statisticsVertical.value = [
-          {
-            title: 'Total Ventas',
-            subtitle: '',
-            color: 'primary',
-            icon: 'ri-shopping-cart-line',
-            stats: '$' + resp.total_sale_month_current,
-            change: resp.variation_porcentage_total_sale,
-          },
-          {
-            title: resp.sucursales_most_sales_month_current ? resp.sucursales_most_sales_month_current.name_sucursale : 'No hay CES registrado',
-            subtitle: '',
-            color: 'success',
-            icon: 'ri-handbag-line',
-            stats: resp.sucursales_most_sales_month_current ? '$' + resp.sucursales_most_sales_month_current.total_sales : '$0',
-            change: resp.variation_porcentage_sucursale_most_sale,
-          },
-          {
-            title: 'Total Compras',
-            subtitle: '',
-            color: 'secondary',
-            icon: 'ri-truck-line',
-            stats: '$' + resp.total_purchase_month_current,
-            change: resp.variation_porcentage_purchase,
-          },
-        ]
-
-
+        statisticsVertical.value = buildInformationCards(resp)
       } catch (error) {
         console.log(error)
+        statisticsVertical.value = buildInformationCards()
       } finally {
         loadingInformation.value = false
       }
@@ -64,21 +85,10 @@
           },
         })
 
-        statisticsWithImages.value = [
-            {
-                title: 'Asesor con más ventas',
-                subtitle: resp.asesores_most_sales_month_current ? resp.asesores_most_sales_month_current.name_asesor : 'No hay Asesor registrado',
-                stats: resp.asesores_most_sales_month_current ? '$' + resp.asesores_most_sales_month_current.total_sales : '$0',
-                change: resp.variation_porcentage,
-                image: '',
-                imgWidth: 99,
-                color: 'primary',
-            },
-        ]
-
-
+        statisticsWithImages.value = buildAsesorCard(resp)
       } catch (error) {
         console.log(error)
+        statisticsWithImages.value = buildAsesorCard()
       } finally {
         loadingAsesor.value = false
       }

@@ -1,4 +1,6 @@
 <script setup>
+import { downloadAuthenticatedFile } from '@/utils/authDownload'
+
 onMounted(() => {
   list()
 })
@@ -102,47 +104,38 @@ const showItem = (item) => {
 }
 
 
-const downloadExcel = () => {
-  let QUERY_PARAMS = ""
-
-  if(search.value){
-    QUERY_PARAMS += "&search=" + search.value
+const downloadExcel = async () => {
+  try {
+    await downloadAuthenticatedFile('sales-excel', {
+      query: {
+        z: 1,
+        search: search.value,
+        type_client: type_client.value,
+        search_client: search_client.value,
+        start_date: range_date.value ? range_date.value.split('to')[0] : '',
+        end_date: range_date.value ? range_date.value.split('to')[1] : '',
+        type: type.value,
+        state_delivery: state_delivery.value,
+        state_payment: state_payment.value,
+        search_product: search_product.value,
+      },
+      filename: 'ventas.xlsx',
+      errorMessage: 'No se pudo exportar las ventas.',
+    })
+  } catch (error) {
+    console.log(error)
   }
-
-  if(type_client.value){
-    QUERY_PARAMS += "&type_client=" + type_client.value
-  }
-
-  if(search_client.value){
-    QUERY_PARAMS += "&search_client=" + search_client.value
-  }
-
-  if(range_date.value){
-    QUERY_PARAMS += "&start_date=" + range_date.value.split("to")[0]
-    QUERY_PARAMS += "&end_date=" + range_date.value.split("to")[1]
-  }
-
-  if(type.value){
-    QUERY_PARAMS += "&type=" + type.value
-  }
-
-  if(state_delivery.value){
-    QUERY_PARAMS += "&state_delivery=" + state_delivery.value
-  }
-
-  if(state_payment.value){
-    QUERY_PARAMS += "&state_payment=" + state_payment.value
-  }
-
-  if(search_product.value){
-    QUERY_PARAMS += "&search_product=" + search_product.value
-  }
-
-  window.open(import.meta.env.VITE_API_BASE_URL + 'sales-excel?z=1' + QUERY_PARAMS, '_blank')
 }
 
-const downloadPdf = (item) => {
-  window.open(import.meta.env.VITE_API_BASE_URL + 'sales-pdf/' + item.id, '_blank')
+const downloadPdf = async (item) => {
+  try {
+    await downloadAuthenticatedFile(`sales-pdf/${item.id}`, {
+      filename: `venta-${item.id}.pdf`,
+      errorMessage: 'No se pudo descargar el PDF de la venta.',
+    })
+  } catch (error) {
+    console.log(error)
+  }
 }
 
 watch(currentPage, (page) => {

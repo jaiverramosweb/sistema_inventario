@@ -23,6 +23,20 @@ Variables de entorno esperadas en `.env`:
 - `pnpm run qa:lint`: valida estilo y errores obvios de frontend antes de una ronda QA.
 - `pnpm run dev`: levanta el front para smoke manual.
 
+## E2E Smoke con Playwright
+
+Variables recomendadas para autenticar en local:
+
+- `PW_E2E_EMAIL` (default: `superadmin@sitecsas.com`)
+- `PW_E2E_PASSWORD` (requerida)
+- `PLAYWRIGHT_BASE_URL` (default: `http://localhost:5173`)
+
+Comandos:
+
+- `pnpm run e2e:install`: instala navegador Chromium de Playwright.
+- `pnpm run e2e:smoke`: ejecuta suite smoke headless.
+- `pnpm run e2e:smoke:headed`: ejecuta suite smoke con navegador visible.
+
 ## Smoke QA minimo (Sprint 3)
 
 1. Login valido y navegacion base del menu.

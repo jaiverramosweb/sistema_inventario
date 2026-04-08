@@ -13,6 +13,52 @@ definePage({ meta: { permission: 'list_lead' } })
 const search = ref('')
 const statusFilter = ref(null)
 
+const LEAD_STATUS_OPTIONS = [
+  { title: 'Nuevo', value: 'NEW' },
+  { title: 'Contactado', value: 'CONTACTED' },
+  { title: 'Calificado', value: 'QUALIFIED' },
+  { title: 'Perdido', value: 'LOST' },
+  { title: 'Convertido', value: 'CONVERTED' },
+]
+
+const LEGACY_STATUS_MAP = {
+  NUEVO: 'NEW',
+  CONTACTADO: 'CONTACTED',
+  CALIFICADO: 'QUALIFIED',
+  'NO CERRADO': 'LOST',
+  CLIENTE: 'CONVERTED',
+}
+
+const STATUS_LABELS = {
+  NEW: 'Nuevo',
+  CONTACTED: 'Contactado',
+  QUALIFIED: 'Calificado',
+  LOST: 'Perdido',
+  CONVERTED: 'Convertido',
+}
+
+const normalizeLeadStatus = status => LEGACY_STATUS_MAP[status] || status
+const leadStatusLabel = status => STATUS_LABELS[normalizeLeadStatus(status)] || (status || '-')
+const leadStatusColor = status => {
+  const normalizedStatus = normalizeLeadStatus(status)
+
+  if (normalizedStatus === 'CONVERTED') {
+    return 'success'
+  }
+
+  if (normalizedStatus === 'LOST') {
+    return 'error'
+  }
+
+  if (normalizedStatus === 'CONTACTED' || normalizedStatus === 'QUALIFIED') {
+    return 'info'
+  }
+
+  return 'primary'
+}
+
+const canMutateLead = status => normalizeLeadStatus(status) !== 'CONVERTED'
+
 const isShowDialog = ref(false)
 const isShowDialogEdit = ref(false)
 const isShowDialogDelete = ref(false)
@@ -41,7 +87,8 @@ const headers = [
 
 const list = async () => {
   try {
-    const resp = await $api(`crm/leads?page=${currentPage.value}&search=${search.value}&status=${statusFilter.value || ''}`, {
+    const normalizedStatusFilter = normalizeLeadStatus(statusFilter.value)
+    const resp = await $api(`crm/leads?page=${currentPage.value}&search=${search.value}&status=${normalizedStatusFilter || ''}`, {
       method: 'GET',
     })
 
@@ -114,8 +161,15 @@ watch([currentPage, statusFilter], () => {
           </VCol>
 
           <VCol cols="12" sm="3">
-            <VSelect :items="['NEW', 'CONTACTED', 'QUALIFIED', 'LOST', 'CONVERTED']" v-model="statusFilter"
-              label="Filtrar por estado" density="compact" clearable />
+            <VSelect
+              :items="LEAD_STATUS_OPTIONS"
+              item-title="title"
+              item-value="value"
+              v-model="statusFilter"
+              label="Filtrar por estado"
+              density="compact"
+              clearable
+            />
           </VCol>
 
           <VCol cols="12" sm="3" class="text-end">
@@ -147,21 +201,20 @@ watch([currentPage, statusFilter], () => {
             <td>{{ item.phone || '-' }}</td>
             <td>{{ item.source || '-' }}</td>
             <td>
-              <VChip size="small"
-                :color="item.status === 'NUEVO' ? 'primary' : (item.status === 'CONTACTADO' ? 'success' : 'warning')">
-                {{ item.status }}
+              <VChip size="small" :color="leadStatusColor(item.status)">
+                {{ leadStatusLabel(item.status) }}
               </VChip>
             </td>
             <td>{{ item.sucursale ? item.sucursale.name : '-' }}</td>
             <td>{{ new Date(item.created_at).toLocaleDateString() }}</td>
             <td>
               <div class="d-flex gap-1">
-                <IconBtn size="small" color="primary" @click="editItem(item)" v-if="item.status !== 'CONTACTADO' && isPermission('edit_lead')">
+                <IconBtn size="small" color="primary" @click="editItem(item)" v-if="canMutateLead(item.status) && isPermission('edit_lead')">
                   <VIcon icon="ri-pencil-line" />
                   <VTooltip activator="parent">Editar</VTooltip>
                 </IconBtn>
 
-                <IconBtn size="small" color="success" @click="convertItem(item)" v-if="item.status !== 'CONTACTADO' && isPermission('convert_lead')">
+                <IconBtn size="small" color="success" @click="convertItem(item)" v-if="canMutateLead(item.status) && isPermission('convert_lead')">
                   <VIcon icon="ri-user-follow-line" />
                   <VTooltip activator="parent">Convertir a Cliente</VTooltip>
                 </IconBtn>

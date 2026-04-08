@@ -106,7 +106,7 @@ onBeforeUnmount(() => {
 
 <template>
   <VBadge dot bordered location="bottom right" offset-x="2" offset-y="2" color="success" class="user-profile-badge">
-    <VAvatar class="cursor-pointer" size="38">
+    <VAvatar class="cursor-pointer" size="38" data-testid="profile-menu-trigger">
       <VImg :src="user && user.avatar ? user.avatar : avatar1" />
 
       <!-- SECTION Menu -->
@@ -152,7 +152,7 @@ onBeforeUnmount(() => {
             </template>
 
             <VListItem class="px-4">
-              <VBtn block color="error" size="small" append-icon="ri-logout-box-r-line" @click="logout">
+              <VBtn block color="error" size="small" append-icon="ri-logout-box-r-line" @click="logout" data-testid="logout-button">
                 Cerrar Sesión
               </VBtn>
             </VListItem>

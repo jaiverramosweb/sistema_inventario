@@ -18,16 +18,17 @@ class UserResource extends JsonResource
             'id'            => $this->id,
             'name'          => $this->name,
             'email'         => $this->email,
-            'role_id'       => (int) $this->role_id,
-            'role'          => $this->role->name,
+            'role_id'       => $this->role_id ? (int) $this->role_id : null,
+            'role'          => $this->role?->name,
             'avatar'        => $this->avatar ? env('APP_URL') . 'storage/' . $this->avatar : null,
-            'sucuarsal_id'  => (int) $this->sucuarsal_id,
-            'sucursale'     => $this->sucursale->name,
+            'sucuarsal_id'  => $this->sucuarsal_id ? (int) $this->sucuarsal_id : null,
+            'sucursal_id'   => $this->sucuarsal_id ? (int) $this->sucuarsal_id : null,
+            'sucursale'     => $this->sucursale?->name,
             'phone'         => $this->phone,
             'type_document' => $this->type_document,
             'document'      => $this->document,
             'gender'        => $this->gender,
-            'created_at'    => $this->created_at->format("Y-m-d h:i A")
+            'created_at'    => $this->created_at?->format("Y-m-d h:i A")
         ];
     }
 }

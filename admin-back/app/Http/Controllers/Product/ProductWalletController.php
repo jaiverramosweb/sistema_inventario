@@ -23,6 +23,25 @@ class ProductWalletController extends Controller
      */
     public function store(ProductPiceRequest $request)
     {
+        $exists = ProductWallet::where('product_id', $request->product_id)
+            ->where('unit_id', $request->unit_id)
+            ->where('type_client', $request->type_client)
+            ->where(function ($query) use ($request) {
+                if (is_null($request->sucursal_id)) {
+                    $query->whereNull('sucursal_id');
+                } else {
+                    $query->where('sucursal_id', $request->sucursal_id);
+                }
+            })
+            ->first();
+
+        if ($exists) {
+            return response()->json([
+                'status' => 403,
+                'message' => 'precio exists',
+            ], 403);
+        }
+
         $product_price = ProductWallet::create($request->validated());
         $price_resoruce = new ProductPriceResource($product_price);
 
@@ -48,13 +67,21 @@ class ProductWalletController extends Controller
         $exists = ProductWallet::where('product_id', $request->product_id)
             ->where('id', '<>', $id)
             ->where('unit_id', $request->unit_id)
+            ->where('type_client', $request->type_client)
+            ->where(function ($query) use ($request) {
+                if (is_null($request->sucursal_id)) {
+                    $query->whereNull('sucursal_id');
+                } else {
+                    $query->where('sucursal_id', $request->sucursal_id);
+                }
+            })
             ->first();
 
         if ($exists) {
             return response()->json([
                 'status' => 403,
                 'message' => 'precio exists',
-            ]);
+            ], 403);
         }
 
         $product_price = ProductWallet::findOrFail($id);
