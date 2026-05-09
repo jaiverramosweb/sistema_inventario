@@ -1,17 +1,45 @@
-Informe_Técnico.docx
-Informe_Técnico.pdf
-ejemplo_import.xlsx
-Propuesta_chat_con_IA.docx
-deployment_guide_V1.md
-deployment_guide.md
-estructura.md
-Análisis_del_Proyecto_Sistema_de_Inventario.txt
-Manual_de_Usuario_Sistema_Inventario.txt
-comandos.md
-DOCUMENTO_TECNICO_ARQUITECTURA_ACTUAL.md
-INFORME_EJECUTIVO_GERENCIAL.md
-DEPLOY_VPS_GITHUB_ACTIONS.md
-documento_tecnico_completo.docx
-.ruff_cache
-INFORME_SEGURIDAD_ROBUSTEZ.md
-RUNBOOK_VPS_COLAS_PERMISOS.md
+# ─── Editores e IDEs ────────────────────────────────────────────
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# ─── Sistema operativo ──────────────────────────────────────────
+*.tmp
+*.bak
+*~
+
+# ─── Caches de herramientas ─────────────────────────────────────
+.playwright-mcp/
+.ruff_cache/
+.pytest_cache/
+__pycache__/
+*.pyc
+
+# ─── Archivos generados por Playwright durante exploración ──────
+playwright-report/
+test-results/
+.playwright/
+
+# ─── Reportes temporales o WIP en raíz ──────────────────────────
+# (los documentos definitivos viven en docs/ y entrega_cliente/)
+/Informe_Técnico.docx
+/Informe_Técnico.pdf
+/deployment_guide.md
+/deployment_guide_V1.md
+/estructura.md
+/Análisis_del_Proyecto_Sistema_de_Inventario.txt
+/Manual_de_Usuario_Sistema_Inventario.txt
+/INFORME_EJECUTIVO_GERENCIAL.md
+/DEPLOY_VPS_GITHUB_ACTIONS.md
+/RUNBOOK_VPS_COLAS_PERMISOS.md
+
+# ─── Archivos de credenciales locales ───────────────────────────
+*.pem
+*.key
+*_rsa
+*_ed25519
+.env.local
+.env.*.local

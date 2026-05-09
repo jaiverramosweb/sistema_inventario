@@ -1,130 +1,147 @@
 # Sistema de Inventario Pro
 
-Este es un sistema integral de gestión de inventarios diseñado para centralizar el control de existencias, compras, ventas, traslados y procesos especializados de reacondicionamiento técnico.
-
-## 🚀 Objetivo del Proyecto
-Proporcionar una herramienta robusta y escalable para el control total de la cadena de suministro y mantenimiento de activos, permitiendo a las empresas optimizar sus procesos operativos y obtener visibilidad técnica y financiera en tiempo real.
-
-### Problema que resuelve
-- Falta de trazabilidad en el movimiento de componentes técnicos.
-- Descentralización de inventarios entre múltiples sucursales y bodegas.
-- Dificultad en el cálculo de costos por equipos reacondicionados.
-- Falta de reportes unificados de KPIs de ventas y compras.
-
-### Público Objetivo
-- Empresas de distribución y logística.
-- Talleres de servicio técnico y reacondicionamiento de hardware.
-- Pequeñas y medianas empresas con múltiples puntos de venta.
+Sistema integral de gestión de inventarios diseñado para centralizar el control de existencias, compras, ventas, traslados y procesos especializados de reacondicionamiento técnico.
 
 ---
 
-## 🛠 Stack Tecnológico
+## Stack
 
-### Backend
-- **Lenguaje:** PHP 8.2+
-- **Framework:** Laravel 12
-- **Librerías Clave:**
-  - `JWT-Auth`: Autenticación segura basada en tokens.
-  - `Spatie Permission`: Gestión granular de roles y permisos.
-  - `Maatwebsite Excel`: Importación y exportación de reportes.
-  - `Barryvdh DomPDF`: Generación de comprobantes en PDF.
-- **Base de Datos:** PostgreSQL
-
-### Frontend
-- **Framework:** Vue 3
-- **Librerías Clave:**
-  - `Vuetify 3`: Sistema de diseño y UI components.
-  - `Pinia`: Gestión de estado global.
-  - `Vite`: Herramienta de compilación rápida.
-  - `ApexCharts / Chart.js`: Visualización de datos y reportes.
-- **Estándares:** UI moderna, responsive y orientada a la experiencia de usuario.
+| Capa | Tecnología |
+|---|---|
+| Backend | PHP 8.2 + Laravel 12 |
+| Frontend | Vue 3 + Vuetify 3 + Vite |
+| Base de datos | PostgreSQL 14+ |
+| Autenticación | JWT + 2FA (TOTP) |
+| Autorización | Spatie Permission (RBAC granular) |
+| Despliegue | Releases blue-green con Nginx + PHP-FPM |
 
 ---
 
-## 📂 Estructura del Proyecto
+## Quickstart (desarrollo)
 
-El proyecto está dividido en dos grandes bloques desacoplados:
-
-- **`admin-back/`**: API REST construida con Laravel. Contiene toda la lógica de negocio, modelos de datos, migraciones y controladores.
-- **`admin-front/`**: Aplicación de cliente SPA (Single Page Application) construida con Vue.js. Interactúa con la API para presentar la interfaz al usuario.
-
----
-
-## 📦 Módulos del Sistema
-
-1.  **Dashboard (Panel de Control):** Resumen financiero, KPIs de ventas, compras y gráficas comparativas.
-2.  **Inventario (Products):** Gestión de catálogo, categorías, marcas y modelos.
-3.  **Almacenes (Warehouses):** Control de existencias físicas por ubicación geográfica (Sucursal/CES).
-4.  **Kardex:** Historial detallado de entradas y salidas para auditoría y trazabilidad.
-5.  **Ventas (Sales):** Registro de transacciones, gestión de clientes y atención de pedidos.
-6.  **Compras (Purchases):** Gestión de proveedores y recepción de mercancía.
-7.  **Traslados (Transport):** Movimientos controlados de stock entre diferentes bodegas.
-8.  **Reacondicionamiento (Refurbish):** Módulo técnico para ensamblaje, sustitución de piezas y cálculo de costos técnicos.
-9.  **Configuración:** Gestión de usuarios, roles, permisos y parámetros globales del sistema.
-
----
-
-## ⚙️ Variables de Entorno (.env)
-
-### Backend (`admin-back/.env`)
-| Variable | Descripción |
-| :--- | :--- |
-| `APP_URL` | URL base del servidor Laravel (ej. `http://127.0.0.1:8000`) |
-| `DB_CONNECTION` | Motor de base de datos (`pgsql`) |
-| `DB_HOST` | Host de la base de datos |
-| `DB_DATABASE` | Nombre de la base de datos |
-| `JWT_SECRET` | Clave secreta para la generación de tokens JWT |
-
-### Frontend (`admin-front/.env`)
-| Variable | Descripción |
-| :--- | :--- |
-| `VITE_API_BASE_URL` | URL de la API de Laravel (ej. `http://127.0.0.1:8000/api/`) |
-
----
-
-## 🛠 Instalación y Ejecución Local
-
-### Requisitos Previos
-- PHP 8.2+ y Composer.
-- Node.js y PNPM (o NPM/Yarn).
-- PostgreSQL configurado.
-
-### Paso 1: Configurar el Backend
 ```bash
+# Backend
 cd admin-back
 composer install
 cp .env.example .env
-php artisan key:generate
-php artisan jwt:secret
-# Configura tus credenciales DB en .env y luego:
+php artisan key:generate && php artisan jwt:secret
+# (Configurá DB_* en .env)
 php artisan migrate --seed
 php artisan serve
-```
 
-### Paso 2: Configurar el Frontend
-```bash
+# Frontend (en otra terminal)
 cd admin-front
 pnpm install
-# Asegúrate de que VITE_API_BASE_URL en .env coincida con el backend
 pnpm run dev
 ```
 
----
+- Backend: http://127.0.0.1:8000
+- Frontend: http://localhost:5173
+- Usuario inicial: `superadmin@sitecsas.com` (ver seeder para password de demo)
 
-## 🔄 Flujos Principales
-
-### Ciclo de Reacondicionamiento
-1. Un equipo entra como activo base.
-2. En el **Workbench**, el técnico instala nuevos componentes desde el inventario.
-3. El sistema calcula automáticamente el nuevo costo del equipo sumando las piezas instaladas.
-4. El equipo se marca como finalizado y está listo para la venta con su nuevo valor técnico.
+> Para producción y troubleshooting consultar [docs/INSTALACION.md](./docs/INSTALACION.md).
 
 ---
 
-## 📝 Notas Técnicas
-- **Autenticación**: El sistema usa JWT. Si recibes un error 401, verifica que el token no haya expirado (ajustable en `JWT_TTL` en `.env`).
-- **Permisos**: Al añadir una nueva ruta en el backend, asegúrate de registrar el permiso correspondiente en la tabla de roles si quieres que sea visible en el frontend.
-- **Rutas API**: Las rutas de la API están configuradas en `bootstrap/app.php` con el prefijo `api`.
+## Documentación
+
+Documentación técnica completa en `docs/`:
+
+| Documento | Contenido |
+|---|---|
+| [INSTALACION.md](./docs/INSTALACION.md) | Manual de instalación dev y producción |
+| [CICD.md](./docs/CICD.md) | Despliegue automático con GitHub Actions + cómo migrar a otro repo |
+| [CONFIGURACION.md](./docs/CONFIGURACION.md) | Variables de entorno, JWT, 2FA, roles y permisos |
+| [MODELO_BD.md](./docs/MODELO_BD.md) | Esquema relacional y diccionario de datos |
+| [API.md](./docs/API.md) | Catálogo de endpoints REST |
+| [ARQUITECTURA.md](./docs/ARQUITECTURA.md) | Visión técnica integral |
+| [SEGURIDAD.md](./docs/SEGURIDAD.md) | Controles, hallazgos y hardening |
+| [OPERACIONES.md](./docs/OPERACIONES.md) | Runbook: backups, logs, monitoreo |
+| [PLAN_QA.md](./docs/PLAN_QA.md) | Plan y reportes de pruebas |
+| [MANUAL_USUARIO.md](./docs/MANUAL_USUARIO.md) | Guía de uso por módulo |
+| [CONTRIBUCION.md](./docs/CONTRIBUCION.md) | Convenciones de desarrollo |
+
+Documentos para entrega al cliente (Word) en `entrega_cliente/`.
 
 ---
+
+## Módulos del sistema
+
+1. **Dashboard** — KPIs, gráficos de ventas/compras/asesores
+2. **Productos** — catálogo, stock por almacén, precios por sucursal
+3. **Almacenes** — control de existencias por ubicación
+4. **Kardex** — historial de movimientos
+5. **Ventas** — transacciones, clientes, pagos
+6. **Compras** — proveedores, recepción de mercancía
+7. **Traslados** — movimientos entre almacenes con salida y entrega
+8. **Devoluciones** — RMA con clasificación (reparación/reemplazo/devolución)
+9. **Reacondicionamiento** — workbench técnico para equipos refurbished
+10. **CRM** — leads, oportunidades, pipeline kanban, actividades
+11. **Auditoría** — eventos y diff de cambios con exportación
+12. **Configuración** — sucursales, almacenes, categorías, unidades, proveedores
+13. **Roles y permisos** — 41 permisos granulares con backfill automático
+14. **Usuarios** — gestión y asignación de roles
+
+---
+
+## Estructura del repositorio
+
+```
+proyecto_inventario/
+├── admin-back/                 # API REST — Laravel 12
+├── admin-front/                # SPA — Vue 3 + Vuetify
+├── docs/                       # Documentación técnica (Markdown)
+│   └── _archivo/               # Documentos previos consolidados
+├── entrega_cliente/            # Documentos Word para entrega final
+├── deploy.sh                   # Script de despliegue blue-green
+└── README.md                   # Este archivo
+```
+
+---
+
+## Comandos frecuentes
+
+### Backend
+
+```bash
+php artisan migrate --seed          # Migrar y poblar BD
+php artisan jwt:secret              # Generar nuevo JWT_SECRET
+php artisan optimize:clear          # Limpiar todos los cachés
+php artisan permission:cache-reset  # Reset cache de Spatie
+php artisan test                    # Ejecutar tests
+./vendor/bin/pint                   # Formato de código (PSR-12)
+```
+
+### Frontend
+
+```bash
+pnpm run dev          # Dev server (puerto 5173)
+pnpm run build        # Build de producción → dist/
+pnpm run preview      # Servir dist/ localmente
+pnpm run lint         # ESLint + auto-fix
+pnpm run e2e:smoke    # Tests E2E (Playwright)
+```
+
+---
+
+## Soporte
+
+| Nivel | Cuándo |
+|---|---|
+| Mesa de ayuda | Dudas de uso, errores de UI |
+| Operaciones TI | Caídas, errores intermitentes |
+| Desarrollo | Bugs reproducibles, mejoras |
+| Proveedor (SI Sistemas) | Garantía, escalamiento crítico |
+
+Procedimientos detallados en [docs/OPERACIONES.md §11](./docs/OPERACIONES.md#11-contactos-y-escalamiento).
+
+---
+
+## Licencia
+
+Software propietario. Todos los derechos reservados.
+SI SISTEMAS INFORMATICOS Y TECNOLOGIA SAS — NIT 900.583.147-1
+
+---
+
 *Desarrollado con pasión para la eficiencia operativa.*

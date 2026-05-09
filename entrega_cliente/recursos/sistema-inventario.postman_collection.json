@@ -1,0 +1,596 @@
+{
+  "info": {
+    "name": "Sistema de Inventario Pro - API",
+    "description": "Colección de endpoints REST del Sistema de Inventario Pro.\n\n**Variables de entorno necesarias:**\n- `base_url` (ej. `http://127.0.0.1:8000/api`)\n- `email` (usuario para login)\n- `password` (contraseña)\n- `token` (se setea automáticamente tras Login)\n\n**Flujo recomendado:**\n1. Ejecutar `Auth > Login` — guarda automáticamente el token.\n2. El resto de endpoints usan `{{token}}` automáticamente.\n\n**Proveedor:** SI SISTEMAS INFORMATICOS Y TECNOLOGIA SAS — NIT 900.583.147-1",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }]
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://127.0.0.1:8000/api" },
+    { "key": "email", "value": "superadmin@sitecsas.com" },
+    { "key": "password", "value": "" },
+    { "key": "token", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const json = pm.response.json();",
+                  "  if (json.access_token) {",
+                  "    pm.collectionVariables.set('token', json.access_token);",
+                  "    console.log('Token guardado en variable de colección.');",
+                  "  } else if (json.requires_2fa) {",
+                  "    pm.collectionVariables.set('mfa_token', json.mfa_token);",
+                  "    console.log('Login requiere 2FA. Usar endpoint Verify 2FA.');",
+                  "  }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}"
+            },
+            "url": "{{base_url}}/auth/login"
+          }
+        },
+        {
+          "name": "Verify 2FA",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const json = pm.response.json();",
+                  "  if (json.access_token) pm.collectionVariables.set('token', json.access_token);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mfa_token\": \"{{mfa_token}}\",\n  \"code\": \"123456\"\n}"
+            },
+            "url": "{{base_url}}/auth/2fa/verify"
+          }
+        },
+        {
+          "name": "Me (perfil)",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/auth/me"
+          }
+        },
+        {
+          "name": "Refresh token",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/auth/refresh"
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/auth/logout"
+          }
+        },
+        {
+          "name": "2FA - Status",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/auth/2fa/status"
+          }
+        },
+        {
+          "name": "2FA - Setup init",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/auth/2fa/setup/init"
+          }
+        },
+        {
+          "name": "2FA - Setup verify",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"123456\"\n}"
+            },
+            "url": "{{base_url}}/auth/2fa/setup/verify"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Productos",
+      "item": [
+        {
+          "name": "Listar productos (con filtros)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"category_id\": null,\n  \"warehouse_id\": null,\n  \"search\": null\n}"
+            },
+            "url": "{{base_url}}/products/index?page=1"
+          }
+        },
+        {
+          "name": "Configuración de producto",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/products/config"
+          }
+        },
+        {
+          "name": "Crear producto",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"category_id\": 1,\n  \"title\": \"Producto demo\",\n  \"sku\": \"SKU-001\",\n  \"price_general\": 100000,\n  \"price_company\": 90000,\n  \"importe_iva\": 19,\n  \"available\": true,\n  \"status\": \"Activo\"\n}"
+            },
+            "url": "{{base_url}}/products"
+          }
+        },
+        {
+          "name": "Detalle de producto",
+          "request": { "method": "GET", "url": "{{base_url}}/products/1" }
+        },
+        {
+          "name": "Actualizar producto",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Producto demo actualizado\"\n}"
+            },
+            "url": "{{base_url}}/products/1"
+          }
+        },
+        {
+          "name": "Eliminar producto",
+          "request": { "method": "DELETE", "url": "{{base_url}}/products/1" }
+        },
+        {
+          "name": "Exportar Excel",
+          "request": { "method": "GET", "url": "{{base_url}}/products-excel" }
+        }
+      ]
+    },
+    {
+      "name": "Clientes",
+      "item": [
+        {
+          "name": "Listar",
+          "request": { "method": "GET", "url": "{{base_url}}/clients?page=1" }
+        },
+        {
+          "name": "Crear",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Juan\",\n  \"surname\": \"Pérez\",\n  \"type_client\": 1,\n  \"type_document\": \"CC\",\n  \"n_document\": \"123456789\",\n  \"email\": \"juan@example.com\",\n  \"phone\": \"3001234567\",\n  \"sucursal_id\": 1,\n  \"status\": 1\n}"
+            },
+            "url": "{{base_url}}/clients"
+          }
+        },
+        {
+          "name": "Detalle",
+          "request": { "method": "GET", "url": "{{base_url}}/clients/1" }
+        },
+        {
+          "name": "Actualizar",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"phone\": \"3009999999\"\n}" },
+            "url": "{{base_url}}/clients/1"
+          }
+        },
+        {
+          "name": "Eliminar",
+          "request": { "method": "DELETE", "url": "{{base_url}}/clients/1" }
+        }
+      ]
+    },
+    {
+      "name": "Ventas",
+      "item": [
+        {
+          "name": "Listar (filtros)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"date_from\": null,\n  \"date_to\": null\n}" },
+            "url": "{{base_url}}/sales/index?page=1"
+          }
+        },
+        {
+          "name": "Configuración",
+          "request": { "method": "GET", "url": "{{base_url}}/sales/config" }
+        },
+        {
+          "name": "Crear venta",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"client_id\": 1,\n  \"type_client\": 1,\n  \"sucursal_id\": 1,\n  \"state\": 1,\n  \"subtotal\": 100000,\n  \"iva\": 19000,\n  \"total\": 119000,\n  \"details\": [\n    {\n      \"product_id\": 1,\n      \"warehouse_id\": 1,\n      \"unit_id\": 1,\n      \"quantity\": 1,\n      \"price_unit\": 100000,\n      \"descuento\": 0,\n      \"iva\": 19000,\n      \"total\": 119000\n    }\n  ],\n  \"payments\": [\n    {\n      \"amount\": 119000,\n      \"payment_method\": \"Efectivo\"\n    }\n  ]\n}"
+            },
+            "url": "{{base_url}}/sales"
+          }
+        },
+        {
+          "name": "Detalle de venta",
+          "request": { "method": "GET", "url": "{{base_url}}/sales/1" }
+        },
+        {
+          "name": "PDF de venta",
+          "request": { "method": "GET", "url": "{{base_url}}/sales-pdf/1" }
+        }
+      ]
+    },
+    {
+      "name": "Compras",
+      "item": [
+        {
+          "name": "Listar",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{}" },
+            "url": "{{base_url}}/pushases/index?page=1"
+          }
+        },
+        {
+          "name": "Configuración",
+          "request": { "method": "GET", "url": "{{base_url}}/pushases/config" }
+        },
+        {
+          "name": "Crear compra",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"warehouse_id\": 1,\n  \"sucuarsal_id\": 1,\n  \"provider_id\": 1,\n  \"date_emition\": \"2026-05-09\",\n  \"type_comprobant\": \"Factura\",\n  \"n_comprobant\": \"F-001\",\n  \"total\": 100000,\n  \"immporte\": 84033,\n  \"iva\": 15967,\n  \"state\": 1\n}"
+            },
+            "url": "{{base_url}}/pushases"
+          }
+        },
+        {
+          "name": "Atender detalle (recibir)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"puchase_detail_id\": 1\n}" },
+            "url": "{{base_url}}/pushase-details/attention"
+          }
+        },
+        {
+          "name": "PDF de compra",
+          "request": { "method": "GET", "url": "{{base_url}}/pushases-pdf/1" }
+        }
+      ]
+    },
+    {
+      "name": "Traslados",
+      "item": [
+        {
+          "name": "Listar",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{}" },
+            "url": "{{base_url}}/transports/index?page=1"
+          }
+        },
+        {
+          "name": "Crear traslado",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"warehause_start_id\": 1,\n  \"warehause_end_id\": 2,\n  \"date_emision\": \"2026-05-09\",\n  \"state\": 1\n}"
+            },
+            "url": "{{base_url}}/transports"
+          }
+        },
+        {
+          "name": "Marcar salida",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"transport_detail_id\": 1\n}" },
+            "url": "{{base_url}}/transport-details/attention-exit"
+          }
+        },
+        {
+          "name": "Marcar entrega",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"transport_detail_id\": 1\n}" },
+            "url": "{{base_url}}/transport-details/attention-delivery"
+          }
+        },
+        {
+          "name": "PDF de traslado",
+          "request": { "method": "GET", "url": "{{base_url}}/transport-pdf/1" }
+        }
+      ]
+    },
+    {
+      "name": "Conversiones y Kardex",
+      "item": [
+        {
+          "name": "Listar conversiones",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{}" },
+            "url": "{{base_url}}/conversions/index?page=1"
+          }
+        },
+        {
+          "name": "Crear conversión",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"product_id\": 1,\n  \"warehouse_id\": 1,\n  \"unit_start_id\": 1,\n  \"unit_end_id\": 2,\n  \"quantity_start\": 1,\n  \"quantity_end\": 12,\n  \"description\": \"Conversión caja a unidades\"\n}"
+            },
+            "url": "{{base_url}}/conversions"
+          }
+        },
+        {
+          "name": "Eliminar conversión",
+          "request": { "method": "DELETE", "url": "{{base_url}}/conversions/1" }
+        },
+        {
+          "name": "Kardex de producto",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"product_id\": 1,\n  \"warehouse_id\": 1,\n  \"date_from\": \"2026-01-01\",\n  \"date_to\": \"2026-12-31\"\n}"
+            },
+            "url": "{{base_url}}/kardex-product"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Refurbish",
+      "item": [
+        {
+          "name": "Equipo + componentes",
+          "request": { "method": "GET", "url": "{{base_url}}/refurbish/equipment/1" }
+        },
+        {
+          "name": "Iniciar reacondicionamiento",
+          "request": { "method": "POST", "url": "{{base_url}}/refurbish/start/1" }
+        },
+        {
+          "name": "Agregar componente",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"parent_product_id\": 1,\n  \"child_product_id\": 5,\n  \"warehouse_id\": 1,\n  \"unit_id\": 1\n}"
+            },
+            "url": "{{base_url}}/refurbish/add-component"
+          }
+        },
+        {
+          "name": "Retirar componente",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"product_item_id\": 1\n}" },
+            "url": "{{base_url}}/refurbish/remove-component"
+          }
+        },
+        {
+          "name": "Finalizar",
+          "request": { "method": "POST", "url": "{{base_url}}/refurbish/finish/1" }
+        }
+      ]
+    },
+    {
+      "name": "CRM",
+      "item": [
+        {
+          "name": "Leads - Listar",
+          "request": { "method": "GET", "url": "{{base_url}}/crm/leads" }
+        },
+        {
+          "name": "Leads - Convertir",
+          "request": { "method": "POST", "url": "{{base_url}}/crm/leads/1/convert" }
+        },
+        {
+          "name": "Oportunidades - Listar",
+          "request": { "method": "GET", "url": "{{base_url}}/crm/opportunities" }
+        },
+        {
+          "name": "Oportunidades - Cambiar etapa",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"pipeline_stage_id\": 2\n}" },
+            "url": "{{base_url}}/crm/opportunities/1/change-stage"
+          }
+        },
+        {
+          "name": "Pipeline Stages",
+          "request": { "method": "GET", "url": "{{base_url}}/crm/pipeline-stages" }
+        },
+        {
+          "name": "Activities - Listar",
+          "request": { "method": "GET", "url": "{{base_url}}/crm/activities" }
+        }
+      ]
+    },
+    {
+      "name": "Auditoría",
+      "item": [
+        {
+          "name": "Logs",
+          "request": { "method": "GET", "url": "{{base_url}}/audit/logs?page=1" }
+        },
+        {
+          "name": "Filtros disponibles",
+          "request": { "method": "GET", "url": "{{base_url}}/audit/logs/filters" }
+        },
+        {
+          "name": "Detalle log",
+          "request": { "method": "GET", "url": "{{base_url}}/audit/logs/1" }
+        },
+        {
+          "name": "Exportar XLSX",
+          "request": { "method": "GET", "url": "{{base_url}}/audit/logs/export?format=xlsx" }
+        },
+        {
+          "name": "Exportar CSV",
+          "request": { "method": "GET", "url": "{{base_url}}/audit/logs/export?format=csv" }
+        }
+      ]
+    },
+    {
+      "name": "KPI / Dashboard",
+      "item": [
+        {
+          "name": "Información general",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"sucursal_id\": null\n}" },
+            "url": "{{base_url}}/kpi/information-general"
+          }
+        },
+        {
+          "name": "Asesor más ventas",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{}" },
+            "url": "{{base_url}}/kpi/asesor-most-sale"
+          }
+        },
+        {
+          "name": "Total ventas y pagos",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{}" },
+            "url": "{{base_url}}/kpi/sales-total-payment"
+          }
+        },
+        {
+          "name": "Ventas por mes/año",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"year\": 2026\n}" },
+            "url": "{{base_url}}/kpi/sales-x-month-year"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Configuración base",
+      "item": [
+        {
+          "name": "Sucursales - Listar",
+          "request": { "method": "GET", "url": "{{base_url}}/sucursales" }
+        },
+        {
+          "name": "Almacenes - Listar",
+          "request": { "method": "GET", "url": "{{base_url}}/warehouses" }
+        },
+        {
+          "name": "Categorías - Listar",
+          "request": { "method": "GET", "url": "{{base_url}}/categories" }
+        },
+        {
+          "name": "Proveedores - Listar",
+          "request": { "method": "GET", "url": "{{base_url}}/providers" }
+        },
+        {
+          "name": "Unidades - Listar",
+          "request": { "method": "GET", "url": "{{base_url}}/units" }
+        },
+        {
+          "name": "Conversiones de unidad - Listar",
+          "request": { "method": "GET", "url": "{{base_url}}/unit-conversions" }
+        }
+      ]
+    },
+    {
+      "name": "Usuarios y Roles",
+      "item": [
+        {
+          "name": "Usuarios - Listar",
+          "request": { "method": "GET", "url": "{{base_url}}/users" }
+        },
+        {
+          "name": "Usuarios - Config (roles, sucursales)",
+          "request": { "method": "GET", "url": "{{base_url}}/users/config" }
+        },
+        {
+          "name": "Roles - Listar",
+          "request": { "method": "GET", "url": "{{base_url}}/role" }
+        },
+        {
+          "name": "Roles - Crear",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Vendedor\",\n  \"permissions\": [\"list_product\", \"list_client\", \"register_sale\", \"list_sale\"]\n}"
+            },
+            "url": "{{base_url}}/role"
+          }
+        }
+      ]
+    }
+  ]
+}

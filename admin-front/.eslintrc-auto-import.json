@@ -359,6 +359,7 @@
     "useId": true,
     "useModel": true,
     "useTemplateRef": true,
-    "isPermission": true
+    "isPermission": true,
+    "downloadAuthenticatedFile": true
   }
 }
